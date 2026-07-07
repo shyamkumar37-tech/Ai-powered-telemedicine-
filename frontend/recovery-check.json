@@ -1,0 +1,20 @@
+{
+  "recovery": {
+    "bannerInitiallyVisible": true,
+    "bannerVisibleAfterRetry": false,
+    "loginDisabledAfterRetry": false
+  },
+  "console": [
+    "debug: [vite] connecting...",
+    "debug: [vite] connected.",
+    "info: %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+    "log: [TeleCare+] LoginPage redirect check {path: /login?forceLogin=1, isAuthReady: true, isAuthenticated: false, role: null}",
+    "log: [TeleCare+] route change: /login?forceLogin=1",
+    "warning: ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.",
+    "warning: ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.",
+    "error: Failed to load resource: net::ERR_CONNECTION_REFUSED"
+  ],
+  "requests": [
+    "http://localhost:8080/api/system/status"
+  ]
+}

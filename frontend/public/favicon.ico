@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="TeleCare+ icon">
+  <rect width="192" height="192" rx="42" fill="#16263b"/>
+  <circle cx="96" cy="96" r="52" fill="#1c877e"/>
+  <path d="M96 58c6.1 0 11 4.9 11 11v16h16c6.1 0 11 4.9 11 11s-4.9 11-11 11h-16v16c0 6.1-4.9 11-11 11s-11-4.9-11-11v-16H69c-6.1 0-11-4.9-11-11s4.9-11 11-11h16V69c0-6.1 4.9-11 11-11Z" fill="#ffffff"/>
+  <text x="96" y="170" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="18" fill="#bdeeea">TeleCare+</text>
+</svg>

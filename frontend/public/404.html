@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TeleCare+ Redirect</title>
+  </head>
+  <body>
+    <script>
+      (function () {
+        var path = window.location.pathname || "/";
+        var base = path.toLowerCase().indexOf("/telecare+") === 0 ? "/TeleCare+" : "";
+        var target = base + "/?redirect=" + encodeURIComponent(path + window.location.search + window.location.hash);
+        window.location.replace(target);
+      })();
+    </script>
+  </body>
+</html>

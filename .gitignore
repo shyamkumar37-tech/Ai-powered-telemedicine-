@@ -1,0 +1,31 @@
+backend/.env.properties
+.env
+.env.local
+
+# Build outputs
+backend/target/
+frontend/dist/
+frontend/build/
+node_modules/
+frontend/node_modules/
+
+# Local logs and runtime files
+*.log
+*.pid
+*.err
+backend/logs/
+
+# Browser/test scratch space
+.agents/
+.edge-headless/
+.playwright-temp/
+.tmp-edge-profile/
+tmp-edge-profile/
+test-results/
+playwright-report/
+
+# Temporary inspection artifacts
+tmp-*.html
+*-response.json
+login-dom.html
+system-status.json
