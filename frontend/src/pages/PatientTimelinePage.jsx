@@ -1,14 +1,15 @@
+import LanguageSwitcher from "../components/LanguageSwitcher";
 import { useEffect, useMemo, useState } from "react";
-import Badge from "../components/Badge";
-import LocalizedText from "../components/LocalizedText";
-import SectionCard from "../components/SectionCard";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { fetchPatientTimeline } from "../services/telecareService";
 import { getApiErrorMessage } from "../utils/apiError";
 import { translateDisplayText } from "../utils/i18n";
-import EmptyStateCard from "../components/ui/EmptyStateCard";
-import ErrorStateCard from "../components/ui/ErrorStateCard";
+import PatientSidebar from "../components/PatientSidebar";
+import "./patient-booking-override.css";
+import { User, LogOut, Activity, Bell, CalendarDays, FileText, HeartPulse, MessageSquareText, Pill, AlertTriangle, RefreshCw, Layers } from "lucide-react";
+import { buildLoginRedirect } from "../utils/authSession";
 import {
   deriveActor,
   deriveStatus,
@@ -18,29 +19,17 @@ import {
   needsAction,
   normalizeTimelineDate
 } from "../utils/timelineUtils";
-import { Activity, Bell, CalendarDays, FileText, HeartPulse, MessageSquareText, Pill } from "lucide-react";
-
-function TimelineSkeleton() {
-  return (
-    <div className="space-y-4">
-      <div className="page-skeleton__block" aria-hidden="true" />
-      {Array.from({ length: 3 }).map((_, index) => (
-        <div key={`timeline-skeleton-${index}`} className="page-skeleton__card" aria-hidden="true" />
-      ))}
-    </div>
-  );
-}
 
 export default function PatientTimelinePage() {
-  const { auth } = useAuth();
+  const { auth, logout } = useAuth();
   const { language, t } = useLanguage();
-  const patientId = auth.profileId;
+  const navigate = useNavigate();
+  const patientId = auth?.profileId;
+  
   const [timeline, setTimeline] = useState([]);
   const [filter, setFilter] = useState("All");
   const [viewMode, setViewMode] = useState(() => {
-    if (typeof window === "undefined") {
-      return "comfortable";
-    }
+    if (typeof window === "undefined") return "comfortable";
     try {
       const stored = localStorage.getItem("telecareplus-timeline-view");
       return stored === "compact" || stored === "comfortable" ? stored : "comfortable";
@@ -51,15 +40,27 @@ export default function PatientTimelinePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
+  const load = async () => {
+    if (!patientId) {
+      setTimeline([]);
+      setError("Unable to load timeline.");
+      setLoading(false);
+      return;
+    }
     setLoading(true);
-    fetchPatientTimeline(patientId)
-      .then((data) => {
-        setTimeline(Array.isArray(data) ? data : []);
-        setError("");
-      })
-      .catch((err) => setError(getApiErrorMessage(err, t("unableLoadTimeline"))))
-      .finally(() => setLoading(false));
+    try {
+      const data = await fetchPatientTimeline(patientId);
+      setTimeline(Array.isArray(data) ? data : []);
+      setError("");
+    } catch (err) {
+      setError(getApiErrorMessage(err, "Unable to load timeline."));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load();
   }, [patientId]);
 
   const processedTimeline = useMemo(() => {
@@ -91,34 +92,25 @@ export default function PatientTimelinePage() {
       });
   }, [timeline]);
 
-  const filterOptions = useMemo(() => ([
-    { label: translateDisplayText(language, "All"), value: "All" },
-    { label: translateDisplayText(language, "Appointments"), value: "APPOINTMENT" },
-    { label: translateDisplayText(language, "Triage"), value: "TRIAGE" },
-    { label: translateDisplayText(language, "Prescriptions"), value: "PRESCRIPTION" },
-    { label: translateDisplayText(language, "Alerts"), value: "ALERT" }
-  ]), [language]);
+  const filterOptions = [
+    { label: "All", value: "All" },
+    { label: "Appointments", value: "APPOINTMENT" },
+    { label: "Triage", value: "TRIAGE" },
+    { label: "Prescriptions", value: "PRESCRIPTION" },
+    { label: "Alerts", value: "ALERT" }
+  ];
 
   const filteredTimeline = useMemo(() => {
-    if (filter === "All") {
-      return processedTimeline;
-    }
+    if (filter === "All") return processedTimeline;
     return processedTimeline.filter((item) => item.type === filter);
   }, [filter, processedTimeline]);
 
   const groupedByDate = useMemo(() => {
-    const groups = {
-      today: [],
-      yesterday: [],
-      week: [],
-      older: []
-    };
+    const groups = { today: [], yesterday: [], week: [], older: [] };
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
-    const weekStart = new Date(today);
-    weekStart.setDate(today.getDate() - 6);
+    const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+    const weekStart = new Date(today); weekStart.setDate(today.getDate() - 6);
 
     filteredTimeline.forEach((item) => {
       const date = normalizeTimelineDate(item?.occurredAt).date;
@@ -142,183 +134,174 @@ export default function PatientTimelinePage() {
   }, [filteredTimeline]);
 
   const renderTypeIcon = (type) => {
-    const base = "h-4 w-4 text-slate-500";
+    const props = { size: 16, color: "var(--tct-text-muted)" };
     switch (type) {
-      case "APPOINTMENT":
-        return <CalendarDays className={base} />;
-      case "TRIAGE":
-        return <HeartPulse className={base} />;
-      case "PRESCRIPTION":
-        return <Pill className={base} />;
-      case "HEALTH":
-        return <Activity className={base} />;
-      case "ALERT":
-        return <Bell className={base} />;
-      case "CONSULTATION":
-        return <MessageSquareText className={base} />;
-      default:
-        return <FileText className={base} />;
+      case "APPOINTMENT": return <CalendarDays {...props} />;
+      case "TRIAGE": return <HeartPulse {...props} />;
+      case "PRESCRIPTION": return <Pill {...props} />;
+      case "HEALTH": return <Activity {...props} />;
+      case "ALERT": return <Bell {...props} />;
+      case "CONSULTATION": return <MessageSquareText {...props} />;
+      default: return <FileText {...props} />;
     }
   };
 
-  const renderStatusBadge = (status) => {
-    if (!status) {
-      return null;
-    }
-    const value = status.toUpperCase();
-    const tone = value === "CONFIRMED" || value === "COMPLETED"
-      ? "bg-emerald-100 text-emerald-700"
-      : value === "REQUESTED" || value === "PENDING"
-        ? "bg-amber-100 text-amber-700"
-        : value === "CANCELLED" || value === "MISSED"
-          ? "bg-rose-100 text-rose-700"
-          : "bg-slate-100 text-slate-700";
-    return (
-      <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold shadow-sm ${tone}`}>
-        {translateDisplayText(language, value)}
-      </span>
-    );
+  const handleLogout = () => {
+    logout();
+    navigate(buildLoginRedirect(""), { replace: true });
   };
-
-  const compact = viewMode === "compact";
 
   return (
-    <SectionCard title={t("unifiedTimeline")}>
-      {loading ? <TimelineSkeleton /> : null}
-      {error ? (
-        <ErrorStateCard
-          title={t("unableLoadTimeline")}
-          body={error}
-          actionLabel={t("retry")}
-          onAction={() => {
-            setLoading(true);
-            fetchPatientTimeline(patientId)
-              .then((data) => {
-                setTimeline(Array.isArray(data) ? data : []);
-                setError("");
-              })
-              .catch((err) => setError(getApiErrorMessage(err, t("unableLoadTimeline"))))
-              .finally(() => setLoading(false));
-          }}
-        />
-      ) : null}
-      {!loading && !error && !timeline.length ? (
-        <EmptyStateCard
-          title={t("noTimeline")}
-          body={translateDisplayText(language, "No recent continuity events were found.")}
-        />
-      ) : null}
-      {!loading && !error && timeline.length ? (
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap gap-2">
-          {filterOptions.map((option) => {
-            const active = filter === option.value;
-            return (
-              <button
-                key={option.value}
-                type="button"
-                className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
-                  active ? "bg-clinic text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:text-slate-800"
-                }`}
-                onClick={() => setFilter(option.value)}
-                aria-label={option.label}
-                data-voice-label={option.label}
-              >
-                {option.label}
-              </button>
-            );
-          })}
-          </div>
-          <div className="flex items-center gap-2 rounded-full bg-white px-2 py-2">
-            {[
-              { label: translateDisplayText(language, "Comfortable view"), value: "comfortable" },
-              { label: translateDisplayText(language, "Compact view"), value: "compact" }
-            ].map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
-                  viewMode === option.value ? "bg-ink text-white" : "text-slate-500 hover:text-slate-700"
-                }`}
-                onClick={() => {
-                  setViewMode(option.value);
-                  try {
-                    localStorage.setItem("telecareplus-timeline-view", option.value);
-                  } catch {
-                    // Ignore storage failures.
-                  }
-                }}
-                aria-label={option.label}
-                data-voice-label={option.label}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : null}
-      {!loading && !error && timeline.length && !filteredTimeline.length ? (
-        <p className="text-sm text-slate-500">{translateDisplayText(language, "No timeline events match your filter.")}</p>
-      ) : null}
-      <div className={compact ? "space-y-3" : "space-y-6"}>
-        {[
-          { key: "today", label: translateDisplayText(language, "Today"), items: groupedByDate.today },
-          { key: "yesterday", label: translateDisplayText(language, "Yesterday"), items: groupedByDate.yesterday },
-          { key: "week", label: translateDisplayText(language, "Earlier this week"), items: groupedByDate.week },
-          { key: "older", label: translateDisplayText(language, "Older"), items: groupedByDate.older }
-        ].map((group) => (
-          group.items.length ? (
-            <div key={group.key}>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">{group.label}</p>
-              <div className={compact ? "space-y-2" : "space-y-4"}>
-                {group.items.map((item, index) => (
-                  <div key={`${item.type}-${item.occurredAt}-${index}`} className={`rounded-2xl bg-mist ${compact ? "p-4" : "p-5"} ${item.actionNeeded ? "border border-amber-200" : ""}`}>
-                    <div className="flex flex-wrap items-start justify-between gap-4">
-                      <div className="flex items-start gap-3">
-                        <span className={`mt-1 rounded-full bg-white shadow-sm ${compact ? "p-1.5" : "p-2"}`}>{renderTypeIcon(item.type)}</span>
-                        <div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <LocalizedText as="p" className="font-semibold text-ink" value={item.title} />
-                            {item.repeatCount && item.repeatCount > 1 ? (
-                              <span className="rounded-full bg-white px-2 py-0.5 text-[0.65rem] font-semibold text-slate-600">
-                                {translateDisplayText(language, "Repeated")} × {item.repeatCount}
-                              </span>
-                            ) : null}
-                          </div>
-                          <p className="text-xs text-slate-500">
-                            <span className="font-semibold text-slate-600">{translateDisplayText(language, item.relativeDate)}</span>
-                            <span className="mx-2 text-slate-400">•</span>
-                            <span>{translateDisplayText(language, item.displayDate)}</span>
-                          </p>
-                          {!item.hasValidDate ? (
-                            <p className="mt-1 text-xs text-amber-600">{translateDisplayText(language, "Timestamp needs review")}</p>
-                          ) : null}
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">{translateDisplayText(language, item.type)}</span>
-                        {item.severity ? <Badge value={item.severity} /> : null}
-                        {renderStatusBadge(item.status)}
-                      </div>
-                    </div>
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600">
-                        {translateDisplayText(language, "Source")}: {translateDisplayText(language, item.actor)}
-                      </span>
-                      {item.actionNeeded ? (
-                        <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-                          {translateDisplayText(language, "Needs action")}
-                        </span>
-                      ) : null}
-                    </div>
-                    <LocalizedText as="p" className="mt-3 text-sm text-slate-700" value={item.details} />
-                  </div>
-                ))}
+    <div id="tct-root">
+      <div className="app">
+        <PatientSidebar />
+        
+        <main id="page-main" role="main">
+          <div className="topbar">
+            <div>
+              <h1 className="serif">Unified Timeline</h1>
+              <p>Your complete medical history and continuity of care.</p>
+              <div className="eyebrow-pill" style={{ marginTop: '12px' }}>
+                <Activity />Health
+              </div>
+              <div className="signed-in" style={{ marginTop: '12px', marginLeft: '8px' }}>
+                <User />
+                Signed in as {auth?.fullName || "Anita Patient"}
               </div>
             </div>
-          ) : null
-        ))}
+            <div className="topbar-right">
+              <LanguageSwitcher customClass="lang" hideLabel />
+              <button className="btn-ghost" onClick={handleLogout} aria-label="Log out">
+                <LogOut />Logout
+              </button>
+            </div>
+          </div>
+
+          <div className="booking-layout">
+            <div style={{ flex: 1, padding: '32px', maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '32px' }}>
+                <div className="filter-bar" style={{ marginBottom: 0 }}>
+                  {filterOptions.map(f => (
+                    <button 
+                      key={f.value} 
+                      className={`filter-pill ${filter === f.value ? 'active' : ''}`}
+                      onClick={() => setFilter(f.value)}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+                
+                <div style={{ display: 'flex', gap: '4px', background: 'var(--tct-panel)', border: '1px solid var(--tct-panel-line)', padding: '4px', borderRadius: '100px' }}>
+                  <button 
+                    style={{ padding: '6px 12px', borderRadius: '100px', fontSize: '13px', fontWeight: '600', color: viewMode === 'comfortable' ? '#FFFFFF' : 'var(--tct-text-muted)', background: viewMode === 'comfortable' ? 'var(--tct-teal)' : 'transparent' }}
+                    onClick={() => { setViewMode("comfortable"); localStorage.setItem("telecareplus-timeline-view", "comfortable"); }}
+                  >
+                    Comfortable
+                  </button>
+                  <button 
+                    style={{ padding: '6px 12px', borderRadius: '100px', fontSize: '13px', fontWeight: '600', color: viewMode === 'compact' ? '#FFFFFF' : 'var(--tct-text-muted)', background: viewMode === 'compact' ? 'var(--tct-teal)' : 'transparent' }}
+                    onClick={() => { setViewMode("compact"); localStorage.setItem("telecareplus-timeline-view", "compact"); }}
+                  >
+                    Compact
+                  </button>
+                </div>
+              </div>
+
+              {loading ? (
+                <div className="doctors-grid" style={{ gridTemplateColumns: '1fr' }}>
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="doctor-card" style={{ pointerEvents: 'none', height: '80px' }}>
+                      <div className="skeleton-pulse" style={{ height: '24px', width: '40%', borderRadius: '4px', marginBottom: '16px' }}></div>
+                      <div className="skeleton-pulse" style={{ height: '16px', width: '80%', borderRadius: '4px' }}></div>
+                    </div>
+                  ))}
+                </div>
+              ) : error ? (
+                <div className="empty-state">
+                  <AlertTriangle />
+                  <h3>Unable to load timeline</h3>
+                  <p>{error}</p>
+                  <button className="btn-ghost" style={{ marginTop: '16px' }} onClick={load}><RefreshCw /> Retry</button>
+                </div>
+              ) : !loading && !error && !timeline.length ? (
+                <div className="empty-state">
+                  <Layers />
+                  <h3>No Timeline Events</h3>
+                  <p>No recent continuity events were found.</p>
+                </div>
+              ) : !loading && !error && timeline.length && !filteredTimeline.length ? (
+                <div className="empty-state">
+                  <Layers />
+                  <h3>No matching events</h3>
+                  <p>No timeline events match your filter.</p>
+                </div>
+              ) : (
+                <div className="space-y-8">
+                  {[
+                    { key: "today", label: "Today", items: groupedByDate.today },
+                    { key: "yesterday", label: "Yesterday", items: groupedByDate.yesterday },
+                    { key: "week", label: "Earlier this week", items: groupedByDate.week },
+                    { key: "older", label: "Older", items: groupedByDate.older }
+                  ].map((group) => (
+                    group.items.length > 0 && (
+                      <div key={group.key} className="tct-animate-in">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+                           <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#FFFFFF' }}>{group.label}</h3>
+                           <div style={{ flex: 1, height: '1px', background: 'var(--tct-panel-line)' }}></div>
+                        </div>
+                        <div className="doctors-grid" style={{ gridTemplateColumns: '1fr', gap: viewMode === 'compact' ? '8px' : '16px' }}>
+                          {group.items.map((item, index) => (
+                            <div key={`${item.type}-${item.occurredAt}-${index}`} className="doctor-card" style={{ cursor: 'default', padding: viewMode === 'compact' ? '16px' : '24px', border: item.actionNeeded ? '1px solid var(--tct-coral)' : '' }}>
+                              <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+                                <div style={{ flexShrink: 0, width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--tct-panel-line-strong)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  {renderTypeIcon(item.type)}
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+                                    <div>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <h4 style={{ fontSize: '16px', color: '#FFFFFF', fontWeight: '600' }}>{item.title}</h4>
+                                        {item.repeatCount > 1 && (
+                                          <span style={{ fontSize: '11px', padding: '2px 8px', background: 'rgba(255,255,255,0.1)', borderRadius: '100px', color: '#E2E8F0' }}>Repeated x{item.repeatCount}</span>
+                                        )}
+                                      </div>
+                                      <p style={{ fontSize: '13px', color: 'var(--tct-text-secondary)', marginTop: '4px' }}>
+                                        <strong style={{ color: '#E2E8F0', fontWeight: '500' }}>{item.relativeDate}</strong> • {item.displayDate}
+                                      </p>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                      <span style={{ fontSize: '12px', padding: '4px 10px', background: 'rgba(255,255,255,0.05)', color: 'var(--tct-text-muted)', borderRadius: '100px', fontWeight: '600' }}>{item.type}</span>
+                                      {item.status && (
+                                        <span style={{ fontSize: '12px', padding: '4px 10px', background: 'var(--tct-teal-dim)', color: 'var(--tct-teal)', borderRadius: '100px', fontWeight: '600' }}>{item.status}</span>
+                                      )}
+                                      {item.actionNeeded && (
+                                        <span style={{ fontSize: '12px', padding: '4px 10px', background: 'var(--tct-coral-dim)', color: 'var(--tct-coral)', borderRadius: '100px', fontWeight: '600' }}>Needs Action</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div style={{ marginTop: '12px', fontSize: '14px', color: 'var(--tct-text-secondary)' }}>
+                                    <span style={{ display: 'inline-block', fontSize: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--tct-panel-line-strong)', padding: '2px 8px', borderRadius: '4px', marginRight: '8px', color: '#E2E8F0' }}>
+                                      Source: {item.actor}
+                                    </span>
+                                    {item.details && <p style={{ marginTop: '8px' }}>{item.details}</p>}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  ))}
+                </div>
+              )}
+
+            </div>
+          </div>
+        </main>
       </div>
-    </SectionCard>
+    </div>
   );
 }

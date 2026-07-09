@@ -9,7 +9,19 @@ import { LanguageProvider, useLanguage } from "./context/LanguageContext";
 import { registerPushServiceWorker } from "./services/pushService";
 import { installTelemetryInterceptors } from "./services/telemetry";
 import { ToastProvider } from "./components/ui/ToastProvider";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { registerSW } from 'virtual:pwa-register';
 import "./index.css";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes default
+      refetchOnWindowFocus: true,
+      retry: 1,
+    },
+  },
+});
 
 const CLIENT_BUILD_VERSION = "20260403-stabilization-fix-53";
 
@@ -350,23 +362,25 @@ if (_rootEl) {
 
   try {
     window.__TELECARE_REACT_ROOT__?.render(
-      <AppErrorBoundary>
-        <BrowserRouter
-          basename={ROUTER_BASE}
-          future={{
-            v7_startTransition: true,
-            v7_relativeSplatPath: true
-          }}
-        >
-          <LanguageProvider>
-            <AuthProvider>
-              <ToastProvider>
-                <AppRuntimeShell />
-              </ToastProvider>
-            </AuthProvider>
-          </LanguageProvider>
-        </BrowserRouter>
-      </AppErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AppErrorBoundary>
+          <BrowserRouter
+            basename={ROUTER_BASE}
+            future={{
+              v7_startTransition: true,
+              v7_relativeSplatPath: true
+            }}
+          >
+            <LanguageProvider>
+              <AuthProvider>
+                <ToastProvider>
+                  <AppRuntimeShell />
+                </ToastProvider>
+              </AuthProvider>
+            </LanguageProvider>
+          </BrowserRouter>
+        </AppErrorBoundary>
+      </QueryClientProvider>
     );
   } catch (e) {
     console.error("[TeleCare+] render failed", e);
@@ -393,6 +407,7 @@ setTimeout(() => {
       if (!import.meta.env.DEV) {
         await registerPushServiceWorker().catch(() => {});
       }
+      registerSW({ immediate: true });
     })
     .catch(() => {});
 }, 0);

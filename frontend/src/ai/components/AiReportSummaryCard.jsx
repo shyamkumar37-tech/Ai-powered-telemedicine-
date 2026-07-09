@@ -1,8 +1,8 @@
 import { useState } from "react";
-import SectionCard from "../../components/SectionCard";
 import { useLanguage } from "../../context/LanguageContext";
 import { exportAiReportSummary, fetchAiReportSummary } from "../services/aiService";
 import { getApiErrorMessage } from "../../utils/apiError";
+import { Sparkles, Download, FileText } from "lucide-react";
 
 export default function AiReportSummaryCard({ patientId, titleKey = "aiReportSummary" }) {
   const { t } = useLanguage();
@@ -12,25 +12,21 @@ export default function AiReportSummaryCard({ patientId, titleKey = "aiReportSum
   const [exporting, setExporting] = useState(false);
 
   async function handleGenerate() {
-    if (!patientId) {
-      return;
-    }
+    if (!patientId) return;
     try {
       setLoading(true);
       setError("");
       const data = await fetchAiReportSummary(patientId);
       setSummary(data);
     } catch (err) {
-      setError(getApiErrorMessage(err, t("unableGenerateAiSummary")));
+      setError(getApiErrorMessage(err, "Unable to generate AI summary."));
     } finally {
       setLoading(false);
     }
   }
 
   async function handleExport() {
-    if (!patientId) {
-      return;
-    }
+    if (!patientId) return;
     try {
       setExporting(true);
       const data = await exportAiReportSummary(patientId);
@@ -42,60 +38,75 @@ export default function AiReportSummaryCard({ patientId, titleKey = "aiReportSum
       link.click();
       URL.revokeObjectURL(link.href);
     } catch (err) {
-      setError(getApiErrorMessage(err, t("unableExportAiSummary")));
+      setError(getApiErrorMessage(err, "Unable to export AI summary."));
     } finally {
       setExporting(false);
     }
   }
 
   return (
-    <SectionCard
-      title={t(titleKey)}
-      action={(
-        <div className="flex flex-wrap gap-2">
-          <button className="btn-secondary" type="button" onClick={handleGenerate} disabled={loading || !patientId}>
-            {loading ? t("generatingAiSummary") : t("generateAiSummary")}
+    <div className="doctor-card" style={{ padding: '24px', cursor: 'default' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', gap: '16px', flexWrap: 'wrap' }}>
+        <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Sparkles size={18} color="var(--tct-teal)" /> {t(titleKey)}
+        </h4>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button className="btn-secondary" onClick={handleGenerate} disabled={loading || !patientId} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            {loading ? "Generating..." : "Generate AI Summary"}
           </button>
-          <button className="btn-primary" type="button" onClick={handleExport} disabled={exporting || !patientId}>
-            {exporting ? t("exportingAiSummary") : t("exportAiSummary")}
+          <button className="btn-primary" onClick={handleExport} disabled={exporting || !patientId || !summary} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Download size={14} /> {exporting ? "Exporting..." : "Export"}
           </button>
         </div>
-      )}
-    >
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      </div>
+
+      {error && <p style={{ fontSize: '14px', color: 'var(--tct-coral)', marginBottom: '16px', fontWeight: '500' }}>{error}</p>}
+      
       {!summary ? (
-        <p className="text-sm text-slate-500">{t("aiSummaryHelper")}</p>
+        <div style={{ padding: '24px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px dashed var(--tct-panel-line-strong)', textAlign: 'center' }}>
+          <FileText size={24} color="var(--tct-text-muted)" style={{ margin: '0 auto', marginBottom: '12px' }} />
+          <p style={{ fontSize: '14px', color: 'var(--tct-text-secondary)' }}>Click generate to analyze your medical records using AI.</p>
+        </div>
       ) : (
-        <div className="space-y-4 text-sm text-slate-600">
-          <p><span className="font-medium text-ink">{t("aiSummaryOverview")}:</span> {summary.overview}</p>
+        <div className="space-y-6">
           <div>
-            <p className="font-medium text-ink">{t("aiSummaryComplaints")}:</p>
-            <ul className="list-disc pl-5">
-              {summary.recentComplaints?.map((item, index) => (
-                <li key={`${item}-${index}`}>{item}</li>
-              ))}
-            </ul>
+            <p style={{ fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', color: 'var(--tct-text-muted)', marginBottom: '8px' }}>Overview</p>
+            <p style={{ fontSize: '14px', color: '#E2E8F0', lineHeight: '1.6' }}>{summary.overview}</p>
           </div>
-          <p><span className="font-medium text-ink">{t("aiSummaryDiagnosis")}:</span> {summary.diagnosisSummary}</p>
+          
+          <div className="doctors-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px' }}>
+            <div>
+              <p style={{ fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', color: 'var(--tct-text-muted)', marginBottom: '8px' }}>Recent Complaints</p>
+              <ul style={{ paddingLeft: '20px', color: '#E2E8F0', fontSize: '14px', lineHeight: '1.6' }}>
+                {summary.recentComplaints?.map((item, idx) => <li key={idx} style={{ paddingLeft: '4px' }}>{item}</li>)}
+              </ul>
+            </div>
+            
+            <div>
+              <p style={{ fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', color: 'var(--tct-text-muted)', marginBottom: '8px' }}>Prescribed Medicines</p>
+              <ul style={{ paddingLeft: '20px', color: '#E2E8F0', fontSize: '14px', lineHeight: '1.6' }}>
+                {summary.prescribedMedicines?.map((item, idx) => <li key={idx} style={{ paddingLeft: '4px' }}>{item}</li>)}
+              </ul>
+            </div>
+
+            <div>
+              <p style={{ fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', color: 'var(--tct-text-muted)', marginBottom: '8px' }}>Follow Up Advice</p>
+              <ul style={{ paddingLeft: '20px', color: '#E2E8F0', fontSize: '14px', lineHeight: '1.6' }}>
+                {summary.followUpAdvice?.map((item, idx) => <li key={idx} style={{ paddingLeft: '4px' }}>{item}</li>)}
+              </ul>
+            </div>
+          </div>
+
           <div>
-            <p className="font-medium text-ink">{t("aiSummaryMedicines")}:</p>
-            <ul className="list-disc pl-5">
-              {summary.prescribedMedicines?.map((item, index) => (
-                <li key={`${item}-${index}`}>{item}</li>
-              ))}
-            </ul>
+            <p style={{ fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', color: 'var(--tct-text-muted)', marginBottom: '8px' }}>Diagnosis Summary</p>
+            <p style={{ fontSize: '14px', color: '#E2E8F0', lineHeight: '1.6' }}>{summary.diagnosisSummary}</p>
           </div>
-          <div>
-            <p className="font-medium text-ink">{t("aiSummaryFollowUp")}:</p>
-            <ul className="list-disc pl-5">
-              {summary.followUpAdvice?.map((item, index) => (
-                <li key={`${item}-${index}`}>{item}</li>
-              ))}
-            </ul>
-          </div>
-          <p className="text-xs text-slate-500">{summary.disclaimer}</p>
+
+          <p style={{ fontSize: '12px', color: 'var(--tct-text-muted)', fontStyle: 'italic', marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--tct-panel-line)' }}>
+            {summary.disclaimer}
+          </p>
         </div>
       )}
-    </SectionCard>
+    </div>
   );
 }

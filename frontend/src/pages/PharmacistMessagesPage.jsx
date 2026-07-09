@@ -1,7 +1,7 @@
-import MessagingWorkspace from "../components/MessagingWorkspace";
+import PremiumMessagingWorkspace from "../components/PremiumMessagingWorkspace";
 import { useLanguage } from "../context/LanguageContext";
 
 export default function PharmacistMessagesPage() {
   const { t } = useLanguage();
-  return <MessagingWorkspace role="PHARMACIST" title={t("careMessages")} />;
+  return <PremiumMessagingWorkspace role="PHARMACIST" title={t("careMessages")} />;
 }

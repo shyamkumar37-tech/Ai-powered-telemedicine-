@@ -2,6 +2,7 @@ package com.telecareplus.security;
 
 import com.telecareplus.entity.enums.RoleType;
 import com.telecareplus.repository.AppointmentRepository;
+import com.telecareplus.repository.AlertNotificationRepository;
 import com.telecareplus.repository.CareMessageRepository;
 import com.telecareplus.repository.CaregiverInterventionRepository;
 import com.telecareplus.repository.CaregiverRepository;
@@ -13,6 +14,7 @@ import com.telecareplus.repository.PatientCaregiverLinkRepository;
 import com.telecareplus.repository.PatientRepository;
 import com.telecareplus.repository.PharmacistRepository;
 import com.telecareplus.repository.PrescriptionRepository;
+import com.telecareplus.repository.TriageAssessmentRepository;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -34,6 +36,8 @@ public class AccessScopeAuthorizer {
     private final ConsultationNoteRepository consultationNoteRepository;
     private final PrescriptionRepository prescriptionRepository;
     private final DispenseRecordRepository dispenseRecordRepository;
+    private final TriageAssessmentRepository triageAssessmentRepository;
+    private final AlertNotificationRepository alertNotificationRepository;
 
     public boolean canAccessPatient(Authentication authentication, Long patientId) {
         CustomUserPrincipal principal = extractPrincipal(authentication);
@@ -101,6 +105,7 @@ public class AccessScopeAuthorizer {
             case PATIENT -> patientRepository.existsByIdAndUserId(patientId, principal.getUserId());
             case DOCTOR -> appointmentRepository.existsByPatientIdAndDoctorUserId(patientId, principal.getUserId());
             case CAREGIVER -> patientCaregiverLinkRepository.hasActivePatientAccess(patientId, principal.getUserId(), Instant.now());
+            case PHARMACIST -> dispenseRecordRepository.existsByPatientIdAndPharmacistUserId(patientId, principal.getUserId());
             default -> false;
         };
     }
@@ -116,6 +121,40 @@ public class AccessScopeAuthorizer {
         return principal.getRole() == RoleType.DOCTOR
                 && doctorRepository.existsByIdAndUserId(doctorId, principal.getUserId())
                 && appointmentRepository.existsByPatientIdAndDoctorUserId(patientId, principal.getUserId());
+    }
+
+    public boolean canCreateCaregiverLink(Authentication authentication, Long patientId, Long caregiverId) {
+        CustomUserPrincipal principal = extractPrincipal(authentication);
+        if (principal == null || patientId == null || caregiverId == null) {
+            return false;
+        }
+        if (principal.getRole() == RoleType.ADMIN) {
+            return true;
+        }
+        return principal.getRole() == RoleType.CAREGIVER
+                && caregiverRepository.existsByIdAndUserId(caregiverId, principal.getUserId())
+                && patientCaregiverLinkRepository.hasActivePatientAccess(patientId, principal.getUserId(), Instant.now());
+    }
+
+    public boolean canCreateAppointment(Authentication authentication, Long patientId, Long triageAssessmentId) {
+        if (!canAccessPatient(authentication, patientId)) {
+            return false;
+        }
+        return triageAssessmentId == null || triageAssessmentRepository.existsByIdAndPatientId(triageAssessmentId, patientId);
+    }
+
+    public boolean canReferencePatientAlert(Authentication authentication, Long patientId, Long alertNotificationId) {
+        if (!canAccessPatientCare(authentication, patientId)) {
+            return false;
+        }
+        return alertNotificationId == null || alertNotificationRepository.existsByIdAndPatientId(alertNotificationId, patientId);
+    }
+
+    public boolean canReferenceDoctorPatientAppointment(Authentication authentication, Long doctorId, Long patientId, Long appointmentId) {
+        if (!canAccessDoctorPatient(authentication, doctorId, patientId)) {
+            return false;
+        }
+        return appointmentId == null || appointmentRepository.existsByIdAndPatientIdAndDoctorId(appointmentId, patientId, doctorId);
     }
 
     public boolean canCreatePatientObservation(Authentication authentication, Long patientId, Long doctorId) {
@@ -158,12 +197,22 @@ public class AccessScopeAuthorizer {
                 && caregiverInterventionRepository.existsByIdAndCaregiverUserId(interventionId, principal.getUserId());
     }
 
-    public boolean canSendPatientMessage(Authentication authentication, Long patientId, Long senderUserId) {
+    public boolean canSendPatientMessage(Authentication authentication, Long patientId, Long senderUserId, Long recipientUserId) {
         CustomUserPrincipal principal = extractPrincipal(authentication);
-        if (principal == null || patientId == null || senderUserId == null) {
+        if (principal == null || patientId == null || senderUserId == null || recipientUserId == null) {
             return false;
         }
-        return principal.getUserId().equals(senderUserId) && canAccessPatientCare(authentication, patientId);
+        return principal.getUserId().equals(senderUserId)
+                && canAccessPatientCare(authentication, patientId)
+                && canMessageRecipientForPatient(patientId, recipientUserId);
+    }
+
+    private boolean canMessageRecipientForPatient(Long patientId, Long recipientUserId) {
+        Instant now = Instant.now();
+        return patientRepository.existsByIdAndUserId(patientId, recipientUserId)
+                || appointmentRepository.existsByPatientIdAndDoctorUserId(patientId, recipientUserId)
+                || patientCaregiverLinkRepository.hasActivePatientAccess(patientId, recipientUserId, now)
+                || dispenseRecordRepository.existsByPatientIdAndPharmacistUserId(patientId, recipientUserId);
     }
 
     public boolean canAccessMessage(Authentication authentication, Long messageId) {

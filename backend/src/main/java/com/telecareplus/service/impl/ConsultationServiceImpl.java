@@ -33,6 +33,13 @@ public class ConsultationServiceImpl implements ConsultationService {
         note.setNotes(request.notes());
         note.setOutcome(request.outcome());
         note.setFollowUpDate(request.followUpDate());
+        if (request.aiGenerated() != null) {
+            note.setAiGenerated(request.aiGenerated());
+            note.setReviewedAt(request.reviewedAt());
+            note.setReviewedBy(request.reviewedBy());
+        } else {
+            note.setAiGenerated(false);
+        }
         appointment.setStatus(AppointmentStatus.COMPLETED);
         appointmentRepository.save(appointment);
         return MapperUtil.toConsultationResponse(consultationNoteRepository.save(note));

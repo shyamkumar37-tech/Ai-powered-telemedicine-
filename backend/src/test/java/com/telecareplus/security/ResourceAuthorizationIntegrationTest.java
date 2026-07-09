@@ -3,17 +3,22 @@ package com.telecareplus.security;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.telecareplus.entity.Appointment;
+import com.telecareplus.entity.AlertNotification;
 import com.telecareplus.entity.Caregiver;
 import com.telecareplus.entity.ConsultationNote;
 import com.telecareplus.entity.Doctor;
 import com.telecareplus.entity.Patient;
 import com.telecareplus.entity.PatientCaregiverLink;
 import com.telecareplus.entity.Prescription;
+import com.telecareplus.entity.TriageAssessment;
 import com.telecareplus.entity.User;
+import com.telecareplus.entity.enums.AlertSeverity;
 import com.telecareplus.entity.enums.AppointmentStatus;
 import com.telecareplus.entity.enums.ConsultationMode;
 import com.telecareplus.entity.enums.ConsultationOutcome;
 import com.telecareplus.entity.enums.RoleType;
+import com.telecareplus.entity.enums.TriageLevel;
+import com.telecareplus.repository.AlertNotificationRepository;
 import com.telecareplus.repository.AppointmentRepository;
 import com.telecareplus.repository.CaregiverRepository;
 import com.telecareplus.repository.ConsultationNoteRepository;
@@ -21,6 +26,7 @@ import com.telecareplus.repository.DoctorRepository;
 import com.telecareplus.repository.PatientCaregiverLinkRepository;
 import com.telecareplus.repository.PatientRepository;
 import com.telecareplus.repository.PrescriptionRepository;
+import com.telecareplus.repository.TriageAssessmentRepository;
 import com.telecareplus.repository.UserRepository;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -39,8 +45,21 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import com.telecareplus.repository.elasticsearch.PatientSearchRepository;
+
+import org.springframework.test.context.ActiveProfiles;
+
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles("test")
 class ResourceAuthorizationIntegrationTest {
+
+    @MockBean
+    private ElasticsearchOperations elasticsearchOperations;
+
+    @MockBean
+    private PatientSearchRepository patientSearchRepository;
 
     @Autowired
     private TestRestTemplate restTemplate;
@@ -71,6 +90,12 @@ class ResourceAuthorizationIntegrationTest {
 
     @Autowired
     private PrescriptionRepository prescriptionRepository;
+
+    @Autowired
+    private TriageAssessmentRepository triageAssessmentRepository;
+
+    @Autowired
+    private AlertNotificationRepository alertNotificationRepository;
 
     private Patient primaryPatient;
     private Patient otherPatient;
@@ -308,6 +333,73 @@ class ResourceAuthorizationIntegrationTest {
                 """.formatted(primaryPatient.getId(), primaryDoctor.getUser().getId(), primaryCaregiver.getUser().getId()), token));
     }
 
+    @Test
+    void messageSenderCannotSpoofUnrelatedRecipientUser() {
+        String token = tokenFor(primaryPatient.getUser());
+
+        assertForbidden(post("/api/messages", """
+                {"patientId":%d,"senderUserId":%d,"recipientUserId":%d,"subject":"Test","body":"Test"}
+                """.formatted(primaryPatient.getId(), primaryPatient.getUser().getId(), otherPatient.getUser().getId()), token));
+    }
+
+    @Test
+    void caregiverCannotSelfLinkToUnlinkedPatient() {
+        String token = tokenFor(primaryCaregiver.getUser());
+
+        assertForbidden(post("/api/caregivers/link", """
+                {"patientId":%d,"caregiverId":%d}
+                """.formatted(otherPatient.getId(), primaryCaregiver.getId()), token));
+    }
+
+    @Test
+    void patientCannotAttachAnotherPatientsTriageToAppointment() {
+        TriageAssessment triage = triageFor(otherPatient);
+        try {
+            String token = tokenFor(primaryPatient.getUser());
+
+            assertForbidden(post("/api/appointments", """
+                    {"patientId":%d,"doctorId":%d,"triageAssessmentId":%d,"appointmentDateTime":"%s","mode":"TELECONSULTATION","concernSummary":"Test"}
+                    """.formatted(
+                    primaryPatient.getId(),
+                    primaryDoctor.getId(),
+                    triage.getId(),
+                    LocalDateTime.now().plusYears(5).plusSeconds(System.nanoTime() % 10_000)
+            ), token));
+        } finally {
+            triageAssessmentRepository.deleteById(triage.getId());
+        }
+    }
+
+    @Test
+    void caregiverCannotAttachAnotherPatientsAlertToIntervention() {
+        AlertNotification alert = alertFor(otherPatient);
+        try {
+            String token = tokenFor(primaryCaregiver.getUser());
+
+            assertForbidden(post("/api/caregiver-interventions", """
+                    {"caregiverId":%d,"patientId":%d,"alertNotificationId":%d,"actionType":"CALLED_PATIENT","wellbeingStatus":"STABLE","notes":"Test","followUpNeeded":false}
+                    """.formatted(primaryCaregiver.getId(), primaryPatient.getId(), alert.getId()), token));
+        } finally {
+            alertNotificationRepository.deleteById(alert.getId());
+        }
+    }
+
+    @Test
+    void doctorCannotAttachMismatchedAppointmentToReferral() {
+        Appointment primaryAppointment = appointmentFor(primaryPatient, primaryDoctor);
+        Appointment otherAppointment = appointmentFor(otherPatient, primaryDoctor);
+        try {
+            String token = tokenFor(primaryDoctor.getUser());
+
+            assertForbidden(post("/api/future-care/referrals", """
+                    {"doctorId":%d,"patientId":%d,"appointmentId":%d,"specialty":"Cardiology","reason":"Test","urgency":"ROUTINE"}
+                    """.formatted(primaryDoctor.getId(), otherPatient.getId(), primaryAppointment.getId()), token));
+        } finally {
+            appointmentRepository.deleteById(otherAppointment.getId());
+            appointmentRepository.deleteById(primaryAppointment.getId());
+        }
+    }
+
     static List<String> patientScopedEndpoints() {
         return List.of(
                 "/api/dashboard/patient/%d",
@@ -437,6 +529,36 @@ class ResourceAuthorizationIntegrationTest {
         link.setCaregiver(caregiver);
         link.setMedicationHistoryReadAllowed(true);
         return link;
+    }
+
+    private TriageAssessment triageFor(Patient patient) {
+        TriageAssessment triage = new TriageAssessment();
+        triage.setPatient(patient);
+        triage.setSymptoms("Phase 2 authorization test");
+        triage.setLevel(TriageLevel.ROUTINE_CONSULTATION);
+        triage.setRecommendation("Test only");
+        triage.setAssessedAt(LocalDateTime.now());
+        return triageAssessmentRepository.save(triage);
+    }
+
+    private AlertNotification alertFor(Patient patient) {
+        AlertNotification alert = new AlertNotification();
+        alert.setPatient(patient);
+        alert.setSeverity(AlertSeverity.WARNING);
+        alert.setMessage("Phase 2 authorization test");
+        alert.setActive(true);
+        return alertNotificationRepository.save(alert);
+    }
+
+    private Appointment appointmentFor(Patient patient, Doctor doctor) {
+        Appointment appointment = new Appointment();
+        appointment.setPatient(patient);
+        appointment.setDoctor(doctor);
+        appointment.setAppointmentDateTime(LocalDateTime.now().plusYears(5).plusSeconds(System.nanoTime() % 10_000));
+        appointment.setStatus(AppointmentStatus.BOOKED);
+        appointment.setMode(ConsultationMode.TELECONSULTATION);
+        appointment.setConcernSummary("Phase 2 authorization test");
+        return appointmentRepository.save(appointment);
     }
 
     private String tokenFor(User user) {

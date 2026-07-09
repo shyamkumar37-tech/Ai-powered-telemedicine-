@@ -1,0 +1,4 @@
+ALTER TABLE consultation_note
+ADD COLUMN ai_generated BOOLEAN DEFAULT FALSE NOT NULL,
+ADD COLUMN reviewed_at TIMESTAMP,
+ADD COLUMN reviewed_by VARCHAR(255);

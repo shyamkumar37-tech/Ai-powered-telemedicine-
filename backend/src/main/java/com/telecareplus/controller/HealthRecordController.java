@@ -22,7 +22,7 @@ public class HealthRecordController {
     }
 
     @GetMapping("/patient/{patientId}")
-    @PreAuthorize("hasRole('PATIENT') and @accessScopeAuthorizer.canAccessPatient(authentication, #patientId)")
+    @PreAuthorize("(hasRole('PATIENT') and @accessScopeAuthorizer.canAccessPatient(authentication, #patientId)) or hasRole('DOCTOR')")
     public List<HealthDtos.HealthRecordResponse> list(@PathVariable Long patientId) {
         return healthRecordService.getPatientRecords(patientId);
     }

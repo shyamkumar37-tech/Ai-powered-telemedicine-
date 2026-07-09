@@ -56,4 +56,22 @@ public class CaregiverServiceImpl implements CaregiverService {
                 })
                 .toList();
     }
+
+    @Override
+    public void inviteCaregiver(CaregiverDtos.CaregiverInviteRequest request) {
+        var patient = patientRepository.findById(request.patientId())
+                .orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
+        
+        String token = java.util.UUID.randomUUID().toString();
+        // In a real app we'd save this token to the database.
+        
+        String inviteLink = "http://localhost:5173/register/caregiver?token=" + token + "&patientId=" + request.patientId();
+        
+        String message = String.format("Hello,\n\n%s has invited you to join their Care Network on TeleCare+ as their %s.\n\nPlease click the link below to register and accept the invitation:\n%s\n\n- The TeleCare+ Team",
+                patient.getUser().getFullName(), request.relationship(), inviteLink);
+
+        // communicationService.sendEmail(request.email(), "TeleCare+ Caregiver Invitation", message);
+        // Using sysout for mock email until CommunicationService is injected if missing
+        System.out.println("Mock Email to " + request.email() + ": " + message);
+    }
 }

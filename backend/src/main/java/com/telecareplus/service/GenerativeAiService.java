@@ -23,5 +23,7 @@ public interface GenerativeAiService {
 
     Optional<GeneratedReply> generateClinicalReply(String systemPrompt, String userPrompt);
 
+    Optional<String> generateRawText(String systemPrompt, String userPrompt);
+
     Optional<TranslatedText> translateText(String text, String sourceLanguage, String targetLanguage);
 }

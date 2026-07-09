@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Badge from "../components/Badge";
 import LocalizedText from "../components/LocalizedText";
-import SectionCard from "../components/SectionCard";
+import PremiumSectionCard from "../components/PremiumSectionCard";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { createReferral, fetchDoctorReferrals, fetchReferralSuggestions } from "../services/telecareService";
@@ -64,12 +64,12 @@ export default function DoctorReferralsPage() {
   }, [doctorId]);
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-      <SectionCard
+    <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr] tcd-animate-in">
+      <PremiumSectionCard
         title={t("referralIntelligence")}
         action={
           <button
-            className="btn-primary"
+            className="doc-btn doc-btn-primary"
             type="button"
             disabled={saving}
             aria-label={saving ? t("saving") : t("createReferral")}
@@ -99,9 +99,9 @@ export default function DoctorReferralsPage() {
       >
         <div className="space-y-4">
           <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-600">{t("patientId")}</span>
+            <span className="text-sm font-medium text-slate-400">{t("patientId")}</span>
             <select
-              className="field"
+              className="doc-input"
               aria-label={t("patientId")}
               data-voice-label={t("patientId")}
               value={form.patientId}
@@ -115,9 +115,9 @@ export default function DoctorReferralsPage() {
           </label>
           <div className="grid gap-4 md:grid-cols-2">
             <label className="block space-y-2">
-              <span className="text-sm font-medium text-slate-600">{t("specialty")}</span>
+              <span className="text-sm font-medium text-slate-400">{t("specialty")}</span>
               <input
-                className="field"
+                className="doc-input"
                 aria-label={t("specialty")}
                 data-voice-label={t("specialty")}
                 value={form.specialty}
@@ -125,9 +125,9 @@ export default function DoctorReferralsPage() {
               />
             </label>
             <label className="block space-y-2">
-              <span className="text-sm font-medium text-slate-600">{t("urgency")}</span>
+              <span className="text-sm font-medium text-slate-400">{t("urgency")}</span>
               <select
-                className="field"
+                className="doc-input"
                 aria-label={t("urgency")}
                 data-voice-label={t("urgency")}
                 value={form.urgency}
@@ -140,9 +140,9 @@ export default function DoctorReferralsPage() {
             </label>
           </div>
           <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-600">{t("targetFacility")}</span>
+            <span className="text-sm font-medium text-slate-400">{t("targetFacility")}</span>
             <input
-              className="field"
+              className="doc-input"
               aria-label={t("targetFacility")}
               data-voice-label={t("targetFacility")}
               value={form.targetFacility}
@@ -150,9 +150,9 @@ export default function DoctorReferralsPage() {
             />
           </label>
           <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-600">{t("reason")}</span>
+            <span className="text-sm font-medium text-slate-400">{t("reason")}</span>
             <textarea
-              className="field min-h-24 resize-y"
+              className="doc-input min-h-24 resize-y"
               aria-label={t("reason")}
               data-voice-label={t("reason")}
               value={form.reason}
@@ -160,9 +160,9 @@ export default function DoctorReferralsPage() {
             />
           </label>
           <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-600">{t("recommendationNote")}</span>
+            <span className="text-sm font-medium text-slate-400">{t("recommendationNote")}</span>
             <textarea
-              className="field min-h-24 resize-y"
+              className="doc-input min-h-24 resize-y"
               aria-label={t("recommendationNote")}
               data-voice-label={t("recommendationNote")}
               value={form.recommendationNote}
@@ -170,9 +170,9 @@ export default function DoctorReferralsPage() {
             />
           </label>
           <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-600">{t("recommendedDate")}</span>
+            <span className="text-sm font-medium text-slate-400">{t("recommendedDate")}</span>
             <input
-              className="field"
+              className="doc-input"
               type="date"
               aria-label={t("recommendedDate")}
               data-voice-label={t("recommendedDate")}
@@ -182,11 +182,11 @@ export default function DoctorReferralsPage() {
           </label>
         </div>
         {message ? <p className="mt-4 text-sm text-emerald-600" role="status" aria-live="polite">{message}</p> : null}
-        {error ? <p className="mt-4 text-sm text-red-600" role="alert">{error}</p> : null}
-      </SectionCard>
+        {error ? <p className="mt-4 text-sm text-red-400" role="alert">{error}</p> : null}
+      </PremiumSectionCard>
 
       <div className="space-y-6">
-        <SectionCard title={t("suggestedReferrals")}>
+        <PremiumSectionCard title={t("suggestedReferrals")}>
           {loading ? <LoadingSkeleton lines={4} /> : null}
           {!loading && !suggestions.length ? (
             <EmptyStateCard
@@ -196,18 +196,18 @@ export default function DoctorReferralsPage() {
           ) : null}
           <div className="space-y-4">
             {suggestions.map((item) => (
-              <div key={`${item.patientId}-${item.specialty}`} className="rounded-2xl bg-mist p-5">
-                <div className="flex flex-wrap items-center justify-between gap-3">
+              <div key={`${item.patientId}-${item.specialty}`} className="rounded-xl border border-white/5 bg-white/5 p-5">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/5 pb-3">
                   <div>
-                    <p className="font-semibold text-ink">{item.patientName}</p>
-                    <p className="text-sm text-slate-500">{translateDisplayText(language, item.specialty)}</p>
+                    <p className="font-semibold text-white tracking-tight">{item.patientName}</p>
+                    <p className="text-sm text-slate-400 mt-1">{translateDisplayText(language, item.specialty)}</p>
                   </div>
-                  <Badge value={item.urgency} />
+                  <span className={`doc-badge ${item.urgency === 'URGENT' ? 'doc-badge-alert' : item.urgency === 'PRIORITY' ? 'doc-badge-warn' : 'doc-badge-neutral'} text-xs px-2.5 py-1`}>{item.urgency}</span>
                 </div>
-                <LocalizedText as="p" className="mt-3 text-sm text-slate-700" value={item.rationale} />
-                <LocalizedText as="p" className="mt-2 text-sm font-semibold text-clinic" value={item.recommendedFacility} />
+                <LocalizedText as="p" className="mt-4 text-sm text-slate-300 leading-relaxed" value={item.rationale} />
+                <LocalizedText as="p" className="mt-2 text-sm font-semibold text-teal-400" value={item.recommendedFacility} />
                 <button
-                  className="btn-secondary mt-4"
+                  className="doc-btn doc-btn-secondary mt-4 w-full"
                   type="button"
                   aria-label={t("useSuggestion")}
                   data-voice-label={t("useSuggestion")}
@@ -226,9 +226,9 @@ export default function DoctorReferralsPage() {
               </div>
             ))}
           </div>
-        </SectionCard>
+        </PremiumSectionCard>
 
-        <SectionCard title={t("existingReferrals")}>
+        <PremiumSectionCard title={t("existingReferrals")}>
           {!loading && !referrals.length ? (
             <EmptyStateCard
               title={t("noReferrals")}
@@ -237,24 +237,24 @@ export default function DoctorReferralsPage() {
           ) : null}
           <div className="space-y-4">
             {referrals.map((item) => (
-              <div key={item.id} className="rounded-2xl bg-mist p-5">
-                <div className="flex flex-wrap items-center justify-between gap-3">
+              <div key={item.id} className="rounded-xl border border-white/5 bg-white/5 p-5">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/5 pb-3">
                   <div>
-                    <p className="font-semibold text-ink">{item.patientName}</p>
-                    <p className="text-sm text-slate-500">{translateDisplayText(language, item.specialty)}</p>
+                    <p className="font-semibold text-white tracking-tight">{item.patientName}</p>
+                    <p className="text-sm text-slate-400 mt-1">{translateDisplayText(language, item.specialty)}</p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge value={item.urgency} />
-                    <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">{translateDisplayText(language, item.status)}</span>
+                    <span className={`doc-badge ${item.urgency === 'URGENT' ? 'doc-badge-alert' : item.urgency === 'PRIORITY' ? 'doc-badge-warn' : 'doc-badge-neutral'} text-[10px] px-2 py-0.5`}>{item.urgency}</span>
+                    <span className="doc-badge doc-badge-success text-[10px] px-2 py-0.5">{translateDisplayText(language, item.status)}</span>
                   </div>
                 </div>
-                <LocalizedText as="p" className="mt-3 text-sm text-slate-700" value={item.reason} />
-                {item.recommendationNote ? <LocalizedText as="p" className="mt-2 text-sm text-slate-600" value={item.recommendationNote} /> : null}
-                <LocalizedText as="p" className="mt-2 text-sm font-semibold text-clinic" value={item.targetFacility || "-"} />
+                <LocalizedText as="p" className="mt-4 text-sm text-slate-300 leading-relaxed" value={item.reason} />
+                {item.recommendationNote ? <LocalizedText as="p" className="mt-2 text-sm text-slate-400" value={item.recommendationNote} /> : null}
+                <LocalizedText as="p" className="mt-2 text-sm font-semibold text-teal-400" value={item.targetFacility || "-"} />
               </div>
             ))}
           </div>
-        </SectionCard>
+        </PremiumSectionCard>
       </div>
     </div>
   );

@@ -6,71 +6,9 @@ import { LANGUAGE_CONTEXT_FALLBACK, useLanguage } from "../context/LanguageConte
 import { API_BASE_URL } from "../services/api";
 import { requestOtpLogin } from "../services/authService";
 import { getDefaultRouteForRole, normalizeRole } from "../utils/roleUtils";
-import { Tabs, Tab } from "../components/ui/Tabs";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useToast } from "../components/ui/ToastProvider";
-
-function FloatingField({
-  id,
-  label,
-  type = "text",
-  value,
-  onChange,
-  helperText,
-  errorText,
-  rightAddon,
-  inputMode,
-  required,
-  autoComplete
-}) {
-  return (
-    <label className="tc-floating-field" htmlFor={id}>
-      <span className="sr-only">{label}</span>
-      <input
-        id={id}
-        className="tc-floating-input"
-        type={type}
-        value={value}
-        onChange={(e) => {
-          try {
-            console.log(`[TeleCare+] input change ${id}`, e.target && e.target.value);
-          } catch (err) {
-            /* ignore */
-          }
-          onChange && onChange(e);
-        }}
-        onFocus={(e) => {
-          try {
-            console.log(`[TeleCare+] input focus ${id}`);
-          } catch (err) {}
-        }}
-        onBlur={(e) => {
-          try {
-            console.log(`[TeleCare+] input blur ${id}`);
-          } catch (err) {}
-        }}
-        onKeyDown={(e) => {
-          try {
-            console.log(`[TeleCare+] input keydown ${id}`, e.key);
-          } catch (err) {}
-        }}
-        placeholder=" "
-        inputMode={inputMode}
-        required={required}
-        autoComplete={autoComplete}
-        aria-invalid={Boolean(errorText)}
-        aria-describedby={helperText || errorText ? `${id}-hint` : undefined}
-      />
-      <span className="tc-floating-label">{label}</span>
-      {rightAddon ? <span className="tc-floating-addon">{rightAddon}</span> : null}
-      {helperText || errorText ? (
-        <span id={`${id}-hint`} className={errorText ? "tc-field-error" : "tc-field-helper"}>
-          {errorText || helperText}
-        </span>
-      ) : null}
-    </label>
-  );
-}
+import "./login-override.css";
 
 export default function LoginPage() {
   const { language, t, translateUiText = (value) => value } = useLanguage() ?? LANGUAGE_CONTEXT_FALLBACK;
@@ -78,6 +16,7 @@ export default function LoginPage() {
   const { pushToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
+
   const forceLogin = (() => {
     try {
       return new URLSearchParams(location.search || "").get("forceLogin") === "1";
@@ -95,10 +34,10 @@ export default function LoginPage() {
       return language && language !== "en" ? `?lang=${language}` : "";
     }
   })();
+
   const [form, setForm] = useState({ email: "", password: "" });
   const [otpForm, setOtpForm] = useState({ phone: "", otp: "" });
   const [mode, setMode] = useState("password");
-  const [showPassword, setShowPassword] = useState(false);
   const [otpMessage, setOtpMessage] = useState("");
   const [otpErrors, setOtpErrors] = useState({ phone: "", otp: "" });
   const [error, setError] = useState("");
@@ -114,21 +53,17 @@ export default function LoginPage() {
         sessionStorage.removeItem("telecareplus-auth-expired");
         pushToast({
           type: "error",
-          title: translateUiText("Session expired"),
-          message: translateUiText("Please sign in again to continue.")
+          title: "Session expired",
+          message: "Please sign in again to continue."
         });
       }
-    } catch {
-      // Ignore session storage errors.
-    }
-    // Clear form fields on mount to prevent autofill from persisting after logout
+    } catch {}
     setForm({ email: "", password: "" });
     setOtpForm({ phone: "", otp: "" });
   }, []);
 
   const checkBackend = useCallback(async () => {
     setBackendStatus({ state: "checking" });
-
     const controller = new AbortController();
     const timeoutId = window.setTimeout(() => controller.abort(), 4000);
     try {
@@ -138,9 +73,7 @@ export default function LoginPage() {
         signal: controller.signal,
         headers: { "Accept": "application/json" }
       });
-      if (!response.ok) {
-        throw new Error("Backend unavailable");
-      }
+      if (!response.ok) throw new Error("Backend unavailable");
       const payload = await response.json();
       const ready = payload?.ready === true || payload?.status === "UP";
       setBackendStatus({ state: ready ? "ready" : "down" });
@@ -159,9 +92,9 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (typeof document !== "undefined") {
-      document.title = `TeleCare+ - ${translateUiText("Login")}`;
+      document.title = `TeleCare+ — Secure sign in`;
     }
-  }, [translateUiText]);
+  }, []);
 
   const redirectByRole = (authData, { allowForceLogin = false } = {}) => {
     if (hasRedirectedRef.current || (forceLogin && !allowForceLogin)) {
@@ -176,14 +109,6 @@ export default function LoginPage() {
   };
 
   useEffect(() => {
-    if (typeof window !== "undefined" && window.__TELECARE_LOCAL_RUNTIME__) {
-      console.log("[TeleCare+] LoginPage redirect check", {
-        path: location.pathname + location.search,
-        isAuthReady,
-        isAuthenticated,
-        role: auth?.role ?? null
-      });
-    }
     if (forceLogin && isAuthenticated && !hasForcedLogoutRef.current) {
       hasForcedLogoutRef.current = true;
       logout();
@@ -195,7 +120,7 @@ export default function LoginPage() {
   }, [auth, forceLogin, isAuthReady, isAuthenticated, location.pathname, location.search]);
 
   const backendUnavailable = backendStatus.state === "down";
-  const backendMessage = translateUiText("Backend service is starting. Please wait a moment and try again.");
+  const backendMessage = "Backend service is starting. Please wait a moment and try again.";
 
   const onPasswordSubmit = async (event) => {
     event.preventDefault();
@@ -209,12 +134,12 @@ export default function LoginPage() {
       const authData = await login(form);
       pushToast({
         type: "success",
-        title: translateUiText("Login successful"),
-        message: translateUiText(`Welcome back, ${authData?.fullName || "TeleCare+ user"}.`)
+        title: "Login successful",
+        message: `Welcome back, ${authData?.fullName || "TeleCare+ user"}.`
       });
       redirectByRole(authData, { allowForceLogin: true });
     } catch (err) {
-      setError(err.response?.data?.message || err.message || t("loginFailed"));
+      setError(err.response?.data?.message || err.message || "Login failed");
     } finally {
       setLoading(false);
     }
@@ -228,13 +153,13 @@ export default function LoginPage() {
     const trimmedPhone = otpForm.phone.trim();
     const digitsOnly = trimmedPhone.replace(/\D/g, "");
     if (!trimmedPhone) {
-      setOtpErrors((current) => ({ ...current, phone: t("mobileNumberRequired") }));
+      setOtpErrors((current) => ({ ...current, phone: "Mobile number is required" }));
       setError("");
       setOtpMessage("");
       return;
     }
     if (digitsOnly.length < 10 || digitsOnly.length > 15) {
-      setOtpErrors((current) => ({ ...current, phone: t("invalidMobileNumber") }));
+      setOtpErrors((current) => ({ ...current, phone: "Invalid mobile number" }));
       setError("");
       setOtpMessage("");
       return;
@@ -244,17 +169,12 @@ export default function LoginPage() {
     setError("");
     setOtpMessage("");
     try {
-      const phone = trimmedPhone;
-      setOtpErrors({ phone: "", otp: "" });
-      const response = await requestOtpLogin({ phone });
+      const response = await requestOtpLogin({ phone: trimmedPhone });
       setOtpMessage(response.message);
-      setOtpForm((current) => ({
-        ...current,
-        phone,
-        otp: current.otp
-      }));
+      setOtpErrors({ phone: "", otp: "" });
+      setOtpForm((current) => ({ ...current, phone: trimmedPhone }));
     } catch (err) {
-      setError(err.response?.data?.message || t("unableSendOtp"));
+      setError(err.response?.data?.message || "Unable to send OTP");
     } finally {
       setLoading(false);
     }
@@ -271,17 +191,11 @@ export default function LoginPage() {
     const digitsOnly = trimmedPhone.replace(/\D/g, "");
     const resolvedOtp = otpForm.otp.trim();
 
-    if (!trimmedPhone) {
-      nextErrors.phone = t("mobileNumberRequired");
-    } else if (digitsOnly.length < 10 || digitsOnly.length > 15) {
-      nextErrors.phone = t("invalidMobileNumber");
-    }
+    if (!trimmedPhone) nextErrors.phone = "Mobile number is required";
+    else if (digitsOnly.length < 10 || digitsOnly.length > 15) nextErrors.phone = "Invalid mobile number";
 
-    if (!resolvedOtp) {
-      nextErrors.otp = t("otpRequired");
-    } else if (resolvedOtp.length !== 6) {
-      nextErrors.otp = t("otpInvalidLength");
-    }
+    if (!resolvedOtp) nextErrors.otp = "OTP is required";
+    else if (resolvedOtp.length !== 6) nextErrors.otp = "OTP must be 6 digits";
 
     if (nextErrors.phone || nextErrors.otp) {
       setOtpErrors(nextErrors);
@@ -292,257 +206,180 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
     try {
-      const payload = {
-        phone: trimmedPhone,
-        otp: resolvedOtp
-      };
-      setOtpErrors({ phone: "", otp: "" });
-      const authData = await verifyOtpLogin(payload);
+      const authData = await verifyOtpLogin({ phone: trimmedPhone, otp: resolvedOtp });
       pushToast({
         type: "success",
-        title: translateUiText("Login successful"),
-        message: translateUiText(`Welcome back, ${authData?.fullName || "TeleCare+ user"}.`)
+        title: "Login successful",
+        message: `Welcome back, ${authData?.fullName || "TeleCare+ user"}.`
       });
       redirectByRole(authData, { allowForceLogin: true });
     } catch (err) {
-      setError(err.response?.data?.message || err.response?.data?.error || err.message || t("otpLoginFailed"));
+      setError(err.response?.data?.message || err.response?.data?.error || err.message || "OTP login failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="login-shell">
-      <div className="login-shell__grid">
-        <section className="login-visual">
-          <div className="login-visual__glow" aria-hidden="true" />
-          <div className="login-visual__orb" aria-hidden="true" />
-          <div className="login-visual__content">
-            <p className="login-visual__eyebrow">{translateUiText("Continuous care, beyond consultations")}</p>
-            <h1 className="login-visual__title">{translateUiText("TeleCare+ connected care workspace")}</h1>
-            <p className="login-visual__subtitle">
-              {translateUiText("Monitor health, manage care plans, and stay connected with your care team — all in one place.")}
-            </p>
-            <div className="login-visual__mockups">
-              <div className="relative min-h-[320px]">
-                <div className="login-float login-float--center tc-tilt rounded-2xl border border-white/10 bg-white/5 p-5 shadow-lg shadow-[0_0_30px_rgba(0,255,200,0.1)] backdrop-blur-xl transition-all duration-200 hover:scale-[1.02]">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold text-white/90">{translateUiText("Today's Health Overview")}</p>
-                    <span className="rounded-full bg-emerald-400/20 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-emerald-200">
-                      {translateUiText("Stable")}
-                    </span>
-                  </div>
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                      <p className="text-xs uppercase tracking-[0.2em] text-white/60">{translateUiText("Heart Rate")}</p>
-                      <p className="mt-2 text-xl font-semibold text-white">78 bpm</p>
-                    </div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                      <p className="text-xs uppercase tracking-[0.2em] text-white/60">{translateUiText("BP")}</p>
-                      <p className="mt-2 text-xl font-semibold text-white">120/80</p>
-                    </div>
-                  </div>
-                </div>
+    <div id="tcl-root" className="login-wrapper">
+      <div className="stage">
+        
+        <div className="brand">
+          <div className="eyebrow">Continuous care, beyond consultations</div>
+          <h1 className="serif">TeleCare+ connected<br/><em>care</em> workspace</h1>
+          <p className="lede">Monitor vitals, manage care plans, and stay connected with your care team — all in one place.</p>
 
-                <div className="login-float login-float--delay-1 tc-tilt absolute right-0 top-6 w-[220px] -rotate-2 rounded-xl border border-white/10 bg-white/5 p-4 shadow-[0_0_30px_rgba(0,255,200,0.1)] backdrop-blur-xl transition-all duration-200 hover:scale-[1.02]">
-                  <p className="text-xs uppercase tracking-[0.2em] text-white/60">{translateUiText("Next Appointment")}</p>
-                  <p className="mt-2 text-base font-semibold text-white">{translateUiText("Dr. Sharma")}</p>
-                  <p className="text-sm text-white/70">{translateUiText("Today 4:30 PM")}</p>
-                </div>
+          <div className="overview-label">Today's overview</div>
+          <div className="grid">
+            <div className="card">
+              <div className="label"><span className="dot"></span>Heart rate</div>
+              <div className="value mono">78<span style={{fontSize: '14px', color: 'var(--text-muted)', fontWeight: 400}}> bpm</span></div>
+              <div className="sub">Resting, within range</div>
+            </div>
+            <div className="card">
+              <div className="label"><span className="dot brass"></span>Blood pressure</div>
+              <div className="value mono">128<span style={{fontSize: '14px', color: 'var(--text-muted)'}}>/82</span></div>
+              <div className="sub">Slightly elevated</div>
+            </div>
 
-                <div className="login-float login-float--delay-2 tc-tilt absolute bottom-[-12px] left-0 w-[220px] rounded-xl border border-white/10 bg-white/5 p-4 shadow-[0_0_30px_rgba(0,255,200,0.1)] backdrop-blur-xl transition-all duration-200 hover:scale-[1.02]">
-                  <p className="text-xs uppercase tracking-[0.2em] text-white/60">{translateUiText("Medication Adherence")}</p>
-                  <p className="mt-2 text-base font-semibold text-white">85% {translateUiText("completed")}</p>
-                  <div className="mt-3 h-2 w-full rounded-full bg-white/10">
-                    <div className="h-2 w-[85%] rounded-full bg-emerald-400" />
-                  </div>
-                </div>
+            <div className="card appt wide">
+              <div className="label">Next appointment</div>
+              <div className="value serif">Dr. Sharma</div>
+              <div className="sub mono">Today · 4:30 PM</div>
+            </div>
 
-                <div className="login-float login-float--delay-3 tc-tilt absolute bottom-8 right-10 w-[200px] rounded-xl border border-rose-400/30 bg-white/5 p-4 shadow-[0_0_30px_rgba(248,113,113,0.18)] backdrop-blur-xl transition-all duration-200 hover:scale-[1.02]">
-                  <p className="text-xs uppercase tracking-[0.2em] text-rose-200">{translateUiText("Alert")}</p>
-                  <p className="mt-2 text-base font-semibold text-white">{translateUiText("High BP detected")}</p>
-                  <span className="mt-2 inline-flex rounded-full bg-rose-500/20 px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-rose-200">
-                    {translateUiText("Critical")}
-                  </span>
-                </div>
-              </div>
+            <div className="card alert wide">
+              <div className="label"><span className="dot coral"></span>Alert</div>
+              <div className="value" style={{fontSize: '16px'}}>High blood pressure detected</div>
+              <span className="badge">Critical</span>
+            </div>
+
+            <div className="card wide">
+              <div className="label">Medication adherence</div>
+              <div className="value mono">85<span style={{fontSize: '14px', color: 'var(--text-muted)'}}>%</span> <span style={{fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 400}}>completed this week</span></div>
+              <div className="bar-track"><div className="bar-fill"></div></div>
             </div>
           </div>
-        </section>
 
-        <section className="login-panel glass-card login-card">
-          <div className="login-panel__header">
-            <div>
-              <p className="login-panel__brand">{t("appName")}</p>
-              <h2 className="login-panel__title">{t("secureSignIn")}</h2>
-              <p className="login-panel__subtitle">{translateUiText("Secure login - Privacy-first - AI-assisted care")}</p>
-            </div>
-            <LanguageSwitcher />
+          <div className="pulse-strip">
+            <svg width="150" height="28" viewBox="0 0 150 28">
+              <polyline points="0,14 22,14 30,4 38,24 46,14 60,14 68,8 74,20 80,14 150,14"
+                fill="none" stroke="#4FB3A0" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round"
+                strokeDasharray="220" strokeDashoffset="220">
+                <animate attributeName="stroke-dashoffset" from="220" to="0" dur="1.8s" repeatCount="indefinite"/>
+              </polyline>
+            </svg>
+            <div className="ptext">Live sync with <b>Apple Health</b> · last updated 2 min ago</div>
+          </div>
+        </div>
+
+        <div className="seam">
+          <svg width="28" height="140" viewBox="0 0 28 140">
+            <polyline points="0,70 6,70 9,50 12,90 15,70 19,70 22,58 25,80 28,70"
+              fill="none" stroke="#C9A24B" strokeWidth="1.4" strokeLinejoin="round" strokeLinecap="round" opacity="0.55"/>
+          </svg>
+        </div>
+
+        <div className="signin">
+          <div className="signin-top">
+            <div className="wordmark">TELECARE<span>+</span></div>
+            <LanguageSwitcher customClass="lang" hideLabel />
           </div>
 
-          <div className="login-panel__badges">
-            {[translateUiText("Secure login"), translateUiText("Privacy protected"), translateUiText("Low bandwidth optimized")].map((item) => (
-              <span key={item}>{item}</span>
-            ))}
+          <h2 className="serif">Secure sign in</h2>
+          <p className="sub">Privacy-first, AI-assisted care — built for how you actually manage your health.</p>
+
+          <div className="trust-row">
+            <span className="trust"><span className="dot"></span>Encrypted end to end</span>
+            <span className="trust"><span className="dot"></span>HIPAA aligned</span>
+            <span className="trust"><span className="dot"></span>Low-bandwidth optimized</span>
           </div>
 
-          <Tabs>
-            <Tab
-              active={mode === "password"}
-              aria-label={t("emailLogin")}
-              data-voice-label={t("emailLogin")}
-              onClick={() => {
-                setMode("password");
-                setError("");
-              }}
-            >
-              {t("emailLogin")}
-            </Tab>
-            <Tab
-              active={mode === "otp"}
-              aria-label={t("mobileOtp")}
-              data-voice-label={t("mobileOtp")}
-              onClick={() => {
-                setMode("otp");
-                setError("");
-              }}
-            >
-              {t("mobileOtp")}
-            </Tab>
-          </Tabs>
+          <div className="tabs">
+            <button className={mode === "password" ? "active" : ""} onClick={() => { setMode("password"); setError(""); setOtpMessage(""); }}>Email login</button>
+            <button className={mode === "otp" ? "active" : ""} onClick={() => { setMode("otp"); setError(""); }}>Mobile OTP</button>
+          </div>
 
-          {backendUnavailable ? (
-            <div className="login-status" role="status" aria-live="polite">
+          {backendUnavailable && (
+            <div className="error-banner">
               <p>{backendMessage}</p>
               <button
                 type="button"
-                className="btn-secondary mt-3"
+                style={{ marginTop: '8px', textDecoration: 'underline' }}
                 onClick={checkBackend}
-                aria-label={translateUiText("Retry connection")}
-                data-voice-label={translateUiText("Retry connection")}
                 disabled={backendStatus.state === "checking"}
               >
-                {backendStatus.state === "checking" ? translateUiText("Checking...") : translateUiText("Retry connection")}
+                {backendStatus.state === "checking" ? "Checking..." : "Retry connection"}
               </button>
             </div>
-          ) : null}
+          )}
+
+          {error && <div className="error-banner">{error}</div>}
+          {otpMessage && <div className="otp-message">{otpMessage}</div>}
 
           {mode === "password" ? (
-            <form className="space-y-5" onSubmit={onPasswordSubmit}>
-              <FloatingField
-                id="login-email"
-                label={t("email")}
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                helperText={translateUiText("Use the email you registered with TeleCare+.")}
-                required
-                autoComplete="off"
-              />
-              <FloatingField
-                id="login-password"
-                label={t("password")}
-                type={showPassword ? "text" : "password"}
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                helperText={translateUiText("Use the password created during registration.")}
-                required
-                autoComplete="current-password"
-                rightAddon={(
-                  <button
-                    type="button"
-                    className="login-icon-btn"
-                    onClick={() => setShowPassword((current) => !current)}
-                    aria-label={showPassword ? translateUiText("Hide password") : translateUiText("Show password")}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                )}
-              />
-              {error ? <p className="login-error" role="alert">{error}</p> : null}
-              <button
-                className="btn-primary login-submit"
-                disabled={loading || backendUnavailable}
-                aria-label={loading ? t("signingIn") : t("login")}
-                data-voice-label={loading ? t("signingIn") : t("login")}
-              >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                {loading ? t("signingIn") : t("login")}
+            <form onSubmit={onPasswordSubmit} style={{ display: 'contents' }}>
+              <div className="field">
+                <label className="field-label">Email</label>
+                <input type="email" placeholder="Enter your email" required
+                  value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                <div className="hint">Use the email you registered with TeleCare+.</div>
+              </div>
+
+              <div className="field">
+                <label className="field-label">Password</label>
+                <input type="password" placeholder="••••••••••" required
+                  value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+                <div className="hint">Use the password created during registration.</div>
+              </div>
+
+              <button type="submit" className="signin-btn" disabled={loading}>
+                {loading && <Loader2 className="animate-spin" size={16} />}
+                {loading ? "Signing in..." : "Sign in"}
               </button>
-              <p className="text-center text-xs text-slate-500">
-                {translateUiText("Trouble signing in?")}{" "}
-                <Link className="font-semibold text-clinic hover:underline" to={`/support${languageSearch}`}>
-                  {translateUiText("Get help")}
-                </Link>
-                {" • "}
-                <Link
-                  className="font-semibold text-clinic hover:underline"
-                  to={`/support${languageSearch ? `${languageSearch}&topic=password-reset` : "?topic=password-reset"}`}
-                >
-                  {translateUiText("Forgot Password")}
-                </Link>
-              </p>
             </form>
           ) : (
-            <form className="space-y-5" onSubmit={onOtpSubmit}>
-              <FloatingField
-                id="login-phone"
-                label={t("mobileNumber")}
-                value={otpForm.phone}
-                onChange={(e) => {
-                  setOtpForm({ ...otpForm, phone: e.target.value });
-                  setOtpErrors((current) => ({ ...current, phone: "" }));
-                  setError("");
-                }}
-                helperText={translateUiText("Enter the mobile number linked to your TeleCare+ account.")}
-                errorText={otpErrors.phone}
-                required
-                inputMode="tel"
-                autoComplete="tel"
-              />
-              <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
-                <FloatingField
-                  id="login-otp"
-                  label={t("otp")}
-                  value={otpForm.otp}
-                  onChange={(e) => {
-                    setOtpForm({ ...otpForm, otp: e.target.value });
-                    setOtpErrors((current) => ({ ...current, otp: "" }));
-                    setError("");
-                  }}
-                  helperText={translateUiText("Enter the 6-digit code sent to your phone.")}
-                  errorText={otpErrors.otp}
-                  required
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                />
-                <button
-                  type="button"
-                  className="btn-secondary login-otp-btn"
-                  disabled={loading || backendUnavailable}
-                  onClick={onRequestOtp}
-                  aria-label={loading ? t("sending") : t("sendOtp")}
-                  data-voice-label={loading ? t("sending") : t("sendOtp")}
-                >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                  {loading ? t("sending") : t("sendOtp")}
-                </button>
+            <form onSubmit={onOtpSubmit} style={{ display: 'contents' }}>
+              <div className="field">
+                <label className="field-label">Mobile Number</label>
+                <input type="tel" placeholder="+1 (555) 000-0000"
+                  value={otpForm.phone} onChange={(e) => setOtpForm({ ...otpForm, phone: e.target.value })} />
+                {otpErrors.phone ? <div className="hint" style={{ color: 'var(--coral)' }}>{otpErrors.phone}</div> : <div className="hint">Enter the phone number linked to your account.</div>}
               </div>
-              {otpMessage ? <p className="login-success" role="status" aria-live="polite">{otpMessage}</p> : null}
-              {error ? <p className="login-error" role="alert">{error}</p> : null}
-              <button
-                className="btn-primary login-submit"
-                disabled={loading || backendUnavailable}
-                aria-label={loading ? t("verifying") : t("loginWithOtp")}
-                data-voice-label={loading ? t("verifying") : t("loginWithOtp")}
-              >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                {loading ? t("verifying") : t("loginWithOtp")}
-              </button>
+
+              {otpMessage && (
+                <div className="field">
+                  <label className="field-label">One-Time Password</label>
+                  <input type="text" placeholder="123456" maxLength={6}
+                    value={otpForm.otp} onChange={(e) => setOtpForm({ ...otpForm, otp: e.target.value })} />
+                  {otpErrors.otp ? <div className="hint" style={{ color: 'var(--coral)' }}>{otpErrors.otp}</div> : <div className="hint">Enter the 6-digit code sent to your phone.</div>}
+                </div>
+              )}
+
+              {otpMessage ? (
+                <button type="submit" className="signin-btn" disabled={loading}>
+                  {loading && <Loader2 className="animate-spin" size={16} />}
+                  {loading ? "Verifying..." : "Sign in"}
+                </button>
+              ) : (
+                <button type="button" className="signin-btn" onClick={onRequestOtp} disabled={loading}>
+                  {loading && <Loader2 className="animate-spin" size={16} />}
+                  {loading ? "Sending..." : "Send OTP"}
+                </button>
+              )}
             </form>
           )}
-          <p className="login-footer">{t("newHere")} <Link className="login-footer__link" to={`/register${languageSearch}`}>{t("createAccount")}</Link></p>
-        </section>
+
+          <div className="foot-links">
+            <span>Trouble signing in? <a href="#">Get help</a></span>
+            <a href="#">Forgot password</a>
+          </div>
+
+          <div className="create-acct">
+            New here? <Link to="/register">Create an account</Link>
+          </div>
+        </div>
+
       </div>
     </div>
   );

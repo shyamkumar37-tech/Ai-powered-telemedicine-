@@ -1,4 +1,8 @@
 import { useEffect } from "react";
+import { ShieldAlert, Info } from "lucide-react";
+import "../pages/doctor-premium-override.css";
+import "../pages/caregiver-premium-override.css";
+import "../pages/pharmacist-premium-override.css";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { LANGUAGE_CONTEXT_FALLBACK, useLanguage } from "../context/LanguageContext";
@@ -220,7 +224,7 @@ export default function Layout() {
   }, [location.pathname, routes, t, translateUiText]);
 
   return (
-    <div className="app-shell min-h-screen px-3 py-4 sm:px-4 sm:py-6 md:px-8">
+    <div className={`app-shell min-h-screen px-3 py-4 sm:px-4 sm:py-6 md:px-8 ${auth?.role === 'DOCTOR' ? 'doc-premium-layout' : auth?.role === 'CAREGIVER' ? 'cg-premium-layout' : auth?.role === 'PHARMACIST' ? 'ph-premium-layout' : ''}`}>
       <PageContainer>
         <div className="app-header mb-4 flex flex-col gap-4 rounded-[2rem] px-4 py-4 text-white shadow-panel sm:px-5 sm:py-5 md:mb-6 md:flex-row md:items-center md:justify-between md:px-6 md:py-6">
           <div className="min-w-0 space-y-2">

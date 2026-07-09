@@ -1,9 +1,11 @@
 import { lazy, Suspense, useEffect, useRef } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PageSkeleton from "./components/ui/PageSkeleton";
 import RouteErrorBoundary from "./components/RouteErrorBoundary";
+import PageTransition from "./components/ui/PageTransition";
 import { trackRouteTransition } from "./services/telemetry";
 const CaregiverDashboardPage = lazy(() => import("./pages/CaregiverDashboardPage"));
 const CaregiverMonitoringPage = lazy(() => import("./pages/CaregiverMonitoringPage"));
@@ -73,7 +75,9 @@ function LazyPage({ children }) {
   return (
     <RouteErrorBoundary key={location.pathname} routePath={location.pathname}>
       <Suspense fallback={<RouteLoader />}>
-        {children}
+        <PageTransition>
+          {children}
+        </PageTransition>
       </Suspense>
     </RouteErrorBoundary>
   );
@@ -106,15 +110,201 @@ export default function App() {
   }, [location.pathname, location.search]);
 
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/about" element={<AboutPage />} />
-      <Route path="/privacy" element={<PrivacyPage />} />
-      <Route path="/contact" element={<ContactPage />} />
-      <Route path="/terms" element={<TermsPage />} />
-      <Route path="/support" element={<SupportPage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<PageTransition><LandingPage /></PageTransition>} />
+        <Route path="/about" element={<PageTransition><AboutPage /></PageTransition>} />
+        <Route path="/privacy" element={<PageTransition><PrivacyPage /></PageTransition>} />
+        <Route path="/contact" element={<PageTransition><ContactPage /></PageTransition>} />
+        <Route path="/terms" element={<PageTransition><TermsPage /></PageTransition>} />
+        <Route path="/support" element={<PageTransition><SupportPage /></PageTransition>} />
+        <Route path="/login" element={<PageTransition><LoginPage /></PageTransition>} />
+        <Route path="/register" element={<PageTransition><RegisterPage /></PageTransition>} />
+
+      <Route
+        path="/patient"
+        element={
+          <ProtectedRoute roles={["PATIENT"]} variant="dashboard">
+            <LazyPage><PatientDashboardPage /></LazyPage>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/appointments"
+        element={
+          <ProtectedRoute roles={["PATIENT"]}>
+            <LazyPage><PatientAppointmentsPage /></LazyPage>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/triage"
+        element={
+          <ProtectedRoute roles={["PATIENT"]}>
+            <TriagePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/book"
+        element={
+          <ProtectedRoute roles={["PATIENT"]}>
+            <LazyPage><PatientBookingPage /></LazyPage>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/care-plans"
+        element={
+          <ProtectedRoute roles={["PATIENT"]}>
+            <LazyPage><PatientCarePlansPage /></LazyPage>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/prescriptions"
+        element={
+          <ProtectedRoute roles={["PATIENT"]}>
+            <LazyPage><PatientPrescriptionsPage /></LazyPage>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/reminders"
+        element={
+          <ProtectedRoute roles={["PATIENT"]}>
+            <LazyPage><PatientRemindersPage /></LazyPage>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/health"
+        element={
+          <ProtectedRoute roles={["PATIENT"]}>
+            <LazyPage><PatientHealthPage /></LazyPage>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/timeline"
+        element={
+          <ProtectedRoute roles={["PATIENT"]}>
+            <LazyPage><PatientTimelinePage /></LazyPage>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/profile"
+        element={
+          <ProtectedRoute roles={["PATIENT"]}>
+            <LazyPage><PatientProfilePage /></LazyPage>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/messages"
+        element={
+          <ProtectedRoute roles={["PATIENT"]}>
+            <LazyPage><PatientMessagesPage /></LazyPage>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/chatbot"
+        element={
+          <ProtectedRoute roles={["PATIENT"]}>
+            <LazyPage><PatientChatbotPage /></LazyPage>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/ivr"
+        element={
+          <ProtectedRoute roles={["PATIENT"]}>
+            <LazyPage><PatientIvrPage /></LazyPage>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/ivr-booking"
+        element={
+          <ProtectedRoute roles={["PATIENT"]}>
+            <Navigate to="/patient/ivr" replace />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/future-care"
+        element={
+          <ProtectedRoute roles={["PATIENT"]}>
+            <LazyPage><PatientFutureCarePage /></LazyPage>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/observations"
+        element={
+          <ProtectedRoute roles={["PATIENT"]}>
+            <LazyPage><PatientObservationsPage /></LazyPage>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/family-network"
+        element={
+          <ProtectedRoute roles={["PATIENT"]}>
+            <LazyPage><PatientFamilyNetworkPage /></LazyPage>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/voice-assist"
+        element={
+          <ProtectedRoute roles={["PATIENT"]}>
+            <LazyPage><PatientVoiceAssistPage /></LazyPage>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/mental-health-checkin"
+        element={
+          <ProtectedRoute roles={["PATIENT"]}>
+            <LazyPage><MentalHealthCheckinPage /></LazyPage>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/education"
+        element={
+          <ProtectedRoute roles={["PATIENT"]}>
+            <LazyPage><PatientEducationPage /></LazyPage>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/alerts"
+        element={
+          <ProtectedRoute roles={["PATIENT"]}>
+            <LazyPage><PatientAlertsPage /></LazyPage>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/prescriptions/:prescriptionId/print"
+        element={
+          <ProtectedRoute roles={["PATIENT", "DOCTOR"]}>
+            <PrescriptionPrintPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/records"
+        element={
+          <ProtectedRoute roles={["PATIENT"]}>
+            <LazyPage><PatientRecordsPage /></LazyPage>
+          </ProtectedRoute>
+        }
+      />
 
       <Route
         element={
@@ -123,30 +313,7 @@ export default function App() {
           </ProtectedRoute>
         }
       >
-        <Route path="/patient" element={<ProtectedRoute roles={["PATIENT"]} variant="dashboard"><LazyPage><PatientDashboardPage /></LazyPage></ProtectedRoute>} />
         <Route path="/patient/dashboard" element={<ProtectedRoute roles={["PATIENT"]}><Navigate to="/patient" replace /></ProtectedRoute>} />
-        <Route path="/patient/profile" element={<ProtectedRoute roles={["PATIENT"]}><PatientProfilePage /></ProtectedRoute>} />
-        <Route path="/patient/triage" element={<ProtectedRoute roles={["PATIENT"]}><TriagePage /></ProtectedRoute>} />
-        <Route path="/patient/book" element={<ProtectedRoute roles={["PATIENT"]}><LazyPage><PatientBookingPage /></LazyPage></ProtectedRoute>} />
-        <Route path="/patient/appointments" element={<ProtectedRoute roles={["PATIENT"]}><LazyPage><PatientAppointmentsPage /></LazyPage></ProtectedRoute>} />
-        <Route path="/patient/prescriptions" element={<ProtectedRoute roles={["PATIENT"]}><LazyPage><PatientPrescriptionsPage /></LazyPage></ProtectedRoute>} />
-        <Route path="/patient/reminders" element={<ProtectedRoute roles={["PATIENT"]}><PatientRemindersPage /></ProtectedRoute>} />
-        <Route path="/patient/health" element={<ProtectedRoute roles={["PATIENT"]}><PatientHealthPage /></ProtectedRoute>} />
-        <Route path="/patient/messages" element={<ProtectedRoute roles={["PATIENT"]}><PatientMessagesPage /></ProtectedRoute>} />
-        <Route path="/patient/chatbot" element={<ProtectedRoute roles={["PATIENT"]}><PatientChatbotPage /></ProtectedRoute>} />
-        <Route path="/patient/ivr" element={<ProtectedRoute roles={["PATIENT"]}><PatientIvrPage /></ProtectedRoute>} />
-        <Route path="/patient/ivr-booking" element={<ProtectedRoute roles={["PATIENT"]}><Navigate to="/patient/ivr" replace /></ProtectedRoute>} />
-        <Route path="/patient/future-care" element={<ProtectedRoute roles={["PATIENT"]}><PatientFutureCarePage /></ProtectedRoute>} />
-        <Route path="/patient/observations" element={<ProtectedRoute roles={["PATIENT"]}><PatientObservationsPage /></ProtectedRoute>} />
-        <Route path="/patient/family-network" element={<ProtectedRoute roles={["PATIENT"]}><PatientFamilyNetworkPage /></ProtectedRoute>} />
-        <Route path="/patient/voice-assist" element={<ProtectedRoute roles={["PATIENT"]}><PatientVoiceAssistPage /></ProtectedRoute>} />
-        <Route path="/patient/mental-health-checkin" element={<ProtectedRoute roles={["PATIENT"]}><MentalHealthCheckinPage /></ProtectedRoute>} />
-        <Route path="/patient/timeline" element={<ProtectedRoute roles={["PATIENT"]}><PatientTimelinePage /></ProtectedRoute>} />
-        <Route path="/patient/education" element={<ProtectedRoute roles={["PATIENT"]}><PatientEducationPage /></ProtectedRoute>} />
-        <Route path="/patient/care-plans" element={<ProtectedRoute roles={["PATIENT"]}><PatientCarePlansPage /></ProtectedRoute>} />
-        <Route path="/patient/alerts" element={<ProtectedRoute roles={["PATIENT"]}><PatientAlertsPage /></ProtectedRoute>} />
-        <Route path="/patient/prescriptions/:prescriptionId/print" element={<ProtectedRoute roles={["PATIENT", "DOCTOR"]}><PrescriptionPrintPage /></ProtectedRoute>} />
-        <Route path="/patient/records" element={<ProtectedRoute roles={["PATIENT"]}><PatientRecordsPage /></ProtectedRoute>} />
         <Route
           path="/ai-hub"
           element={
@@ -187,7 +354,8 @@ export default function App() {
         <Route path="/admin/dashboard" element={<ProtectedRoute roles={["ADMIN"]}><Navigate to="/admin" replace /></ProtectedRoute>} />
       </Route>
 
-      <Route path="*" element={<NotFoundPage />} />
+      <Route path="*" element={<PageTransition><NotFoundPage /></PageTransition>} />
     </Routes>
+    </AnimatePresence>
   );
 }

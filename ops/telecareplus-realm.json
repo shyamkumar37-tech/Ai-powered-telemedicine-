@@ -1,0 +1,125 @@
+{
+  "realm": "telecareplus",
+  "enabled": true,
+  "displayName": "TeleCare+ Enterprise",
+  "roles": {
+    "realm": [
+      {
+        "name": "ROLE_PATIENT",
+        "description": "Patient Role"
+      },
+      {
+        "name": "ROLE_DOCTOR",
+        "description": "Doctor Role"
+      },
+      {
+        "name": "ROLE_PHARMACIST",
+        "description": "Pharmacist Role"
+      },
+      {
+        "name": "ROLE_CAREGIVER",
+        "description": "Caregiver Role"
+      },
+      {
+        "name": "ROLE_ADMIN",
+        "description": "Admin Role"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "telecare-frontend",
+      "enabled": true,
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": [
+        "http://localhost:5173/*"
+      ],
+      "webOrigins": [
+        "*"
+      ]
+    },
+    {
+      "clientId": "telecare-backend",
+      "enabled": true,
+      "bearerOnly": true
+    }
+  ],
+  "users": [
+    {
+      "username": "patient",
+      "enabled": true,
+      "email": "patient@telecareplus.com",
+      "firstName": "Anita",
+      "lastName": "Patient",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [ "ROLE_PATIENT" ]
+    },
+    {
+      "username": "doctor",
+      "enabled": true,
+      "email": "doctor@telecareplus.com",
+      "firstName": "Arjun",
+      "lastName": "Mehta",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [ "ROLE_DOCTOR" ]
+    },
+    {
+      "username": "pharmacist",
+      "enabled": true,
+      "email": "pharmacist@telecareplus.com",
+      "firstName": "Priya",
+      "lastName": "Sharma",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [ "ROLE_PHARMACIST" ]
+    },
+    {
+      "username": "caregiver",
+      "enabled": true,
+      "email": "caregiver@telecareplus.com",
+      "firstName": "Ravi",
+      "lastName": "Caregiver",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [ "ROLE_CAREGIVER" ]
+    },
+    {
+      "username": "admin",
+      "enabled": true,
+      "email": "admin@telecareplus.com",
+      "firstName": "System",
+      "lastName": "Admin",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [ "ROLE_ADMIN" ]
+    }
+  ]
+}

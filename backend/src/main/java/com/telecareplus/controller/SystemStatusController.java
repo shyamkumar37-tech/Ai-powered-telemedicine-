@@ -67,9 +67,32 @@ public class SystemStatusController {
         response.put("ai", buildAiStatus());
         response.put("providers", buildProviderStatus());
         response.put("dataCounts", buildDataCounts());
+        response.put("analytics", buildAnalytics());
         response.put("warnings", buildWarnings());
         response.put("ready", Boolean.TRUE.equals(((Map<?, ?>) response.get("database")).get("connected")));
         return response;
+    }
+
+    private Map<String, Object> buildAnalytics() {
+        Map<String, Object> analytics = new LinkedHashMap<>();
+        analytics.put("consultationData", java.util.List.of(
+            Map.of("day", "Mon", "avgTime", 14, "total", 45),
+            Map.of("day", "Tue", "avgTime", 12, "total", 52),
+            Map.of("day", "Wed", "avgTime", 15, "total", 38),
+            Map.of("day", "Thu", "avgTime", 11, "total", 60),
+            Map.of("day", "Fri", "avgTime", 16, "total", 41),
+            Map.of("day", "Sat", "avgTime", 10, "total", 20),
+            Map.of("day", "Sun", "avgTime", 9, "total", 15)
+        ));
+        analytics.put("aiRiskData", java.util.List.of(
+            Map.of("name", "Low Risk", "value", 400, "color", "#4FB3A0"),
+            Map.of("name", "Moderate Risk", "value", 300, "color", "#F59E0B"),
+            Map.of("name", "High Risk", "value", 100, "color", "#E2604F")
+        ));
+        analytics.put("avgConsultTime", "12.5m");
+        analytics.put("aiRiskAlerts", 423);
+        analytics.put("systemLoad", "24%");
+        return analytics;
     }
 
     @PostMapping("/demo/seed")

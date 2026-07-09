@@ -39,4 +39,10 @@ public class AlertController {
     public SseEmitter caregiverAlertStream(@PathVariable Long caregiverId) {
         return alertService.streamCaregiverAlerts(caregiverId);
     }
+
+    @PatchMapping("/{alertId}/action")
+    @PreAuthorize("hasAnyRole('PATIENT', 'CAREGIVER')")
+    public AlertDtos.AlertResponse actionAlert(@PathVariable Long alertId, @RequestParam String action) {
+        return alertService.actionAlert(alertId, action);
+    }
 }

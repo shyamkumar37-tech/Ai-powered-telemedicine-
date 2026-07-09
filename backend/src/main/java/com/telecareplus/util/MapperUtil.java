@@ -61,7 +61,8 @@ public final class MapperUtil {
     public static ConsultationDtos.ConsultationNoteResponse toConsultationResponse(ConsultationNote note) {
         return new ConsultationDtos.ConsultationNoteResponse(
                 note.getId(), note.getAppointment().getId(), note.getDoctor().getUser().getFullName(),
-                note.getPatient().getUser().getFullName(), note.getNotes(), note.getOutcome(), note.getFollowUpDate()
+                note.getPatient().getUser().getFullName(), note.getNotes(), note.getOutcome(), note.getFollowUpDate(),
+                note.getAiGenerated(), note.getReviewedAt(), note.getReviewedBy()
         );
     }
 

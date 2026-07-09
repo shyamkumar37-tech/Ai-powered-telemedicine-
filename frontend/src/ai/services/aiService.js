@@ -27,3 +27,11 @@ export const logMoodEntry = async (patientId, payload) => (await api.post(`/ai/i
 export const fetchMoodEntries = async (patientId) => (await api.get(`/ai/insights/mood/${patientId}`)).data;
 export const fetchMoodTrends = async (patientId) => (await api.get(`/ai/insights/mood/${patientId}/trends`)).data;
 export const fetchStressRecommendations = async (patientId) => (await api.get(`/ai/insights/stress-recommendations/${patientId}`)).data;
+
+export const generateSoapNote = async (payload) => (await api.post("/intelligence/doctor/scribe", payload)).data;
+export const checkClinicalDrugInteractions = async (payload) => (await api.post("/intelligence/doctor/drug-interactions", payload)).data;
+export const calculateDosage = async (payload) => (await api.post("/intelligence/doctor/dosage", payload)).data;
+export const suggestClinicalAlternatives = async (payload) => (await api.post("/intelligence/doctor/alternatives", payload)).data;
+export const askCopilot = async (payload) => (await api.post("/intelligence/doctor/copilot", payload)).data;
+export const extractPrescriptionFromImage = async (formData) => (await api.post("/intelligence/doctor/ocr", formData, { headers: { "Content-Type": "multipart/form-data" } })).data;
+export const transcribeAudioToSoapNote = async (formData) => (await api.post("/intelligence/doctor/scribe/audio", formData, { headers: { "Content-Type": "multipart/form-data" } })).data;

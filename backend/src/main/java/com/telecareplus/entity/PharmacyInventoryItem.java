@@ -29,4 +29,10 @@ public class PharmacyInventoryItem extends BaseEntity {
 
     @Column(nullable = false)
     private String unitLabel;
+
+    @Column
+    private java.time.LocalDate expiryDate;
+
+    @Column
+    private String batchNumber;
 }

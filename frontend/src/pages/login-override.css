@@ -1,0 +1,386 @@
+:root{
+  --ink:#0A121C;
+  --ink-2:#0D1826;
+  --panel:#101C2B;
+  --panel-line: rgba(220,230,238,0.08);
+  --panel-line-strong: rgba(220,230,238,0.14);
+  --glass: rgba(16,28,43,0.55);
+  --text-primary:#F3F0E8;
+  --text-secondary:#AEBBC4;
+  --text-muted:#728492;
+  --teal:#4FB3A0;
+  --teal-dim: rgba(79,179,160,0.14);
+  --brass:#C9A24B;
+  --brass-dim: rgba(201,162,75,0.16);
+  --coral:#E2604F;
+  --coral-dim: rgba(226,96,79,0.14);
+}
+
+#tcl-root * {box-sizing:border-box;margin:0;padding:0;}
+#tcl-root {
+  background:
+    radial-gradient(ellipse 900px 500px at 15% 0%, rgba(79,179,160,0.06), transparent 60%),
+    radial-gradient(ellipse 700px 500px at 100% 100%, rgba(201,162,75,0.05), transparent 60%),
+    var(--ink) !important;
+  color:var(--text-primary) !important;
+  font-family:'IBM Plex Sans', sans-serif !important;
+  min-height:100vh !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  padding:48px 24px !important;
+  width:100% !important;
+}
+#tcl-root .serif{font-family:'Fraunces', serif !important;}
+#tcl-root .mono{font-family:'IBM Plex Mono', monospace !important; font-variant-numeric: tabular-nums !important;}
+
+#tcl-root .stage{
+  width:100% !important;
+  max-width:1180px !important;
+  display:grid !important;
+  grid-template-columns: minmax(0,1.05fr) 1px minmax(0,0.85fr) !important;
+  background:var(--panel) !important;
+  border:1px solid var(--panel-line) !important;
+  border-radius:20px !important;
+  overflow:hidden !important;
+  box-shadow: 0 40px 100px -30px rgba(0,0,0,0.6) !important;
+}
+
+#tcl-root .brand, #tcl-root .seam, #tcl-root .signin{ min-width:0 !important; }
+
+/* FORCE GRID PLACEMENT TO PREVENT OVERLAP */
+#tcl-root .brand { grid-column: 1 !important; grid-row: 1 !important; }
+#tcl-root .seam { grid-column: 2 !important; grid-row: 1 !important; }
+#tcl-root .signin { grid-column: 3 !important; grid-row: 1 !important; }
+
+@media (max-width:1080px){
+  #tcl-root .stage{grid-template-columns:1fr !important; }
+  #tcl-root .seam{display:none !important;}
+  #tcl-root .brand{ padding:44px 36px 36px !important; grid-column: 1 !important; grid-row: 1 !important; }
+  #tcl-root .signin{ padding:44px 36px 36px !important; grid-column: 1 !important; grid-row: 2 !important; }
+}
+
+/* ---------- LEFT: brand / overview panel ---------- */
+#tcl-root .brand{
+  padding:56px 52px 48px;
+  position:relative;
+  display:block !important; /* Force block in case Tailwind flex overrides */
+}
+#tcl-root .eyebrow{
+  font-size:11px;
+  letter-spacing:0.16em;
+  text-transform:uppercase;
+  color:var(--teal);
+  font-weight:500;
+  margin-bottom:18px !important;
+  display:block !important;
+}
+#tcl-root h1{
+  font-size:40px;
+  font-weight:500;
+  line-height:1.12;
+  letter-spacing:-0.01em;
+  margin-bottom:18px !important;
+  display:block !important;
+}
+#tcl-root h1 em{ font-style:italic; color:var(--brass); font-weight:400;}
+#tcl-root .lede{
+  color:var(--text-secondary);
+  font-size:15.5px;
+  line-height:1.65;
+  max-width:420px;
+  margin-bottom:40px !important;
+  display:block !important;
+}
+
+#tcl-root .overview-label{
+  font-size:12px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--text-muted);
+  margin-bottom:14px !important;
+  display:block !important;
+}
+#tcl-root .grid{
+  display:grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap:12px !important;
+}
+#tcl-root .card{
+  background: rgba(255,255,255,0.02);
+  border:1px solid var(--panel-line);
+  border-radius:12px;
+  padding:16px 18px;
+}
+#tcl-root .card .label{
+  font-size:11px;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  color:var(--text-muted);
+  margin-bottom:8px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+#tcl-root .dot{width:5px;height:5px;border-radius:50%;background:var(--teal);flex-shrink:0;}
+#tcl-root .dot.brass{background:var(--brass);}
+#tcl-root .dot.coral{background:var(--coral);}
+#tcl-root .card .value{
+  font-size:26px;
+  font-weight:500;
+  letter-spacing:-0.01em;
+}
+#tcl-root .card .sub{
+  font-size:12px;
+  color:var(--text-secondary);
+  margin-top:2px;
+}
+#tcl-root .card.wide{grid-column: span 2 !important;}
+#tcl-root .card.appt{ background:var(--teal-dim); border-color:rgba(79,179,160,0.25); }
+#tcl-root .card.appt .value{font-size:16px; font-weight:500;}
+#tcl-root .card.appt .label{color:var(--teal);}
+#tcl-root .card.alert{ background:var(--coral-dim); border-color:rgba(226,96,79,0.28); }
+#tcl-root .card.alert .label{color:var(--coral);}
+#tcl-root .badge{
+  display:inline-block;
+  margin-top:10px;
+  font-size:10px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--coral);
+  background:rgba(226,96,79,0.16);
+  border:1px solid rgba(226,96,79,0.3);
+  padding:4px 9px;
+  border-radius:5px;
+}
+#tcl-root .bar-track{
+  margin-top:10px;
+  height:4px;
+  background:rgba(255,255,255,0.06);
+  border-radius:2px;
+  overflow:hidden;
+}
+#tcl-root .bar-fill{
+  height:100%;
+  width:85%;
+  background: linear-gradient(90deg, var(--teal), var(--brass));
+  border-radius:2px;
+}
+
+/* pulse strip */
+#tcl-root .pulse-strip{
+  margin-top:32px;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding-top:20px;
+  border-top:1px solid var(--panel-line);
+}
+#tcl-root .pulse-strip svg{ flex-shrink:0; }
+#tcl-root .pulse-strip .ptext{ font-size:12px; color:var(--text-muted); }
+#tcl-root .pulse-strip .ptext b{ color:var(--text-secondary); font-weight:500; }
+
+/* ---------- SEAM (signature element) ---------- */
+#tcl-root .seam{
+  position:relative;
+  background: linear-gradient(180deg, transparent, var(--panel-line-strong) 15%, var(--panel-line-strong) 85%, transparent);
+}
+#tcl-root .seam svg{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%) rotate(90deg);
+  overflow:visible;
+}
+
+/* ---------- RIGHT: sign in panel ---------- */
+#tcl-root .signin{
+  background: var(--ink-2) !important;
+  padding:56px 48px 44px;
+  display:flex !important;
+  flex-direction:column !important;
+}
+#tcl-root .signin-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  margin-bottom:38px;
+}
+#tcl-root .wordmark{
+  font-size:12px;
+  letter-spacing:0.14em;
+  font-weight:600;
+  color:var(--text-secondary);
+}
+#tcl-root .wordmark span{color:var(--brass);}
+#tcl-root select.lang{
+  background:transparent;
+  border:1px solid var(--panel-line-strong);
+  color:var(--text-secondary);
+  font-size:12px;
+  padding:6px 10px;
+  border-radius:7px;
+  font-family:inherit;
+}
+#tcl-root h2{
+  font-size:28px;
+  font-weight:500;
+  margin-bottom:8px;
+  letter-spacing:-0.01em;
+}
+#tcl-root .signin p.sub{
+  font-size:13.5px;
+  color:var(--text-muted);
+  margin-bottom:22px;
+  line-height:1.5;
+}
+#tcl-root .trust-row{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:26px;
+}
+#tcl-root .trust{
+  font-size:11px;
+  color:var(--text-secondary);
+  border:1px solid var(--panel-line-strong);
+  padding:6px 10px;
+  border-radius:20px;
+  display:flex;
+  align-items:center;
+  gap:5px;
+}
+#tcl-root .trust .dot{width:4px;height:4px;}
+
+#tcl-root .tabs{
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;
+  background:rgba(255,255,255,0.03) !important;
+  border:1px solid var(--panel-line) !important;
+  border-radius:11px !important;
+  padding:4px !important;
+  margin-bottom:22px !important;
+}
+#tcl-root .tabs button{
+  border:none;
+  background:transparent;
+  color:var(--text-muted);
+  font-family:inherit;
+  font-size:13.5px;
+  font-weight:500;
+  padding:10px;
+  border-radius:8px;
+  cursor:pointer;
+  transition: all 0.15s ease;
+}
+#tcl-root .tabs button.active{
+  background: var(--teal) !important;
+  color:#08201B !important;
+}
+
+#tcl-root label.field-label{
+  font-size:12px;
+  color:var(--teal);
+  font-weight:500;
+  display:block;
+  margin-bottom:7px;
+}
+#tcl-root .field{ margin-bottom:16px; }
+
+/* OVERRIDE TAILWIND FORMS */
+#tcl-root .field input,
+#tcl-root .field input[type="email"],
+#tcl-root .field input[type="password"],
+#tcl-root .field input[type="text"],
+#tcl-root .field input[type="tel"] {
+  width:100% !important;
+  background: rgba(255,255,255,0.03) !important;
+  border:1px solid var(--panel-line-strong) !important;
+  color:var(--text-primary) !important;
+  font-family:'IBM Plex Mono', monospace !important;
+  font-size:14px !important;
+  padding:13px 14px !important;
+  border-radius:10px !important;
+  outline:none !important;
+  transition: border-color 0.15s ease !important;
+  appearance: none !important;
+}
+#tcl-root .field input:focus,
+#tcl-root .field input[type="email"]:focus,
+#tcl-root .field input[type="password"]:focus {
+  border-color:var(--teal) !important;
+}
+
+#tcl-root .field .hint{
+  font-size:11.5px;
+  color:var(--text-muted);
+  margin-top:6px;
+}
+
+#tcl-root .signin-btn{
+  width:100%;
+  margin-top:6px;
+  background: linear-gradient(90deg, var(--teal), #3E9C8B);
+  color:#08201B;
+  border:none;
+  font-family:inherit;
+  font-weight:600;
+  font-size:14.5px;
+  padding:15px;
+  border-radius:11px;
+  cursor:pointer;
+  letter-spacing:0.01em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+#tcl-root .signin-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+#tcl-root .foot-links{
+  margin-top:20px;
+  font-size:12.5px;
+  color:var(--text-muted);
+  display:flex;
+  justify-content:space-between;
+}
+#tcl-root .foot-links a{ color:var(--brass); text-decoration:none; }
+
+#tcl-root .create-acct{
+  margin-top:auto;
+  padding-top:24px;
+  border-top:1px solid var(--panel-line);
+  font-size:13px;
+  color:var(--text-muted);
+}
+#tcl-root .create-acct a{ color:var(--teal); text-decoration:none; font-weight:500; }
+
+#tcl-root .error-banner {
+  background: rgba(226, 96, 79, 0.1);
+  border: 1px solid rgba(226, 96, 79, 0.3);
+  color: var(--coral);
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  margin-bottom: 16px;
+}
+#tcl-root .otp-message {
+  color: var(--teal);
+  font-size: 13.5px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: rgba(79, 179, 160, 0.1);
+  border: 1px solid rgba(79, 179, 160, 0.25);
+  border-radius: 8px;
+}
+
+@media (max-width:520px){
+  #tcl-root{ padding:0 !important; }
+  #tcl-root .stage{ border-radius:0 !important; border:none !important; box-shadow:none !important; }
+  #tcl-root h1{ font-size:32px !important; }
+  #tcl-root .grid{ grid-template-columns:1fr !important; }
+  #tcl-root .card.wide{ grid-column:span 1 !important; }
+}

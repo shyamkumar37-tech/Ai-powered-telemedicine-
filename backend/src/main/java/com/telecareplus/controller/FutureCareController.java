@@ -64,7 +64,7 @@ public class FutureCareController {
     }
 
     @PostMapping("/referrals")
-    @PreAuthorize("hasRole('DOCTOR') and @accessScopeAuthorizer.canAccessDoctorPatient(authentication, #request.doctorId(), #request.patientId())")
+    @PreAuthorize("hasRole('DOCTOR') and @accessScopeAuthorizer.canReferenceDoctorPatientAppointment(authentication, #request.doctorId(), #request.patientId(), #request.appointmentId())")
     public FutureCareDtos.ReferralResponse createReferral(@Valid @RequestBody FutureCareDtos.ReferralRequest request) {
         return futureCareService.createReferral(request);
     }

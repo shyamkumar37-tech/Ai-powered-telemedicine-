@@ -41,7 +41,8 @@ export const createCarePlan = async (payload) => (await api.post("/care-plans", 
 export const fetchPatientCarePlans = async (id) => (await api.get(`/care-plans/patient/${id}`)).data;
 export const fetchDoctorCarePlans = async (id) => (await api.get(`/care-plans/doctor/${id}`)).data;
 export const fetchPatientAlerts = async (id, config = {}) => (await api.get(`/alerts/patient/${id}`, config)).data;
-export const fetchCaregiverAlerts = async (id) => (await api.get(`/alerts/caregiver/${id}`)).data;
+export const fetchCaregiverAlerts = async (id, config = {}) => (await api.get(`/alerts/caregiver/${id}`, config)).data;
+export const actionAlert = async (alertId, action, config = {}) => (await api.patch(`/alerts/${alertId}/action?action=${action}`, null, config)).data;
 export const fetchPatientMessages = async (id, config = {}) => (await api.get(`/messages/patient/${id}`, config)).data;
 export const fetchDoctorMessages = async (id, config = {}) => (await api.get(`/messages/doctor/${id}`, config)).data;
 export const fetchCaregiverMessages = async (id, config = {}) => (await api.get(`/messages/caregiver/${id}`, config)).data;
@@ -57,6 +58,7 @@ export const fetchPharmacistDashboard = async (id, config = {}) => (await api.ge
 export const fetchPharmacistInventory = async (id) => (await api.get(`/pharmacists/${id}/inventory`)).data;
 export const createPharmacistInventoryItem = async (id, payload) => (await api.post(`/pharmacists/${id}/inventory`, payload)).data;
 export const fetchPharmacistDispensing = async (id) => (await api.get(`/pharmacists/${id}/dispensing`)).data;
+export const inviteCaregiver = async (payload) => (await api.post("/caregivers/invite", payload)).data;
 export const updateDispenseRecord = async (id, payload) => (await api.patch(`/pharmacists/dispensing/${id}`, payload)).data;
 export const linkCaregiver = async (payload) => (await api.post("/caregivers/link", payload)).data;
 export const fetchLinkedPatients = async (id) => (await api.get(`/caregivers/${id}/linked-patients`)).data;
@@ -80,7 +82,8 @@ export const fetchReferralSuggestions = async (id) => (await api.get(`/future-ca
 export const createReferral = async (payload) => (await api.post("/future-care/referrals", payload)).data;
 export const fetchDoctorReferrals = async (id) => (await api.get(`/future-care/doctor/${id}/referrals`)).data;
 export const fetchPopulationInsights = async (id) => (await api.get(`/future-care/doctor/${id}/population-insights`)).data;
-
+export const placePharmacyOrder = async (payload) => (await api.post("/pharmacy/order", payload)).data;
+export const trackPharmacyOrder = async (orderId) => (await api.get(`/pharmacy/order/${orderId}/track`)).data;
 function createSseSubscription(path, onMessage, onError) {
   const token = getStoredAuthToken();
   if (!token) {

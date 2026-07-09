@@ -1,15 +1,23 @@
 import { useEffect, useState } from "react";
-import Badge from "../components/Badge";
-import LocalizedText from "../components/LocalizedText";
-import SectionCard from "../components/SectionCard";
+import PremiumSectionCard from "../components/PremiumSectionCard";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { fetchDoctorPriorityQueue } from "../services/telecareService";
 import { getApiErrorMessage } from "../utils/apiError";
 import { translateDisplayText } from "../utils/i18n";
-import LoadingSkeleton from "../components/ui/LoadingSkeleton";
 import EmptyStateCard from "../components/ui/EmptyStateCard";
 import ErrorStateCard from "../components/ui/ErrorStateCard";
+import { BrainCircuit, Activity, AlertTriangle, TrendingDown } from "lucide-react";
+
+function IntelligenceSkeleton() {
+  return (
+    <div className="space-y-4">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i} className="doc-skeleton h-40 w-full rounded-xl" />
+      ))}
+    </div>
+  );
+}
 
 export default function DoctorIntelligencePage() {
   const { auth } = useAuth();
@@ -28,39 +36,143 @@ export default function DoctorIntelligencePage() {
       })
       .catch((err) => setError(getApiErrorMessage(err, t("unableLoadDoctorQueue"))))
       .finally(() => setLoading(false));
-  }, [doctorId]);
+  }, [doctorId, t]);
+
+  const getRiskColor = (level) => {
+    switch (level) {
+      case "CRITICAL": return "bg-rose-500";
+      case "HIGH": return "bg-amber-500";
+      case "MODERATE": return "bg-yellow-500";
+      default: return "bg-teal-500";
+    }
+  };
+
+  const getRiskBadge = (level) => {
+    switch (level) {
+      case "CRITICAL": return "doc-badge-alert";
+      case "HIGH": return "doc-badge-warn";
+      default: return "doc-badge-neutral";
+    }
+  };
 
   return (
-    <SectionCard title={t("doctorIntelligenceQueue")}>
-      {loading ? <LoadingSkeleton lines={4} /> : null}
-      {error ? (
-        <ErrorStateCard
-          title={t("unableLoadDoctorQueue")}
-          body={error}
-        />
-      ) : null}
-      {!loading && !error && !queue.length ? (
-        <EmptyStateCard
-          title={t("noDoctorQueue")}
-          body={translateDisplayText(language, "Priority patients will appear here when risk signals are detected.")}
-        />
-      ) : null}
-      <div className="space-y-4">
-        {queue.map((patient) => (
-          <div key={patient.patientId} className="rounded-2xl bg-mist p-5">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="font-semibold text-ink">{patient.patientName}</p>
-                <p className="text-sm text-slate-500">{t("riskScore")} {patient.riskScore}/100 | {t("adherence")} {patient.adherencePercentage}% | {t("pendingRemindersShort")} {patient.pendingReminders}</p>
+    <div className="space-y-6 tcd-animate-in">
+      <PremiumSectionCard title={(
+        <span className="flex items-center gap-2">
+          <BrainCircuit className="h-5 w-5 text-teal-400" />
+          {t("doctorIntelligenceQueue")}
+        </span>
+      )}>
+        {loading ? <IntelligenceSkeleton /> : null}
+        {error ? (
+          <ErrorStateCard
+            title={t("unableLoadDoctorQueue")}
+            body={error}
+          />
+        ) : null}
+        {!loading && !error && !queue.length ? (
+          <EmptyStateCard
+            title={t("noDoctorQueue")}
+            body={translateDisplayText(language, "Priority patients will appear here when risk signals are detected.")}
+          />
+        ) : null}
+        <div className="doc-grid-2">
+          {queue.map((patient) => (
+            <div key={patient.patientId} className="group rounded-xl border border-white/5 bg-white/5 p-5 transition-colors hover:bg-white/10 hover:border-white/10">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <p className="font-semibold text-white text-lg tracking-tight">{patient.patientName}</p>
+                  <div className="flex items-center gap-3 mt-1">
+                    <span className={`doc-badge ${getRiskBadge(patient.riskLevel)} text-xs px-2.5 py-0.5`}>
+                      {translateDisplayText(language, patient.riskLevel)}
+                    </span>
+                    {patient.latestAlert && patient.latestAlert !== t("noActiveAlert") && (
+                      <span className="flex items-center gap-1 text-xs font-semibold text-rose-400">
+                        <AlertTriangle className="h-3 w-3" /> Active Alert
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-semibold text-slate-300">{patient.riskScore}/100</p>
+                  <p className="text-[10px] uppercase tracking-wider text-slate-500">{t("riskScore")}</p>
+                </div>
               </div>
-              <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-clinic">{translateDisplayText(language, patient.riskLevel)}</span>
+              
+              <div className="grid grid-cols-2 gap-4 mb-5 border-y border-white/5 py-4">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-slate-400 flex items-center gap-1"><Activity className="h-3 w-3" /> Risk Status</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full ${getRiskColor(patient.riskLevel)}`} style={{ width: `${Math.max(5, patient.riskScore)}%` }} />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-slate-400 flex items-center gap-1"><TrendingDown className="h-3 w-3" /> Adherence</span>
+                    <span className="text-xs font-semibold text-white">{patient.adherencePercentage}%</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full bg-teal-400" style={{ width: `${Math.max(5, patient.adherencePercentage)}%` }} />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="rounded-lg bg-black/20 p-3">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Latest Signal</p>
+                  <p className="text-sm text-slate-300 leading-relaxed">{translateDisplayText(language, patient.latestAlert)}</p>
+                </div>
+                
+                <div className="rounded-lg bg-teal-400/5 border border-teal-400/10 p-3">
+                  <p className="text-xs font-semibold text-teal-400/70 uppercase tracking-wider mb-1">AI Recommendation</p>
+                  <p className="text-sm font-medium text-teal-400">{translateDisplayText(language, patient.recommendedAction)}</p>
+                </div>
+              </div>
             </div>
-            {patient.latestAlert && patient.latestAlert !== t("noActiveAlert") ? <div className="mt-3"><Badge value={patient.riskLevel === "CRITICAL" ? "CRITICAL" : "WARNING"} /></div> : null}
-            <LocalizedText as="p" className="mt-3 text-sm text-slate-700" value={patient.latestAlert} />
-            <LocalizedText as="p" className="mt-2 text-sm font-semibold text-clinic" value={patient.recommendedAction} />
+          ))}
+        </div>
+      </PremiumSectionCard>
+
+      <PremiumSectionCard title={(
+        <span className="flex items-center gap-2">
+          <BrainCircuit className="h-5 w-5 text-indigo-400" />
+          Clinical Copilot (RAG)
+        </span>
+      )}>
+        <div className="rounded-xl border border-white/5 bg-slate-900/50 p-5 space-y-4">
+          <p className="text-sm text-slate-400">Ask the AI Copilot questions about clinical guidelines and patient history.</p>
+          <div className="flex gap-2">
+            <input 
+              id="copilot-query" 
+              className="doc-input flex-1" 
+              placeholder="e.g. What is the recommended treatment for hypertension?" 
+              onKeyDown={async (e) => {
+                if (e.key === 'Enter') {
+                  const val = e.target.value;
+                  if (!val) return;
+                  e.target.disabled = true;
+                  const resSpan = document.getElementById("copilot-response");
+                  resSpan.innerText = "Thinking...";
+                  try {
+                    const { askCopilot } = await import("../ai/services/aiService");
+                    const res = await askCopilot({ query: val, patientId: null });
+                    resSpan.innerText = res.answer;
+                  } catch (err) {
+                    resSpan.innerText = "Error asking copilot.";
+                  } finally {
+                    e.target.disabled = false;
+                  }
+                }
+              }}
+            />
           </div>
-        ))}
-      </div>
-    </SectionCard>
+          <div className="p-4 rounded-lg bg-slate-800 border border-slate-700 min-h-24 text-sm text-slate-300">
+            <span id="copilot-response">Copilot response will appear here...</span>
+          </div>
+        </div>
+      </PremiumSectionCard>
+    </div>
   );
 }

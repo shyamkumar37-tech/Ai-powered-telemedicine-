@@ -1,0 +1,17 @@
+type Query {
+    patientDashboard(patientId: ID!): DashboardSummaryResponse
+}
+
+type DashboardSummaryResponse {
+    totalAppointments: Int
+    pendingAppointments: Int
+    prescriptionCount: Int
+    pendingMedicationReminders: Int
+    adherencePercentage: Float
+    recentTriageCategory: String
+    followUpDueItems: Int
+    recentHealthAlerts: [String]
+    riskScore: Int
+    riskLevel: String
+    activeCarePlanCount: Int
+}

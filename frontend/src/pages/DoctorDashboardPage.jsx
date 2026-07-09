@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import LocalizedText from "../components/LocalizedText";
-import SectionCard from "../components/SectionCard";
-import StatCard from "../components/StatCard";
+import PremiumSectionCard from "../components/PremiumSectionCard";
+import PremiumStatCard from "../components/PremiumStatCard";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import AiDoctorInsightsPanel from "../ai/components/AiDoctorInsightsPanel";
@@ -12,7 +12,7 @@ import { translateDisplayText } from "../utils/i18n";
 import LoadingSkeleton from "../components/ui/LoadingSkeleton";
 import EmptyStateCard from "../components/ui/EmptyStateCard";
 import ErrorStateCard from "../components/ui/ErrorStateCard";
-import PriorityActionsCard from "../components/ui/PriorityActionsCard";
+import PremiumPriorityActionsCard from "../components/PremiumPriorityActionsCard";
 import { CalendarDays, ClipboardCheck, ShieldAlert, Stethoscope } from "lucide-react";
 
 export default function DoctorDashboardPage() {
@@ -78,7 +78,17 @@ export default function DoctorDashboardPage() {
       />
     );
   }
-  if (loading) return <LoadingSkeleton lines={4} />;
+  if (loading) return (
+    <div className="space-y-6">
+      <div className="doc-skeleton h-64 w-full"></div>
+      <div className="doc-grid-3">
+        <div className="doc-skeleton h-32 w-full"></div>
+        <div className="doc-skeleton h-32 w-full"></div>
+        <div className="doc-skeleton h-32 w-full"></div>
+      </div>
+    </div>
+  );
+  
   if (!dashboard) {
     return (
       <EmptyStateCard
@@ -147,66 +157,104 @@ export default function DoctorDashboardPage() {
     });
   }
 
+  // Calculate some dummy adherence or progress metrics for visual flavor
+  const adherenceTarget = 80; // 80%
+  const todayProgress = totalAppointments > 0 ? (totalAppointments - pendingAppointments) / totalAppointments * 100 : 100;
+  
   return (
-    <>
-      <PriorityActionsCard
+    <div className="space-y-6 pb-12 tcd-animate-in">
+      <PremiumPriorityActionsCard
         title={translateUiText("Priority actions")}
         subtitle={translateUiText("Focus on the most urgent clinical work first.")}
         actions={priorityActions}
         emptyTitle={translateUiText("No urgent care actions right now")}
         emptyBody={translateUiText("You're caught up. Continue monitoring your queue.")}
-        className="dashboard-section"
       />
-      <div className="grid gap-4 md:grid-cols-3">
-        <StatCard title={t("appointmentsLabel")} value={dashboard.totalAppointments} hint={t("allAssignedAppointments")} icon={<CalendarDays className="h-4 w-4" />} />
-        <StatCard title={t("pendingToday")} value={dashboard.pendingAppointments} hint={t("awaitingConfirmation")} icon={<ClipboardCheck className="h-4 w-4" />} />
-        <StatCard title={t("completedConsults")} value={dashboard.prescriptionCount} hint={t("consultationsClosed")} icon={<Stethoscope className="h-4 w-4" />} />
+      <div className="doc-grid-3">
+        <PremiumStatCard 
+          title={t("appointmentsLabel")} 
+          value={dashboard.totalAppointments} 
+          hint={t("allAssignedAppointments")} 
+          icon={<CalendarDays className="h-5 w-5" />} 
+          progress={todayProgress}
+        />
+        <PremiumStatCard 
+          title={t("pendingToday")} 
+          value={dashboard.pendingAppointments} 
+          hint={t("awaitingConfirmation")} 
+          icon={<ClipboardCheck className="h-5 w-5" />} 
+          progress={pendingAppointments > 0 ? 30 : 100}
+        />
+        <PremiumStatCard 
+          title={t("completedConsults")} 
+          value={dashboard.prescriptionCount} 
+          hint={t("consultationsClosed")} 
+          icon={<Stethoscope className="h-5 w-5" />} 
+          progress={100}
+        />
       </div>
-      <SectionCard
-        title={(
-          <span className="inline-flex items-center gap-2">
-            <Stethoscope className="h-4 w-4 text-teal-600" />
-            {t("clinicalExtensionSnapshot")}
-          </span>
-        )}
-      >
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl bg-mist p-4">
-            <p className="text-sm text-slate-500">{t("carePlanning")}</p>
-            <p className="mt-2 text-xl font-semibold text-ink">{t("ready")}</p>
-            <p className="mt-1 text-sm text-slate-500">{t("createStructuredCarePlans")}</p>
+      <div className="doc-grid-2">
+        <PremiumSectionCard
+          title={(
+            <span className="flex items-center gap-2">
+              <Stethoscope className="h-4 w-4 text-teal-400" />
+              {t("clinicalExtensionSnapshot")}
+            </span>
+          )}
+        >
+          <div className="space-y-4">
+            <div className="rounded-xl bg-white/5 border border-white/5 p-4 flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-400">{t("carePlanning")}</p>
+                <p className="mt-1 text-xs text-slate-500">{t("createStructuredCarePlans")}</p>
+              </div>
+              <span className="doc-badge doc-badge-success">{t("ready")}</span>
+            </div>
+            <div className="rounded-xl bg-white/5 border border-white/5 p-4 flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-400">{t("prioritizedReview")}</p>
+                <p className="mt-1 text-xs text-slate-500">{t("patientsSurfacedByTriage")}</p>
+              </div>
+              <span className="doc-badge doc-badge-alert text-base px-3 py-1">
+                {(Array.isArray(dashboard.recentHealthAlerts) ? dashboard.recentHealthAlerts : []).length}
+              </span>
+            </div>
           </div>
-          <div className="rounded-2xl bg-mist p-4">
-            <p className="text-sm text-slate-500">{t("prioritizedReview")}</p>
-            <p className="mt-2 text-xl font-semibold text-ink">{(Array.isArray(dashboard.recentHealthAlerts) ? dashboard.recentHealthAlerts : []).length}</p>
-            <p className="mt-1 text-sm text-slate-500">{t("patientsSurfacedByTriage")}</p>
-          </div>
-        </div>
-      </SectionCard>
-      <SectionCard
-        title={(
-          <span className="inline-flex items-center gap-2">
-            <ShieldAlert className="h-4 w-4 text-teal-600" />
-            {t("priorityReviewQueue")}
-          </span>
-        )}
-      >
-        {(Array.isArray(dashboard.recentHealthAlerts) ? dashboard.recentHealthAlerts : []).length ? (
-          <div className="space-y-3">
-            {(Array.isArray(dashboard.recentHealthAlerts) ? dashboard.recentHealthAlerts : []).map((item, index) => (
-              <LocalizedText
-                key={`${item}-${index}`}
-                as="div"
-                className="rounded-2xl bg-mist px-4 py-3 text-sm text-slate-700"
-                value={item}
-              />
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-slate-500">{t("noDoctorQueue")}</p>
-        )}
-      </SectionCard>
+        </PremiumSectionCard>
+        
+        <PremiumSectionCard
+          title={(
+            <span className="flex items-center gap-2">
+              <ShieldAlert className="h-4 w-4 text-rose-400" />
+              {t("priorityReviewQueue")}
+            </span>
+          )}
+        >
+          {(Array.isArray(dashboard.recentHealthAlerts) ? dashboard.recentHealthAlerts : []).length ? (
+            <div className="space-y-3">
+              {(Array.isArray(dashboard.recentHealthAlerts) ? dashboard.recentHealthAlerts : []).map((item, index) => (
+                <div
+                  key={`${item}-${index}`}
+                  className="rounded-xl border border-rose-500/10 bg-rose-500/5 px-4 py-3"
+                >
+                  <p className="text-sm font-medium text-slate-200">{item}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <div className="mb-3 rounded-full bg-white/5 p-3 text-slate-500">
+                <ShieldAlert className="h-6 w-6" />
+              </div>
+              <p className="text-sm font-medium text-slate-300">{t("noDoctorQueue")}</p>
+              <p className="mt-1 text-xs text-slate-500">All alerts have been reviewed</p>
+            </div>
+          )}
+        </PremiumSectionCard>
+      </div>
+      
+      {/* TODO: AiDoctorInsightsPanel requires a redesign as well to match the layout */}
       <AiDoctorInsightsPanel doctorId={doctorId} />
-    </>
+    </div>
   );
 }

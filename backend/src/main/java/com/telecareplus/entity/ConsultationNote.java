@@ -37,4 +37,11 @@ public class ConsultationNote extends BaseEntity {
     private ConsultationOutcome outcome;
 
     private LocalDate followUpDate;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private Boolean aiGenerated = false;
+
+    private java.time.LocalDateTime reviewedAt;
+
+    private String reviewedBy;
 }

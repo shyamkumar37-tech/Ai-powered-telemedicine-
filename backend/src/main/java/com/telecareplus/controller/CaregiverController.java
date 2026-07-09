@@ -16,7 +16,7 @@ public class CaregiverController {
     private final CaregiverService caregiverService;
 
     @PostMapping("/link")
-    @PreAuthorize("hasRole('CAREGIVER') and @accessScopeAuthorizer.canAccessCaregiver(authentication, #request.caregiverId())")
+    @PreAuthorize("hasRole('CAREGIVER') and @accessScopeAuthorizer.canCreateCaregiverLink(authentication, #request.patientId(), #request.caregiverId())")
     public void link(@Valid @RequestBody CaregiverDtos.CaregiverLinkRequest request) {
         caregiverService.linkPatient(request);
     }
@@ -25,5 +25,11 @@ public class CaregiverController {
     @PreAuthorize("hasRole('CAREGIVER') and @accessScopeAuthorizer.canAccessCaregiver(authentication, #caregiverId)")
     public List<CaregiverDtos.LinkedPatientResponse> list(@PathVariable Long caregiverId) {
         return caregiverService.getLinkedPatients(caregiverId);
+    }
+
+    @PostMapping("/invite")
+    @PreAuthorize("hasAnyRole('PATIENT', 'CAREGIVER') and @accessScopeAuthorizer.canAccessPatient(authentication, #request.patientId())")
+    public void invite(@Valid @RequestBody CaregiverDtos.CaregiverInviteRequest request) {
+        caregiverService.inviteCaregiver(request);
     }
 }

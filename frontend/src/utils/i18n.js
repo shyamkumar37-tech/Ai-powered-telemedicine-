@@ -1,4 +1,4 @@
-﻿export const supportedLanguages = [
+export const supportedLanguages = [
   { code: "en", label: "English" },
   { code: "hi", label: "हिन्दी" },
   { code: "ml", label: "മലയാളം" },
@@ -594,7 +594,7 @@ const en = {
   pickupCode: "Pickup",
   pendingVerificationStatus: "Pending verification",
   verifiedStatus: "Verified",
-  dispensedStatus: "Dispensed",
+  dispensedStatus: "Dispensed status",
   verificationNotes: "Verification notes",
   update: "Update",
   unableUpdateDispensingStatus: "Unable to update dispensing status.",

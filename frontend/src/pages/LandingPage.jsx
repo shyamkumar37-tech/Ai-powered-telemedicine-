@@ -1,587 +1,501 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import InstallAppButton from "../components/InstallAppButton";
-import LanguageSwitcher from "../components/LanguageSwitcher";
-import { useLanguage } from "../context/LanguageContext";
-import PageContainer from "../components/ui/PageContainer";
+import "./landing-override.css";
 
 export default function LandingPage() {
-  const { language, t, translateUiText = (value) => value } = useLanguage();
   const navigate = useNavigate();
-  const languageSearch = language && language !== "en" ? `?lang=${language}` : "";
-  const loginSearchParams = new URLSearchParams(language && language !== "en" ? { lang: language } : {});
-  loginSearchParams.set("forceLogin", "1");
-  const loginSearch = loginSearchParams.toString();
   const [darkMode, setDarkMode] = useState(() => {
-    if (typeof window === "undefined") {
-      return false;
-    }
+    if (typeof window === "undefined") return false;
     try {
-      return localStorage.getItem("telecareplus-theme") === "dark";
+      return localStorage.getItem("telecareplus-theme") === "light" ? false : true; // Default dark
     } catch {
-      return false;
+      return true;
     }
   });
 
+  // Toggles for accessibility
+  const [screenReader, setScreenReader] = useState(false);
+  const [readAloud, setReadAloud] = useState(false);
+  const [largeText, setLargeText] = useState(false);
+  const [highContrast, setHighContrast] = useState(false);
+  const [voiceCommand, setVoiceCommand] = useState(false);
+  const [langSwitch, setLangSwitch] = useState(false);
+
   useEffect(() => {
     if (typeof document !== "undefined") {
-      document.title = `TeleCare+ - ${translateUiText("Home")}`;
+      document.title = `TeleCare+ — Connected Care Platform`;
     }
-  }, [translateUiText]);
+  }, []);
 
   useEffect(() => {
-    if (typeof document === "undefined") {
-      return;
+    if (typeof document === "undefined") return;
+    if (darkMode) {
+      document.documentElement.removeAttribute("data-theme");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
     }
-    document.documentElement.classList.toggle("telecare-dark", darkMode);
     try {
       localStorage.setItem("telecareplus-theme", darkMode ? "dark" : "light");
-    } catch {
-      // Ignore storage failures.
-    }
+    } catch {}
   }, [darkMode]);
 
-  const toggleTheme = () => {
-    setDarkMode((current) => !current);
+  const toggleTheme = () => setDarkMode((d) => !d);
+
+  // Animated ECG
+  const ecgLineRef = useRef(null);
+  useEffect(() => {
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let req;
+    if (!prefersReduced && ecgLineRef.current) {
+      let offset = 0;
+      const animateECG = () => {
+        offset -= 1.4;
+        if (offset <= -400) offset = 0;
+        if (ecgLineRef.current) {
+          ecgLineRef.current.setAttribute('transform', `translate(${offset},0)`);
+        }
+        req = requestAnimationFrame(animateECG);
+      };
+      req = requestAnimationFrame(animateECG);
+    }
+    return () => { if (req) cancelAnimationFrame(req); };
+  }, []);
+
+  // Symptom check-in bar animation
+  const barRefs = useRef([]);
+  useEffect(() => {
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!prefersReduced) {
+      barRefs.current.forEach(bar => {
+        if (!bar) return;
+        const target = bar.style.width;
+        bar.style.width = '0%';
+        requestAnimationFrame(() => {
+          bar.style.transition = 'width 1.1s cubic-bezier(.2,.8,.2,1)';
+          bar.style.width = target;
+        });
+      });
+    }
+  }, []);
+
+  // Scroll reveals
+  const revealRefs = useRef([]);
+  useEffect(() => {
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced || !('IntersectionObserver' in window)) {
+      revealRefs.current.forEach(el => el?.classList.add('is-visible'));
+    } else {
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            io.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+      revealRefs.current.forEach(el => {
+        if (el) io.observe(el);
+      });
+      return () => io.disconnect();
+    }
+  }, []);
+
+  // Count up numbers
+  const countRefs = useRef([]);
+  useEffect(() => {
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const animateCount = (el) => {
+      const target = parseFloat(el.dataset.count);
+      const suffix = el.dataset.suffix || '';
+      const duration = 1400;
+      const start = performance.now();
+      const tick = (now) => {
+        const p = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - p, 3);
+        const val = Math.round(target * eased);
+        el.textContent = val.toLocaleString() + suffix;
+        if (p < 1) requestAnimationFrame(tick);
+      };
+      if (prefersReduced) {
+        el.textContent = target.toLocaleString() + suffix;
+      } else {
+        requestAnimationFrame(tick);
+      }
+    };
+    
+    if ('IntersectionObserver' in window && !prefersReduced) {
+      const countIo = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            animateCount(entry.target);
+            countIo.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.4 });
+      countRefs.current.forEach(el => {
+        if (el) countIo.observe(el);
+      });
+      return () => countIo.disconnect();
+    } else {
+      countRefs.current.forEach(el => {
+        if (el) animateCount(el);
+      });
+    }
+  }, []);
+
+  const addToRefs = (arr) => (el) => {
+    if (el && !arr.current.includes(el)) {
+      arr.current.push(el);
+    }
   };
 
-  const trustPills = useMemo(() => ([
-    translateUiText("AI-powered triage"),
-    translateUiText("Low bandwidth ready"),
-    translateUiText("Care continuity"),
-    translateUiText("Caregiver connected")
-  ]), [translateUiText]);
-
-  const careJourney = useMemo(() => ([
-    translateUiText("Patient reports symptoms"),
-    translateUiText("AI triage evaluates urgency"),
-    translateUiText("Doctor reviews case"),
-    translateUiText("Prescription confirmed"),
-    translateUiText("Reminders scheduled"),
-    translateUiText("Caregiver monitors adherence")
-  ]), [translateUiText]);
-
-  const platformStats = useMemo(() => ([
-    { value: "24,800+", label: translateUiText("Patients monitored") },
-    { value: "1,240", label: translateUiText("Active consultations") },
-    { value: "91%", label: translateUiText("Recovery adherence") },
-    { value: "148", label: translateUiText("Connected hospitals") }
-  ]), [translateUiText]);
-
-  const showcaseFeatures = useMemo(() => ([
-    {
-      title: translateUiText("AI Symptom Analysis"),
-      text: translateUiText("Risk-aware intake routes urgent cases to the right clinician faster.")
-    },
-    {
-      title: translateUiText("Remote Monitoring"),
-      text: translateUiText("Vitals, alerts, and recovery signals stay visible between visits.")
-    },
-    {
-      title: translateUiText("Medication Tracking"),
-      text: translateUiText("Dose adherence, missed reminders, and pharmacy status stay connected.")
-    },
-    {
-      title: translateUiText("Family Care Dashboard"),
-      text: translateUiText("Caregivers get supportive context without overwhelming the patient.")
-    },
-    {
-      title: translateUiText("Accessibility Tools"),
-      text: translateUiText("Voice, contrast, reading, and text controls are available everywhere.")
-    }
-  ]), [translateUiText]);
-
   return (
-    <div className="landing-shell min-h-screen">
-      <div className="landing-header">
-        <PageContainer className="px-4 md:px-8">
-          <header className="landing-top flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <span className="landing-logo">
-                <svg viewBox="0 0 56 56" aria-hidden="true">
-                  <path
-                    d="M28 6c6.7 0 12.8 2.8 17.2 7.2A24 24 0 0 1 52 30c0 6.7-2.8 12.8-7.2 17.2A24 24 0 0 1 28 54c-6.7 0-12.8-2.8-17.2-7.2A24 24 0 0 1 4 30c0-6.7 2.8-12.8 7.2-17.2A24 24 0 0 1 28 6z"
-                    fill="url(#telecareLogoGradient)"
-                  />
-                  <path
-                    d="M16 31h7.2l3.1 6.8L32.8 22l3.4 9H40"
-                    fill="none"
-                    stroke="white"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <defs>
-                    <linearGradient id="telecareLogoGradient" x1="0" x2="1" y1="0" y2="1">
-                      <stop offset="0%" stopColor="#0f766e" />
-                      <stop offset="100%" stopColor="#0ea5a5" />
-                    </linearGradient>
-                  </defs>
-                </svg>
-              </span>
+    <div className="landing-wrapper">
+      <a className="skip-link" href="#main">Skip to content</a>
+
+      <header className="nav">
+        <div className="nav-inner">
+          <div className="brand">
+            <div className="brand-mark">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M2 12h4l2-7 4 14 2-9 2 5h6" stroke="#04231A" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </div>
+            <div className="brand-text">
+              <div className="eyebrow">TELECARE+</div>
+              <div className="title">Connected Care Platform</div>
+              <div className="sub">From first symptom to daily recovery support</div>
+            </div>
+          </div>
+          <nav className="nav-links">
+            <a href="#journey">Care journey</a>
+            <a href="#roles">Roles</a>
+            <a href="#accessibility">Accessibility</a>
+            <a href="#contact">Contact</a>
+          </nav>
+          <div className="nav-actions">
+            <button className="pill" onClick={toggleTheme} aria-pressed={!darkMode}>
+              {darkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
+            </button>
+            <select className="pill" aria-label="Language">
+              <option>English</option>
+              <option>हिन्दी</option>
+              <option>தமிழ்</option>
+              <option>Español</option>
+            </select>
+            <Link to="/login" className="btn btn-ghost">Login</Link>
+            <Link to="/login" className="btn btn-primary">Create account</Link>
+          </div>
+        </div>
+      </header>
+
+      <main id="main">
+        {/* HERO */}
+        <div className="wrap hero-shell">
+          <span className="ambient ambient-1"></span>
+          <span className="ambient ambient-2"></span>
+          <section className="hero reveal is-visible" style={{ paddingTop: '64px' }} ref={addToRefs(revealRefs)}>
+            <div className="hero-grid">
               <div>
-                <p className="text-xs uppercase tracking-[0.32em] text-slate-500">{translateUiText("TeleCare+")}</p>
-                <p className="text-lg font-semibold text-ink">{translateUiText("Connected Care Platform")}</p>
-                <p className="text-xs text-slate-500">{translateUiText("From first symptom to daily recovery support")}</p>
+                <div className="tags">
+                  <span className="tag">AI-powered triage</span>
+                  <span className="tag">Low bandwidth ready</span>
+                  <span className="tag">Care continuity</span>
+                  <span className="tag">Caregiver connected</span>
+                </div>
+                <h1>Smart telemedicine that <em>continues care</em>, not just consultations.</h1>
+                <p className="lede">Triage, continuity dashboards, chronic monitoring, caregiver oversight, and emergency-aware workflows in one academic-grade platform.</p>
+                <p className="fine">Built for rural clinics, chronic care, and family-supported recovery.</p>
+                <div className="hero-ctas">
+                  <Link to="/login" className="btn btn-primary">Create account</Link>
+                  <Link to="/login" className="btn btn-ghost">Login</Link>
+                </div>
+                <div className="chips">
+                  <span className="chip">4 care roles connected</span>
+                  <span className="chip">6 languages supported</span>
+                  <span className="chip">Accessibility built in</span>
+                  <span className="chip">Low bandwidth ready</span>
+                </div>
               </div>
-            </div>
-            <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
-              <a className="landing-link" href="#journey">{translateUiText("Care journey")}</a>
-              <a className="landing-link" href="#roles">{translateUiText("Roles")}</a>
-              <a className="landing-link" href="#accessibility">{translateUiText("Accessibility")}</a>
-              <a className="landing-link" href="#footer">{translateUiText("Contact")}</a>
-            </nav>
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                className="landing-toggle"
-                onClick={toggleTheme}
-                aria-label={translateUiText("Toggle theme")}
-              >
-                {darkMode ? translateUiText("Dark Mode") : translateUiText("Light Mode")}
-              </button>
-              <LanguageSwitcher />
-              <div className="hidden items-center gap-2 md:flex">
-                <button
-                  type="button"
-                  className="btn-outline"
-                  onClick={() => navigate(`/login${loginSearch ? `?${loginSearch}` : ""}`)}
-                  aria-label={t("login")}
-                  data-voice-label={t("login")}
-                >
-                  {t("login")}
-                </button>
-                <Link className="btn-primary" to={`/register${languageSearch}`}>{t("createAccount")}</Link>
-              </div>
-            </div>
-          </header>
-        </PageContainer>
-      </div>
 
-      <PageContainer className="px-4 md:px-8 pb-16 pt-12">
-        <section className="landing-hero relative overflow-hidden rounded-[2.5rem] px-8 py-12 text-white shadow-panel">
-          <div className="landing-hero__glow landing-hero__glow--left" aria-hidden="true" />
-          <div className="landing-hero__glow landing-hero__glow--right" aria-hidden="true" />
-          <div className="landing-hero__grid">
-            <div className="landing-hero__copy">
-              <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-teal-100/90">
-                {trustPills.map((label) => (
-                  <span key={label} className="rounded-full border border-white/15 bg-white/10 px-3 py-1">
-                    {label}
-                  </span>
-                ))}
-              </div>
-              <h1 className="mt-6 max-w-2xl text-4xl font-semibold leading-tight md:text-6xl">
-                <span className="landing-hero__title">{t("heroTitle")}</span>
-              </h1>
-              <p className="mt-5 max-w-xl text-lg text-slate-200/90">{t("heroText")}</p>
-              <p className="mt-4 text-sm text-teal-100/80">
-                {translateUiText("Built for rural clinics, chronic care, and family-supported recovery")}
-              </p>
-              <div className="mt-8 flex flex-wrap gap-4">
-                <Link
-                  className="btn-primary shadow-lg shadow-teal-900/30 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-teal-900/40 focus-visible:-translate-y-0.5"
-                  to={`/register${languageSearch}`}
-                  aria-label={t("createAccount")}
-                  data-voice-label={t("createAccount")}
-                >
-                  {t("createAccount")}
-                </Link>
-                <Link
-                  className="btn-outline border-white/50 text-white hover:border-white hover:bg-white/10"
-                  to={`/login${loginSearch ? `?${loginSearch}` : ""}`}
-                  aria-label={t("login")}
-                  data-voice-label={t("login")}
-                >
-                  {t("login")}
-                </Link>
-              </div>
-              <div className="mt-8 flex flex-wrap gap-3 text-xs font-semibold text-teal-100/90">
-                {[
-                  translateUiText("4 care roles connected"),
-                  translateUiText("6 languages supported"),
-                  translateUiText("Accessibility built in"),
-                  translateUiText("Low bandwidth ready")
-                ].map((item) => (
-                  <span key={item} className="hero-proof-chip">{item}</span>
-                ))}
+              <div className="preview-stack">
+                <div className="preview-card">
+                  <div className="preview-label">Patient app</div>
+                  <div className="preview-title">Symptom check-in</div>
+                  <div className="bar-track"><div className="bar-fill" style={{ width: '82%' }} ref={addToRefs(barRefs)}></div></div>
+                </div>
+                <div className="preview-card">
+                  <div className="preview-label">Doctor dashboard</div>
+                  <div className="preview-title">Triage queue</div>
+                  <div className="queue-row"><span>Urgent cases</span><b>4</b></div>
+                  <div className="queue-row"><span>Follow-ups</span><b>8</b></div>
+                </div>
+                <div className="preview-card">
+                  <div className="preview-label">Caregiver reminders</div>
+                  <div className="preview-title">Adherence status</div>
+                  <div className="dot-row">
+                    <span className="dot g"></span><span className="dot a"></span><span className="dot r"></span>
+                  </div>
+                </div>
+                <div className="preview-card">
+                  <div className="preview-label">Pharmacist panel</div>
+                  <div className="preview-title">Prescription review</div>
+                  <div className="bar-track"><div className="bar-fill" style={{ width: '96%', background: 'linear-gradient(90deg,#EAF2F5,#C6D6E0)' }} ref={addToRefs(barRefs)}></div></div>
+                </div>
               </div>
             </div>
+          </section>
 
-            <div className="landing-hero__stack">
-              <div className="hero-card hero-card--patient">
-                <p className="text-xs text-slate-500">{translateUiText("Patient app")}</p>
-                <p className="mt-2 text-sm font-semibold text-ink">{translateUiText("Symptom check-in")}</p>
-                <div className="mt-3 h-2 w-full rounded-full bg-slate-200">
-                  <div className="h-2 w-2/3 rounded-full bg-emerald-400" />
-                </div>
-              </div>
-              <div className="hero-card hero-card--doctor">
-                <p className="text-xs text-slate-500">{translateUiText("Doctor dashboard")}</p>
-                <p className="mt-2 text-sm font-semibold text-ink">{translateUiText("Triage queue")}</p>
-                <div className="mt-3 grid gap-2 text-xs text-slate-500">
-                  <span className="hero-line">{translateUiText("Urgent cases")} - 4</span>
-                  <span className="hero-line">{translateUiText("Follow-ups")} - 8</span>
-                </div>
-              </div>
-              <div className="hero-card hero-card--caregiver">
-                <p className="text-xs text-slate-500">{translateUiText("Caregiver reminders")}</p>
-                <p className="mt-2 text-sm font-semibold text-ink">{translateUiText("Adherence status")}</p>
-                <div className="mt-3 flex gap-2">
-                  <span className="status-pill status-pill--good" />
-                  <span className="status-pill status-pill--warn" />
-                  <span className="status-pill status-pill--alert" />
-                </div>
-              </div>
-              <div className="hero-card hero-card--pharmacy">
-                <p className="text-xs text-slate-500">{translateUiText("Pharmacist panel")}</p>
-                <p className="mt-2 text-sm font-semibold text-ink">{translateUiText("Prescription review")}</p>
-                <div className="mt-3 h-8 rounded-xl bg-slate-100" />
-              </div>
-            </div>
+          <div className="stats">
+            <div className="stat-card card-lift reveal" ref={addToRefs(revealRefs)}><div className="stat-num" data-count="24800" data-suffix="+" ref={addToRefs(countRefs)}>0</div><div className="stat-label">Patients monitored</div></div>
+            <div className="stat-card card-lift reveal" ref={addToRefs(revealRefs)}><div className="stat-num" data-count="1240" ref={addToRefs(countRefs)}>0</div><div className="stat-label">Active consultations</div></div>
+            <div className="stat-card card-lift reveal" ref={addToRefs(revealRefs)}><div className="stat-num" data-count="91" data-suffix="%" ref={addToRefs(countRefs)}>0</div><div className="stat-label">Recovery adherence</div></div>
+            <div className="stat-card card-lift reveal" ref={addToRefs(revealRefs)}><div className="stat-num" data-count="148" ref={addToRefs(countRefs)}>0</div><div className="stat-label">Connected hospitals</div></div>
           </div>
-        </section>
+        </div>
 
-        <section className="landing-stats-grid mt-8" aria-label={translateUiText("Platform statistics")}>
-          {platformStats.map((item) => (
-            <div key={item.label} className="premium-card landing-stat-card">
-              <p className="landing-stat-card__value">{item.value}</p>
-              <p className="landing-stat-card__label">{item.label}</p>
+        {/* MONITORING + FEATURES */}
+        <div className="wrap">
+          <section>
+            <div className="section-head reveal" ref={addToRefs(revealRefs)}>
+              <div className="eyebrow-2">Live workspace</div>
+              <h2>Live patient monitoring, clinical action, and family support in one workspace</h2>
             </div>
-          ))}
-        </section>
-
-        <section className="landing-workflow mt-16 landing-reveal">
-          <div className="landing-section-heading">
-            <p className="text-xs uppercase tracking-[0.32em] text-cyan-200">{translateUiText("Command center")}</p>
-            <h2>{translateUiText("Live patient monitoring, clinical action, and family support in one workspace")}</h2>
-          </div>
-          <div className="landing-workflow__grid">
-            <div className="premium-card monitoring-preview">
-              <div className="monitoring-preview__header">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-cyan-100/70">{translateUiText("Live monitoring")}</p>
-                  <h3>{translateUiText("Anita Patient")}</h3>
-                </div>
-                <span>{translateUiText("Stable")}</span>
-              </div>
-              <div className="heartbeat-line" aria-hidden="true" />
-              <div className="monitoring-preview__metrics">
-                <div><strong>78</strong><span>{translateUiText("Heart Rate")}</span></div>
-                <div><strong>120/80</strong><span>{translateUiText("Blood Pressure")}</span></div>
-                <div><strong>96%</strong><span>{translateUiText("Recovery")}</span></div>
-              </div>
-            </div>
-            <div className="landing-feature-showcase">
-              {showcaseFeatures.map((feature) => (
-                <article key={feature.title} className="premium-card feature-showcase-card">
-                  <span className="feature-showcase-card__mark" aria-hidden="true" />
+            <div className="monitor-grid">
+              <div className="monitor-card card-lift reveal" ref={addToRefs(revealRefs)}>
+                <div className="monitor-top">
                   <div>
-                    <h3>{feature.title}</h3>
-                    <p>{feature.text}</p>
+                    <div className="preview-label">Live monitoring</div>
+                    <div className="patient-name">Anita Patient</div>
                   </div>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="journey" className="mt-16 landing-reveal">
-          <div className="journey-shell">
-            <div>
-              <p className="text-xs uppercase tracking-[0.32em] text-clinic">{translateUiText("Care journey")}</p>
-              <h2 className="mt-3 text-2xl font-semibold text-ink md:text-3xl">
-                {translateUiText("A connected flow from first symptom to daily recovery")}
-              </h2>
-              <p className="mt-3 max-w-2xl text-sm text-slate-600">
-                {translateUiText("TeleCare+ keeps patient updates, clinical review, pharmacy checks, and caregiver follow-up in one timeline.")}
-              </p>
-            </div>
-            <div className="journey-row">
-              {careJourney.map((step, index) => (
-                <div key={step} className="journey-step">
-                  <span className="journey-index">{index + 1}</span>
-                  <p className="text-sm font-medium text-ink">{step}</p>
-                  {index < careJourney.length - 1 ? <span className="journey-arrow" aria-hidden="true">-&gt;</span> : null}
+                  <span className="status-pill">● Stable</span>
                 </div>
-              ))}
+                <div className="ecg-wrap">
+                  <svg id="ecgSvg" viewBox="0 0 400 110" width="100%" height="100%" preserveAspectRatio="none">
+                    <polyline id="ecgLine" ref={ecgLineRef} fill="none" stroke="#3DDC97" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round"
+                      points="0,55 30,55 45,55 55,20 65,90 75,40 90,55 400,55 430,55 445,55 455,20 465,90 475,40 490,55 800,55"/>
+                  </svg>
+                </div>
+                <div className="vitals-row">
+                  <div className="vital-box"><div className="vital-num" data-count="78" ref={addToRefs(countRefs)}>0</div><div className="vital-label">Heart Rate</div></div>
+                  <div className="vital-box"><div className="vital-num">120/80</div><div className="vital-label">Blood Pressure</div></div>
+                  <div className="vital-box"><div className="vital-num" data-count="96" data-suffix="%" ref={addToRefs(countRefs)}>0</div><div className="vital-label">Recovery</div></div>
+                </div>
+              </div>
+
+              <div className="feature-list reveal" ref={addToRefs(revealRefs)}>
+                <div className="feature-item card-lift">
+                  <span className="feature-dot"></span>
+                  <div><h3>AI Symptom Analysis</h3><p>Risk-aware intake routes urgent cases to the right clinician faster.</p></div>
+                </div>
+                <div className="feature-item card-lift">
+                  <span className="feature-dot"></span>
+                  <div><h3>Remote Monitoring</h3><p>Vitals, alerts, and recovery signals stay visible between visits.</p></div>
+                </div>
+                <div className="feature-item card-lift">
+                  <span className="feature-dot"></span>
+                  <div><h3>Medication Tracking</h3><p>Dose adherence, missed reminders, and pharmacy status stay connected.</p></div>
+                </div>
+                <div className="feature-item card-lift">
+                  <span className="feature-dot"></span>
+                  <div><h3>Family Care Dashboard</h3><p>Caregivers get supportive context without overwhelming the patient.</p></div>
+                </div>
+                <div className="feature-item card-lift">
+                  <span className="feature-dot"></span>
+                  <div><h3>Accessibility Tools</h3><p>Voice, contrast, reading, and text controls are available everywhere.</p></div>
+                </div>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <section className="landing-testimonials mt-16 landing-reveal" aria-label={translateUiText("Care team outcomes")}>
-          {[
-            {
-              quote: translateUiText("TeleCare+ helped our nurses prioritize risk while keeping family members informed."),
-              name: translateUiText("Dr. Meera Shah"),
-              role: translateUiText("Clinical Director")
-            },
-            {
-              quote: translateUiText("The recovery dashboard made daily medicines and follow-ups feel manageable."),
-              name: translateUiText("Anita R."),
-              role: translateUiText("Patient")
-            },
-            {
-              quote: translateUiText("We cut missed follow-ups because the care timeline is visible to everyone."),
-              name: translateUiText("Rural Care Network"),
-              role: translateUiText("Partner hospital")
-            }
-          ].map((item) => (
-            <figure key={item.name} className="premium-card testimonial-card">
-              <blockquote>{item.quote}</blockquote>
-              <figcaption>
-                <strong>{item.name}</strong>
-                <span>{item.role}</span>
-              </figcaption>
-            </figure>
-          ))}
-        </section>
+          {/* CARE JOURNEY */}
+          <section id="journey">
+            <div className="section-head">
+              <div className="eyebrow-2">Care journey</div>
+              <h2>A connected flow from first symptom to daily recovery</h2>
+              <p>TeleCare+ keeps patient updates, clinical review, pharmacy checks, and caregiver follow-up in one timeline.</p>
+            </div>
+            <div className="journey-track">
+              <div className="journey-step card-lift reveal" ref={addToRefs(revealRefs)}><div className="num">1</div><h3>Patient reports symptoms</h3></div>
+              <div className="journey-step card-lift reveal" ref={addToRefs(revealRefs)}><div className="num">2</div><h3>AI triage evaluates urgency</h3></div>
+              <div className="journey-step card-lift reveal" ref={addToRefs(revealRefs)}><div className="num">3</div><h3>Doctor reviews case</h3></div>
+              <div className="journey-step card-lift reveal" ref={addToRefs(revealRefs)}><div className="num">4</div><h3>Prescription confirmed</h3></div>
+              <div className="journey-step card-lift reveal" ref={addToRefs(revealRefs)}><div className="num">5</div><h3>Reminders scheduled</h3></div>
+              <div className="journey-step card-lift reveal" ref={addToRefs(revealRefs)}><div className="num">6</div><h3>Caregiver monitors adherence</h3></div>
+            </div>
 
-        <section id="roles" className="mt-16 landing-reveal">
-          <div className="roles-grid">
-            {[
-              {
-                title: translateUiText("Patient"),
-                text: translateUiText("Symptom check-ins, reminders, and progress snapshots."),
-                accent: "role-card--patient",
-                cta: translateUiText("Create patient workspace"),
-                icon: (
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M12 4a4 4 0 0 1 4 4c0 2.2-1.8 4-4 4s-4-1.8-4-4a4 4 0 0 1 4-4Z" fill="none" stroke="currentColor" strokeWidth="1.6" />
-                    <path d="M4 20c2.5-4 6-6 8-6s5.5 2 8 6" fill="none" stroke="currentColor" strokeWidth="1.6" />
-                  </svg>
-                )
-              },
-              {
-                title: translateUiText("Doctor"),
-                text: translateUiText("Triage dashboards, review tools, and care planning."),
-                accent: "role-card--doctor",
-                cta: translateUiText("Create doctor workspace"),
-                icon: (
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M6 12h12M12 6v12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-                    <path d="M8 3h8a3 3 0 0 1 3 3v4a7 7 0 0 1-7 7H8a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3Z" fill="none" stroke="currentColor" strokeWidth="1.6" />
-                  </svg>
-                )
-              },
-              {
-                title: translateUiText("Caregiver"),
-                text: translateUiText("Adherence alerts and supportive follow-up guidance."),
-                accent: "role-card--caregiver",
-                cta: translateUiText("Create caregiver workspace"),
-                icon: (
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M12 21c-5-4-8-7-8-11a5 5 0 0 1 8-4 5 5 0 0 1 8 4c0 4-3 7-8 11Z" fill="none" stroke="currentColor" strokeWidth="1.6" />
-                  </svg>
-                )
-              },
-              {
-                title: translateUiText("Pharmacist"),
-                text: translateUiText("Prescription confirmation and medication safety checks."),
-                accent: "role-card--pharmacy",
-                cta: translateUiText("Create pharmacy workspace"),
-                icon: (
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M5 7h14v12H5z" fill="none" stroke="currentColor" strokeWidth="1.6" />
-                    <path d="M8 7V5h8v2" fill="none" stroke="currentColor" strokeWidth="1.6" />
-                    <path d="M12 11v4M10 13h4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-                  </svg>
-                )
-              }
-            ].map(({ title, text, accent, icon, cta }) => (
-              <div key={title} className={`role-card ${accent}`}>
-                <div className="role-card__icon" aria-hidden="true">{icon}</div>
+            <div className="testimonials">
+              <div className="t-card card-lift reveal" ref={addToRefs(revealRefs)}>
+                <p>"TeleCare+ helped our nurses prioritize risk while keeping family members informed."</p>
+                <div className="t-name">Dr. Meera Shah</div>
+                <div className="t-role">Clinical Director</div>
+              </div>
+              <div className="t-card card-lift reveal" ref={addToRefs(revealRefs)}>
+                <p>"The recovery dashboard made daily medicines and follow-ups feel manageable."</p>
+                <div className="t-name">Anita R.</div>
+                <div className="t-role">Patient</div>
+              </div>
+              <div className="t-card card-lift reveal" ref={addToRefs(revealRefs)}>
+                <p>"We cut missed follow-ups because the care timeline is visible to everyone."</p>
+                <div className="t-name">Rural Care Network</div>
+                <div className="t-role">Partner hospital</div>
+              </div>
+            </div>
+          </section>
+
+          {/* ROLES */}
+          <section id="roles">
+            <div className="section-head">
+              <div className="eyebrow-2">Built for every seat at the table</div>
+              <h2>One platform, four connected roles</h2>
+              <p>Each role sees exactly what it needs — nothing more, nothing hidden.</p>
+            </div>
+            <div className="role-grid">
+              <div className="role-card r-patient card-lift reveal" ref={addToRefs(revealRefs)} onClick={() => navigate('/login')}>
+                <div className="role-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2"/><path d="M4 20c1.5-4 5-6 8-6s6.5 2 8 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg></div>
+                <h3>Patient</h3>
+                <p>Symptom check-ins, reminders, and progress snapshots.</p>
+                <div className="role-cta">Open patient app</div>
+              </div>
+              <div className="role-card r-doctor card-lift reveal" ref={addToRefs(revealRefs)} onClick={() => navigate('/login')}>
+                <div className="role-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" strokeWidth="2"/><path d="M8 12h8M12 8v8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg></div>
+                <h3>Doctor</h3>
+                <p>Triage dashboards, review tools, and care planning.</p>
+                <div className="role-cta">Open clinician view</div>
+              </div>
+              <div className="role-card r-caregiver card-lift reveal" ref={addToRefs(revealRefs)} onClick={() => navigate('/login')}>
+                <div className="role-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 21s-7-4.4-7-10a5 5 0 019-3 5 5 0 019 3c0 5.6-7 10-7 10z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/></svg></div>
+                <h3>Caregiver</h3>
+                <p>Adherence alerts and supportive follow-up guidance.</p>
+                <div className="role-cta">Open caregiver hub</div>
+              </div>
+              <div className="role-card r-pharmacist card-lift reveal" ref={addToRefs(revealRefs)} onClick={() => navigate('/login')}>
+                <div className="role-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" strokeWidth="2"/><path d="M9 8h6M9 12h6M9 16h3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg></div>
+                <h3>Pharmacist</h3>
+                <p>Prescription confirmation and medication safety checks.</p>
+                <div className="role-cta">Open pharmacy queue</div>
+              </div>
+            </div>
+          </section>
+
+          {/* ACCESSIBILITY */}
+          <section id="accessibility">
+            <div className="a11y-panel reveal" ref={addToRefs(revealRefs)}>
+              <div className="a11y-top">
                 <div>
-                  <h3 className="text-base font-semibold text-ink">{title}</h3>
-                  <p className="mt-2 text-sm text-slate-600">{text}</p>
-                  <Link className="role-card__cta" to={`/register${languageSearch}`}>
-                    {cta}
-                  </Link>
+                  <div className="eyebrow-2">Accessibility control center</div>
+                  <h2 style={{ fontSize: '22px', marginBottom: '6px' }}>Inclusive care tools built in.</h2>
+                  <p style={{ color: 'var(--muted)', fontSize: '13.5px' }}>Live controls stay available in the toolbar on every page.</p>
                 </div>
+                <span className="status-pill">Assistive-ready</span>
               </div>
-            ))}
-          </div>
-        </section>
 
-        <section className="mt-16 landing-reveal">
-          <div className="feature-split">
-            <div>
-              <p className="text-xs uppercase tracking-[0.32em] text-clinic">{translateUiText("Smart triage")}</p>
-              <h3 className="mt-3 text-2xl font-semibold text-ink">{translateUiText("Spot risk early without overwhelming staff.")}</h3>
-              <p className="mt-3 text-sm text-slate-600">{t("highlightTriage")}</p>
-            </div>
-            <div className="visual-card">
-              <p className="text-xs text-slate-500">{translateUiText("Triage preview")}</p>
-              <div className="mt-3 space-y-2 text-sm">
-                <div className="visual-row"><span className="visual-pill" />{translateUiText("Severe cough - High")}</div>
-                <div className="visual-row"><span className="visual-pill visual-pill--warn" />{translateUiText("Fatigue - Medium")}</div>
-                <div className="visual-row"><span className="visual-pill visual-pill--ok" />{translateUiText("Hydration - Stable")}</div>
-              </div>
-            </div>
-          </div>
-          <div className="feature-split feature-split--reverse">
-            <div>
-              <p className="text-xs uppercase tracking-[0.32em] text-clinic">{translateUiText("Continuity dashboard")}</p>
-              <h3 className="mt-3 text-2xl font-semibold text-ink">{translateUiText("Keep every follow-up visible across the team.")}</h3>
-              <p className="mt-3 text-sm text-slate-600">{t("highlightFlow")}</p>
-            </div>
-            <div className="visual-card">
-              <p className="text-xs text-slate-500">{translateUiText("Care timeline")}</p>
-              <div className="mt-3 space-y-3">
-                <div className="visual-line">
-                  <span className="visual-dot" />
-                  <span className="text-xs text-slate-600">{translateUiText("Doctor review completed")}</span>
+              <div className="a11y-grid">
+                <div className="a11y-card card-lift">
+                  <div className="a11y-card-head">
+                    <div className="a11y-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 19h16M6 15l3-8 3 8M8 12h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg></div>
+                    <h3>Reading tools</h3>
+                  </div>
+                  <div className="a11y-row">
+                    <div><div className="a11y-row-label">Screen reader narration</div><div className="a11y-row-sub">Settings available</div></div>
+                    <button className="toggle" aria-pressed={screenReader} onClick={() => setScreenReader(!screenReader)} aria-label="Toggle screen reader narration"></button>
+                  </div>
+                  <div className="a11y-row">
+                    <div><div className="a11y-row-label">Read page aloud</div><div className="a11y-row-sub">Settings available</div></div>
+                    <button className="toggle" aria-pressed={readAloud} onClick={() => setReadAloud(!readAloud)} aria-label="Toggle read page aloud"></button>
+                  </div>
                 </div>
-                <div className="visual-line">
-                  <span className="visual-dot visual-dot--active" />
-                  <span className="text-xs text-slate-600">{translateUiText("Medication confirmation")}</span>
-                </div>
-                <div className="visual-line">
-                  <span className="visual-dot" />
-                  <span className="text-xs text-slate-600">{translateUiText("Caregiver follow-up")}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="feature-split">
-            <div>
-              <p className="text-xs uppercase tracking-[0.32em] text-clinic">{translateUiText("Caregiver adherence")}</p>
-              <h3 className="mt-3 text-2xl font-semibold text-ink">{translateUiText("Support families with real-time adherence status.")}</h3>
-              <p className="mt-3 text-sm text-slate-600">
-                {translateUiText("Caregiver alerts show what is on track, overdue, and needs a follow-up call.")}
-              </p>
-            </div>
-            <div className="visual-card caregiver-visual">
-              <p className="text-xs text-slate-500">{translateUiText("Caregiver status")}</p>
-              <div className="mt-4 grid gap-3">
-                <div className="caregiver-row">
-                  <span className="status-pill status-pill--good" />
-                  <span className="text-xs text-slate-600">{translateUiText("Morning dose taken")}</span>
-                </div>
-                <div className="caregiver-row">
-                  <span className="status-pill status-pill--warn" />
-                  <span className="text-xs text-slate-600">{translateUiText("Afternoon dose pending")}</span>
-                </div>
-                <div className="caregiver-row">
-                  <span className="status-pill status-pill--alert" />
-                  <span className="text-xs text-slate-600">{translateUiText("Evening dose overdue")}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
 
-        <section id="accessibility" className="mt-16 landing-reveal">
-          <div className="access-center">
-            <div className="access-center__header">
+                <div className="a11y-card card-lift">
+                  <div className="a11y-card-head">
+                    <div className="a11y-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="2"/><path d="M12 4a8 8 0 000 16z" fill="currentColor"/></svg></div>
+                    <h3>Display tools</h3>
+                  </div>
+                  <div className="a11y-row">
+                    <div><div className="a11y-row-label">Large text mode</div><div className="a11y-row-sub">Settings available</div></div>
+                    <button className="toggle" aria-pressed={largeText} onClick={() => setLargeText(!largeText)} aria-label="Toggle large text mode"></button>
+                  </div>
+                  <div className="a11y-row">
+                    <div><div className="a11y-row-label">High contrast layout</div><div className="a11y-row-sub">Settings available</div></div>
+                    <button className="toggle" aria-pressed={highContrast} onClick={() => setHighContrast(!highContrast)} aria-label="Toggle high contrast layout"></button>
+                  </div>
+                </div>
+
+                <div className="a11y-card card-lift">
+                  <div className="a11y-card-head">
+                    <div className="a11y-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="9" y="2" width="6" height="12" rx="3" stroke="currentColor" strokeWidth="2"/><path d="M5 11a7 7 0 0014 0M12 18v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg></div>
+                    <h3>Voice tools</h3>
+                  </div>
+                  <div className="a11y-row">
+                    <div><div className="a11y-row-label">Voice command support</div><div className="a11y-row-sub">Settings available</div></div>
+                    <button className="toggle" aria-pressed={voiceCommand} onClick={() => setVoiceCommand(!voiceCommand)} aria-label="Toggle voice command support"></button>
+                  </div>
+                  <div className="a11y-row">
+                    <div><div className="a11y-row-label">Language switching</div><div className="a11y-row-sub">Settings available</div></div>
+                    <button className="toggle" aria-pressed={langSwitch} onClick={() => setLangSwitch(!langSwitch)} aria-label="Toggle language switching"></button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="info-strip">
+              <div className="info-box"><b>4 roles</b><span>Patient, Doctor, Caregiver, Pharmacist</span></div>
+              <div className="info-box"><b>6 languages</b><span>Multilingual continuity support</span></div>
+              <div className="info-box"><b>Low bandwidth</b><span>Optimized for rural clinics</span></div>
+              <div className="info-box"><b>Accessibility</b><span>Inclusive tools built in</span></div>
+            </div>
+
+            <div className="cta-banner">
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-clinic">{translateUiText("Accessibility control center")}</p>
-                <h3 className="mt-2 text-2xl font-semibold text-ink">{translateUiText("Inclusive care tools built in.")}</h3>
-                <p className="mt-2 text-sm text-slate-600">
-                  {translateUiText("Preview the settings panel - live controls stay in the accessibility toolbar.")}
-                </p>
+                <h3>Installable app</h3>
+                <p>Add TeleCare+ to your device for faster access and background support.</p>
               </div>
-              <span className="landing-accessibility-badge">{translateUiText("Assistive-ready")}</span>
+              <button className="btn btn-ghost">Install app</button>
             </div>
-            <div className="access-center__grid">
-              {[
-                {
-                  title: translateUiText("Reading tools"),
-                  items: [
-                    translateUiText("Screen reader narration"),
-                    translateUiText("Read page aloud")
-                  ]
-                },
-                {
-                  title: translateUiText("Display tools"),
-                  items: [
-                    translateUiText("Large text mode"),
-                    translateUiText("High contrast layout")
-                  ]
-                },
-                {
-                  title: translateUiText("Voice tools"),
-                  items: [
-                    translateUiText("Voice command support"),
-                    translateUiText("Language switching")
-                  ]
-                }
-              ].map((group) => (
-                <div key={group.title} className="access-card">
-                  <div className="access-card__title">
-                    <span className="access-icon" />
-                    <h4 className="text-base font-semibold text-ink">{group.title}</h4>
-                  </div>
-                  <div className="mt-4 space-y-3">
-                    {group.items.map((item) => (
-                      <div key={item} className="access-item">
-                        <div>
-                          <p className="text-sm font-medium text-ink">{item}</p>
-                          <p className="text-xs text-slate-500">{translateUiText("Settings available")}</p>
-                        </div>
-                        <span className="access-toggle">{translateUiText("On")}</span>
-                      </div>
-                    ))}
-                  </div>
+
+            <div className="cta-banner" id="contact">
+              <div>
+                <h3>Ready for connected care operations?</h3>
+                <p>Launch a secure patient, doctor, caregiver, and pharmacy workspace.</p>
+              </div>
+              <Link to="/login" className="btn btn-primary">Create account</Link>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <footer>
+        <div className="wrap">
+          <div className="footer-grid">
+            <div className="footer-brand">
+              <div className="brand">
+                <div className="brand-mark" style={{ width: '36px', height: '36px' }}>
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M2 12h4l2-7 4 14 2-9 2 5h6" stroke="#04231A" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="mt-16 landing-reveal">
-          <div className="trust-strip">
-            {[
-              { title: translateUiText("4 roles"), text: translateUiText("Patient, Doctor, Caregiver, Pharmacist") },
-              { title: translateUiText("6 languages"), text: translateUiText("Multilingual continuity support") },
-              { title: translateUiText("Low bandwidth"), text: translateUiText("Optimized for rural clinics") },
-              { title: translateUiText("Accessibility"), text: translateUiText("Inclusive tools built in") }
-            ].map((item) => (
-              <div key={item.title} className="trust-card">
-                <p className="text-lg font-semibold text-ink">{item.title}</p>
-                <p className="mt-2 text-xs text-slate-600">{item.text}</p>
+                <div className="brand-text"><div className="title">TeleCare+</div></div>
               </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="mt-14 landing-reveal">
-          <InstallAppButton />
-        </section>
-
-        <section className="landing-cta landing-reveal" aria-label={translateUiText("Get started")}>
-          <div>
-            <p>{translateUiText("Ready for connected care operations?")}</p>
-            <span>{translateUiText("Launch a secure patient, doctor, caregiver, and pharmacy workspace.")}</span>
-          </div>
-          <Link className="btn-primary" to={`/register${languageSearch}`}>{t("createAccount")}</Link>
-        </section>
-
-        <footer id="footer" className="landing-footer mt-16 rounded-[2rem] px-8 py-10">
-          <div className="grid gap-6 md:grid-cols-[1.2fr_0.8fr]">
-            <div>
-              <p className="text-sm font-semibold text-ink">{translateUiText("TeleCare+")}</p>
-              <p className="mt-2 text-sm text-slate-600">
-                {translateUiText("A continuity-first telemedicine workspace for clinics, patients, and families.")}
-              </p>
+              <p>A connected care operating system for clinics, patients, and families — built for low-bandwidth, high-trust environments.</p>
             </div>
-            <div className="grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
-              {[
-                { label: translateUiText("About"), to: "/about" },
-                { label: translateUiText("Privacy"), to: "/privacy" },
-                { label: translateUiText("Contact"), to: "/contact" },
-                { label: translateUiText("Terms"), to: "/terms" },
-                { label: translateUiText("Support"), to: "/support" }
-              ].map((item) => (
-                <Link key={item.to} className="footer-link" to={item.to}>
-                  {item.label}
-                </Link>
-              ))}
+            <div className="footer-col">
+              <h4>Platform</h4>
+              <a href="#journey">Care journey</a>
+              <a href="#roles">Roles</a>
+              <a href="#accessibility">Accessibility</a>
+            </div>
+            <div className="footer-col">
+              <h4>Company</h4>
+              <a href="#">About</a>
+              <a href="#">Careers</a>
+              <a href="#">Partners</a>
+            </div>
+            <div className="footer-col">
+              <h4>Support</h4>
+              <a href="#contact">Contact</a>
+              <a href="#">Status</a>
+              <a href="#">Privacy</a>
             </div>
           </div>
-          <p className="mt-6 text-xs text-slate-500">(c) {new Date().getFullYear()} TeleCare+. {translateUiText("All rights reserved.")}</p>
-        </footer>
-      </PageContainer>
+          <div className="footer-bottom">© 2026 TeleCare+. Built for rural clinics and chronic care recovery.</div>
+        </div>
+      </footer>
     </div>
   );
 }

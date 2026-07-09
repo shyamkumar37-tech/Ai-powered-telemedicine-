@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-const LOGIN_URL = "http://127.0.0.1:5173/login?forceLogin=1";
+const LOGIN_URL = "/login?forceLogin=1";
 const STATUS_ENDPOINT = "**/api/system/status";
 const READY_RESPONSE = {
   ready: true,

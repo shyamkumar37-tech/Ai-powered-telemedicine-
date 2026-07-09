@@ -8,7 +8,7 @@ test.describe("TeleCare+ smoke checks", () => {
     caregiver: { email: "caregiver@telecareplus.com", password: "Password123", home: "/caregiver", link: /Monitoring/i },
     pharmacist: { email: "pharmacist@telecareplus.com", password: "Password123", home: "/pharmacist", link: /Inventory/i }
   };
-  const logoutRegex = /Logout|लॉगआउट|ലോഗ്ഔട്ട്|లాగౌట్|ਲਾਗਆਉਟ|வெளியேறு/i;
+  const logoutRegex = /Log\s*out|लॉगआउट|ലോഗ്ഔട്ട്|లాగౌట్|ਲਾਗਆਉਟ|வெளியேறு/i;
   const voiceAssistHeadingRegex = /Voice-assisted support|குரல் உதவி ஆதரவு|वॉयस सहायता केंद्र|ശബ്ദ സഹായ കേന്ദ്രം|వాయిస్ సహాయ కేంద్రం|ਆਵਾਜ਼ ਸਹਾਇਤਾ ਕੇਂਦਰ/i;
   const startListeningRegex = /Start listening|கேட்கத் தொடங்கு|सुनना शुरू करें|ശ്രദ്ധിക്കാൻ തുടങ്ങുക|వినడం ప్రారంభించు|ਸੁਣਨਾ ਸ਼ੁਰੂ ਕਰੋ/i;
   const stopListeningRegex = /Stop listening|கேட்பதை நிறுத்து|सुनना बंद करें|ശ്രദ്ധിക്കുന്നത് നിർത്തുക|వినడం ఆపు|ਸੁਣਨਾ ਬੰਦ ਕਰੋ/i;
@@ -25,7 +25,7 @@ test.describe("TeleCare+ smoke checks", () => {
     if (await loginButton.count()) {
       await loginButton.click();
     } else {
-      await page.locator("form button.btn-primary").first().click();
+      await page.locator("form button[type='submit']").first().click();
     }
     const loginResponse = await loginResponsePromise.catch(() => null);
     try {
@@ -83,19 +83,19 @@ test.describe("TeleCare+ smoke checks", () => {
   test("role dashboards load after login", async ({ page }) => {
     await loginAs(page, credentials.patient);
     await page.getByRole("button", { name: logoutRegex }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await expect(page).toHaveURL(/\/login.*/);
 
     await loginAs(page, credentials.doctor);
     await page.getByRole("button", { name: logoutRegex }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await expect(page).toHaveURL(/\/login.*/);
 
     await loginAs(page, credentials.caregiver);
-    await page.getByRole("button", { name: /Logout/i }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await page.getByRole("button", { name: /Log\s*out/i }).click();
+    await expect(page).toHaveURL(/\/login.*/);
 
     await loginAs(page, credentials.pharmacist);
-    await page.getByRole("button", { name: /Logout/i }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await page.getByRole("button", { name: /Log\s*out/i }).click();
+    await expect(page).toHaveURL(/\/login.*/);
   });
 
   test("critical module pages render without redirect", async ({ page }) => {
@@ -112,34 +112,35 @@ test.describe("TeleCare+ smoke checks", () => {
     for (const route of roleRoutes.PATIENT) {
       await assertPageVisible(route.path);
     }
-    await page.getByRole("button", { name: /Logout/i }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await page.getByRole("button", { name: /Log\s*out/i }).click();
+    await expect(page).toHaveURL(/\/login.*/);
 
     await loginAs(page, credentials.doctor);
     for (const route of roleRoutes.DOCTOR) {
       await assertPageVisible(route.path);
     }
-    await page.getByRole("button", { name: /Logout/i }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await page.getByRole("button", { name: /Log\s*out/i }).click();
+    await expect(page).toHaveURL(/\/login.*/);
 
     await loginAs(page, credentials.caregiver);
     for (const route of roleRoutes.CAREGIVER) {
       await assertPageVisible(route.path);
     }
     await page.getByRole("button", { name: logoutRegex }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await expect(page).toHaveURL(/\/login.*/);
 
     await loginAs(page, credentials.pharmacist);
     for (const route of roleRoutes.PHARMACIST) {
       await assertPageVisible(route.path);
     }
-    await page.getByRole("button", { name: /Logout/i }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await page.getByRole("button", { name: /Log\s*out/i }).click();
+    await expect(page).toHaveURL(/\/login.*/);
   });
 
   test("critical module actions (triage, IVR, messaging)", async ({ page }) => {
     const sendMessageIfPossible = async () => {
       const contactButtons = page.locator("section").first().locator("button");
+      await expect(contactButtons.first().or(page.getByText(/no contacts/i))).toBeVisible({ timeout: 10000 });
       const contactCount = await contactButtons.count();
       const sendButton = page.getByRole("button", { name: /send/i });
       if (contactCount === 0) {
@@ -151,7 +152,7 @@ test.describe("TeleCare+ smoke checks", () => {
       await page.getByRole("textbox", { name: /subject/i }).fill("Check-in");
       await page.getByRole("textbox", { name: /type/i }).fill("Automated test message.");
       await sendButton.click();
-      await expect(page.getByRole("status")).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('p[role="status"]').first()).toBeVisible({ timeout: 10000 });
       await expect(page.getByRole("alert")).toHaveCount(0);
     };
 
@@ -169,26 +170,26 @@ test.describe("TeleCare+ smoke checks", () => {
 
     await page.goto("/patient/messages");
     await sendMessageIfPossible();
-    await page.getByRole("button", { name: /Logout/i }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await page.getByRole("button", { name: /Log\s*out/i }).click();
+    await expect(page).toHaveURL(/\/login.*/);
 
     await loginAs(page, credentials.doctor);
     await page.goto("/doctor/messages");
     await sendMessageIfPossible();
-    await page.getByRole("button", { name: /Logout/i }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await page.getByRole("button", { name: /Log\s*out/i }).click();
+    await expect(page).toHaveURL(/\/login.*/);
 
     await loginAs(page, credentials.caregiver);
     await page.goto("/caregiver/messages");
     await sendMessageIfPossible();
-    await page.getByRole("button", { name: /Logout/i }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await page.getByRole("button", { name: /Log\s*out/i }).click();
+    await expect(page).toHaveURL(/\/login.*/);
 
     await loginAs(page, credentials.pharmacist);
     await page.goto("/pharmacist/messages");
     await sendMessageIfPossible();
     await page.getByRole("button", { name: logoutRegex }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await expect(page).toHaveURL(/\/login.*/);
   });
 
   test("deep module actions (appointments, consultation, prescriptions, caregiver interventions, inventory)", async ({ page }) => {
@@ -210,8 +211,8 @@ test.describe("TeleCare+ smoke checks", () => {
       await page.getByRole("button", { name: /back/i }).click();
     }
 
-    await page.getByRole("button", { name: /Logout/i }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await page.getByRole("button", { name: /Log\s*out/i }).click();
+    await expect(page).toHaveURL(/\/login.*/);
 
     await loginAs(page, credentials.doctor);
     await page.goto("/doctor/appointments");
@@ -225,7 +226,7 @@ test.describe("TeleCare+ smoke checks", () => {
       const saveConsultation = page.getByRole("button", { name: /save consultation/i });
       if (await saveConsultation.isEnabled()) {
         await saveConsultation.click();
-        await expect(page.getByRole("status")).toBeVisible({ timeout: 10000 });
+        await expect(page.locator('p[role="status"]').first()).toBeVisible({ timeout: 10000 });
       }
       const generatePrescription = page.getByRole("button", { name: /generate prescription/i });
       if (await generatePrescription.count() && await generatePrescription.isEnabled()) {
@@ -233,12 +234,12 @@ test.describe("TeleCare+ smoke checks", () => {
         await page.getByRole("textbox", { name: /dosage/i }).fill("500mg");
         await page.getByRole("textbox", { name: /frequency/i }).fill("Twice daily");
         await generatePrescription.click();
-        await expect(page.getByRole("status")).toBeVisible({ timeout: 10000 });
+        await expect(page.locator('p[role="status"]').first()).toBeVisible({ timeout: 10000 });
       }
     }
 
-    await page.getByRole("button", { name: /Logout/i }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await page.getByRole("button", { name: /Log\s*out/i }).click();
+    await expect(page).toHaveURL(/\/login.*/);
 
     await loginAs(page, credentials.caregiver);
     await page.goto("/caregiver/interventions");
@@ -250,8 +251,8 @@ test.describe("TeleCare+ smoke checks", () => {
       await logButton.click();
       await expect(page.locator("p[role='status']").filter({ hasText: /intervention logged/i })).toBeVisible({ timeout: 10000 });
     }
-    await page.getByRole("button", { name: /Logout/i }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await page.getByRole("button", { name: /Log\s*out/i }).click();
+    await expect(page).toHaveURL(/\/login.*/);
 
     await loginAs(page, credentials.pharmacist);
     await page.goto("/pharmacist/inventory");
@@ -262,10 +263,10 @@ test.describe("TeleCare+ smoke checks", () => {
     await page.getByRole("spinbutton", { name: /reorder level/i }).fill("2");
     await page.getByRole("textbox", { name: /unit label/i }).fill("strip");
     await page.getByRole("button", { name: /add item/i }).click();
-    await expect(page.getByRole("status")).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('p[role="status"]').first()).toBeVisible({ timeout: 10000 });
 
-    await page.getByRole("button", { name: /Logout/i }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await page.getByRole("button", { name: /Log\s*out/i }).click();
+    await expect(page).toHaveURL(/\/login.*/);
   });
 
   test("extended module actions (booking, dispensing updates, appointment confirm)", async ({ page }) => {
@@ -276,14 +277,16 @@ test.describe("TeleCare+ smoke checks", () => {
     await loginAs(page, credentials.patient);
     await page.goto("/patient/book");
     await waitForMain();
-    const dateInput = page.locator("input[type='datetime-local']").first();
-    await dateInput.fill("2030-01-02T10:00");
-    await page.getByRole("textbox", { name: /concern summary/i }).fill("Follow-up check.");
-    await page.getByRole("button", { name: /book slot/i }).click();
-    await expect(page.getByRole("status")).toBeVisible({ timeout: 10000 });
+    const slotButton = page.locator('.grid > button.rounded-2xl').first();
+    await expect(slotButton).toBeVisible({ timeout: 10000 });
+    await slotButton.click();
+    await page.getByRole("textbox", { name: /reason for visit/i }).fill("Follow-up check.");
+    await page.getByRole("button", { name: /review and confirm/i }).click();
+    await page.getByRole("button", { name: /confirm appointment/i }).click();
+    await expect(page.locator('p[role="status"]').first()).toBeVisible({ timeout: 10000 });
     await page.waitForURL(/\/patient\/appointments/, { timeout: 10000 }).catch(() => {});
-    await page.getByRole("button", { name: /Logout/i }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await page.getByRole("button", { name: /Log\s*out/i }).click();
+    await expect(page).toHaveURL(/\/login.*/);
 
     await loginAs(page, credentials.doctor);
     await page.goto("/doctor/appointments");
@@ -293,8 +296,8 @@ test.describe("TeleCare+ smoke checks", () => {
       await confirmButtons.first().click();
       await expect(page.getByRole("alert")).toHaveCount(0);
     }
-    await page.getByRole("button", { name: /Logout/i }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await page.getByRole("button", { name: /Log\s*out/i }).click();
+    await expect(page).toHaveURL(/\/login.*/);
 
     await loginAs(page, credentials.pharmacist);
     await page.goto("/pharmacist/dispensing");
@@ -307,7 +310,7 @@ test.describe("TeleCare+ smoke checks", () => {
       await expect(page.getByRole("alert")).toHaveCount(0);
     }
     await page.getByRole("button", { name: logoutRegex }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await expect(page).toHaveURL(/\/login.*/);
   });
 
   test("full lifecycle checks (cancel/resolve/refresh verification)", async ({ page }) => {
@@ -323,8 +326,8 @@ test.describe("TeleCare+ smoke checks", () => {
       await cancelButtons.first().click();
       await expect(page.getByRole("alert")).toHaveCount(0);
     }
-    await page.getByRole("button", { name: /Logout/i }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await page.getByRole("button", { name: /Log\s*out/i }).click();
+    await expect(page).toHaveURL(/\/login.*/);
 
     await loginAs(page, credentials.caregiver);
     await page.goto("/caregiver/interventions");
@@ -334,8 +337,8 @@ test.describe("TeleCare+ smoke checks", () => {
       await resolveButtons.first().click();
       await expect(page.getByRole("alert")).toHaveCount(0);
     }
-    await page.getByRole("button", { name: /Logout/i }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await page.getByRole("button", { name: /Log\s*out/i }).click();
+    await expect(page).toHaveURL(/\/login.*/);
 
     await loginAs(page, credentials.pharmacist);
     await page.goto("/pharmacist/dispensing");
@@ -350,8 +353,8 @@ test.describe("TeleCare+ smoke checks", () => {
       await waitForMain();
       await expect(page.getByRole("combobox", { name: /dispensed status/i }).first()).toHaveValue("VERIFIED");
     }
-    await page.getByRole("button", { name: /Logout/i }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await page.getByRole("button", { name: /Log\s*out/i }).click();
+    await expect(page).toHaveURL(/\/login.*/);
   });
 
   test("end-to-end appointment lifecycle (book -> confirm -> consult -> prescribe)", async ({ page }) => {
@@ -364,18 +367,21 @@ test.describe("TeleCare+ smoke checks", () => {
     await loginAs(page, credentials.patient);
     await page.goto("/patient/book");
     await waitForMain();
-    await page.locator("input[type='datetime-local']").first().fill("2030-02-03T10:30");
-    await page.getByRole("textbox", { name: /concern summary/i }).fill("End-to-end check.");
-    await page.getByRole("button", { name: /book slot/i }).click();
-    await expect(page.getByRole("status")).toBeVisible({ timeout: 10000 });
+    const slotButton = page.locator('.grid > button.rounded-2xl').first();
+    await expect(slotButton).toBeVisible({ timeout: 10000 });
+    await slotButton.click();
+    await page.getByRole("textbox", { name: /reason for visit/i }).fill("End-to-end check.");
+    await page.getByRole("button", { name: /review and confirm/i }).click();
+    await page.getByRole("button", { name: /confirm appointment/i }).click();
+    await expect(page.locator('p[role="status"]').first()).toBeVisible({ timeout: 10000 });
     await page.waitForURL(/\/patient\/appointments/, { timeout: 10000 }).catch(() => {});
     await waitForMain();
     const firstAppointment = page.locator("section").locator(".rounded-2xl").first();
     if (await firstAppointment.count()) {
       appointmentSummary = await firstAppointment.innerText();
     }
-    await page.getByRole("button", { name: /Logout/i }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await page.getByRole("button", { name: /Log\s*out/i }).click();
+    await expect(page).toHaveURL(/\/login.*/);
 
     await loginAs(page, credentials.doctor);
     await page.goto("/doctor/appointments");
@@ -394,7 +400,7 @@ test.describe("TeleCare+ smoke checks", () => {
       const saveConsultation = page.getByRole("button", { name: /save consultation/i });
       if (await saveConsultation.isEnabled()) {
         await saveConsultation.click();
-        await expect(page.getByRole("status")).toBeVisible({ timeout: 10000 });
+        await expect(page.locator('p[role="status"]').first()).toBeVisible({ timeout: 10000 });
       }
       const generatePrescription = page.getByRole("button", { name: /generate prescription/i });
       if (await generatePrescription.count() && await generatePrescription.isEnabled()) {
@@ -402,11 +408,11 @@ test.describe("TeleCare+ smoke checks", () => {
         await page.getByRole("textbox", { name: /dosage/i }).fill("200mg");
         await page.getByRole("textbox", { name: /frequency/i }).fill("Once daily");
         await generatePrescription.click();
-        await expect(page.getByRole("status")).toBeVisible({ timeout: 10000 });
+        await expect(page.locator('p[role="status"]').first()).toBeVisible({ timeout: 10000 });
       }
     }
-    await page.getByRole("button", { name: /Logout/i }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await page.getByRole("button", { name: /Log\s*out/i }).click();
+    await expect(page).toHaveURL(/\/login.*/);
 
     await loginAs(page, credentials.patient);
     await page.goto("/patient/prescriptions");
@@ -416,7 +422,7 @@ test.describe("TeleCare+ smoke checks", () => {
       await expect(prescriptionCards.first()).toBeVisible();
     }
     await page.getByRole("button", { name: logoutRegex }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await expect(page).toHaveURL(/\/login.*/);
   });
 
   test("ai hub premium panels render and respond", async ({ page }) => {
@@ -509,8 +515,8 @@ test.describe("TeleCare+ smoke checks", () => {
     }
     await expect(page.getByText(reportData.title)).toBeVisible({ timeout: 10000 });
 
-    await page.getByRole("button", { name: /Logout/i }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await page.getByRole("button", { name: /Log\s*out/i }).click();
+    await expect(page).toHaveURL(/\/login.*/);
 
     await loginAs(page, credentials.doctor);
     await page.goto("/ai-hub");
@@ -542,8 +548,8 @@ test.describe("TeleCare+ smoke checks", () => {
     }
     await expect(page.getByText(complianceData.disclaimer).first()).toBeVisible({ timeout: 10000 });
 
-    await page.getByRole("button", { name: /Logout/i }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await page.getByRole("button", { name: /Log\s*out/i }).click();
+    await expect(page).toHaveURL(/\/login.*/);
   });
 
   test("language switching updates live role pages", async ({ page }) => {
@@ -560,7 +566,7 @@ test.describe("TeleCare+ smoke checks", () => {
     await expect(page).toHaveURL(/lang=hi/);
     await expect(page.getByRole("button", { name: logoutRegex })).toBeVisible();
     await page.getByRole("button", { name: logoutRegex }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await expect(page).toHaveURL(/\/login.*/);
 
     await loginAs(page, credentials.doctor);
     await page.goto("/doctor/appointments");
@@ -568,7 +574,7 @@ test.describe("TeleCare+ smoke checks", () => {
     await expect(page).toHaveURL(/lang=hi/);
     await expect(page.getByRole("button", { name: logoutRegex })).toBeVisible();
     await page.getByRole("button", { name: logoutRegex }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await expect(page).toHaveURL(/\/login.*/);
 
     await loginAs(page, credentials.caregiver);
     await page.goto("/caregiver/interventions");
@@ -576,7 +582,7 @@ test.describe("TeleCare+ smoke checks", () => {
     await expect(page).toHaveURL(/lang=hi/);
     await expect(page.getByRole("button", { name: logoutRegex })).toBeVisible();
     await page.getByRole("button", { name: logoutRegex }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await expect(page).toHaveURL(/\/login.*/);
 
     await loginAs(page, credentials.pharmacist);
     await page.goto("/pharmacist/inventory");
@@ -584,7 +590,7 @@ test.describe("TeleCare+ smoke checks", () => {
     await expect(page).toHaveURL(/lang=hi/);
     await expect(page.getByRole("button", { name: logoutRegex })).toBeVisible();
     await page.getByRole("button", { name: logoutRegex }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await expect(page).toHaveURL(/\/login.*/);
   });
 
   test("free-text areas retain content on language switch", async ({ page }) => {
@@ -603,7 +609,7 @@ test.describe("TeleCare+ smoke checks", () => {
       await expect(notesField).toHaveValue("Doctor notes should stay intact after language switch.");
     }
     await page.getByRole("button", { name: logoutRegex }).click();
-    await expect(page).toHaveURL(/\/(\?lang=hi)?$/);
+    await expect(page).toHaveURL(/\/login.*/);
   });
 
   test("voice assist UI states render and fallbacks appear", async ({ page }) => {
@@ -626,6 +632,6 @@ test.describe("TeleCare+ smoke checks", () => {
     await expect(page.getByRole("status").first()).toBeVisible();
 
     await page.getByRole("button", { name: logoutRegex }).click();
-    await expect(page).toHaveURL(/\/$/);
+    await expect(page).toHaveURL(/\/login$/);
   });
 });

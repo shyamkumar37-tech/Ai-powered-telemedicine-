@@ -43,4 +43,48 @@ public class IntelligenceController {
     public List<IntelligenceDtos.MissedCareGapResponse> caregiverCareGaps(@PathVariable Long caregiverId) {
         return intelligenceService.getCaregiverCareGaps(caregiverId);
     }
+
+    @PostMapping("/doctor/scribe")
+    @PreAuthorize("hasRole('DOCTOR')")
+    public IntelligenceDtos.AudioScribeResponse generateSoapNote(@RequestBody IntelligenceDtos.AudioScribeRequest request) {
+        return intelligenceService.generateSoapNote(request);
+    }
+
+    @PostMapping("/doctor/drug-interactions")
+    @PreAuthorize("hasRole('DOCTOR')")
+    public IntelligenceDtos.DrugInteractionResponse checkDrugInteractions(@RequestBody IntelligenceDtos.DrugInteractionRequest request) {
+        return intelligenceService.checkDrugInteractions(request);
+    }
+
+    @PostMapping("/doctor/dosage")
+    @PreAuthorize("hasRole('DOCTOR')")
+    public IntelligenceDtos.DosageCalculationResponse calculateDosage(@RequestBody IntelligenceDtos.DosageCalculationRequest request) {
+        return intelligenceService.calculateDosage(request);
+    }
+
+    @PostMapping("/doctor/alternatives")
+    @PreAuthorize("hasRole('DOCTOR')")
+    public IntelligenceDtos.FormularySubstituteResponse suggestAlternatives(@RequestBody IntelligenceDtos.FormularySubstituteRequest request) {
+        return intelligenceService.suggestAlternatives(request);
+    }
+
+    @PostMapping("/doctor/copilot")
+    @PreAuthorize("hasRole('DOCTOR')")
+    public IntelligenceDtos.CopilotResponse askCopilot(@RequestBody IntelligenceDtos.CopilotRequest request) {
+        return intelligenceService.askCopilot(request);
+    }
+
+    @PostMapping(value = "/doctor/ocr", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('DOCTOR')")
+    public IntelligenceDtos.OcrPrescriptionResponse extractPrescriptionFromImage(
+            @RequestParam("image") org.springframework.web.multipart.MultipartFile image) {
+        return intelligenceService.extractPrescriptionFromImage(image);
+    }
+
+    @PostMapping(value = "/doctor/scribe/audio", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('DOCTOR')")
+    public IntelligenceDtos.AudioScribeResponse transcribeAudioToSoapNote(
+            @RequestParam("audio") org.springframework.web.multipart.MultipartFile audio) {
+        return intelligenceService.transcribeAudioToSoapNote(audio);
+    }
 }

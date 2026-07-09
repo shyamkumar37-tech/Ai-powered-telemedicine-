@@ -56,6 +56,8 @@ public class PharmacistServiceImpl implements PharmacistService {
         item.setQuantityAvailable(request.quantityAvailable());
         item.setReorderLevel(request.reorderLevel());
         item.setUnitLabel(request.unitLabel());
+        item.setExpiryDate(request.expiryDate());
+        item.setBatchNumber(request.batchNumber());
         return toInventoryResponse(inventoryRepository.save(item));
     }
 
@@ -96,7 +98,9 @@ public class PharmacistServiceImpl implements PharmacistService {
                 item.getQuantityAvailable(),
                 item.getReorderLevel(),
                 item.getUnitLabel(),
-                item.getQuantityAvailable() <= item.getReorderLevel()
+                item.getQuantityAvailable() <= item.getReorderLevel(),
+                item.getExpiryDate(),
+                item.getBatchNumber()
         );
     }
 

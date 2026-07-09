@@ -1,12 +1,15 @@
 import { useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, Brain, HeartHandshake, ShieldCheck } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, ArrowRight, Brain, HeartHandshake, ShieldCheck, User, LogOut } from "lucide-react";
 import { MentalHealthIllustration } from "../../components/illustrations/CareIllustrations";
-import SectionCard from "../../components/SectionCard";
-import Button from "../../components/ui/Button";
-import Badge from "../../components/ui/Badge";
 import { useLanguage } from "../../context/LanguageContext";
+import { useAuth } from "../../context/AuthContext";
 import { runMentalHealthAssessment, sendMentalHealthChat } from "../services/aiService";
 import { getApiErrorMessage } from "../../utils/apiError";
+import PatientSidebar from "../../components/PatientSidebar";
+import "../../pages/patient-booking-override.css";
+import { buildLoginRedirect } from "../../utils/authSession";
+import LanguageSwitcher from "../../components/LanguageSwitcher";
 
 const moodOptions = [
   { label: "Very low", emoji: "Low", value: "very-low", tone: "danger" },
@@ -24,7 +27,10 @@ const initialForm = {
 };
 
 export default function MentalHealthCheckinPage() {
+  const { auth, logout } = useAuth();
+  const navigate = useNavigate();
   const { t } = useLanguage();
+  
   const [step, setStep] = useState(0);
   const [form, setForm] = useState(initialForm);
   const [messages, setMessages] = useState([]);
@@ -74,7 +80,6 @@ export default function MentalHealthCheckinPage() {
 
   const submitCheckin = async () => {
     const summary = `Mood: ${form.mood || "not selected"}, Stress: ${form.stress}/10, Anxiety: ${form.anxiety}/10. Notes: ${form.notes || "No additional notes."}`;
-
     setLoading(true);
     setError("");
 
@@ -91,171 +96,232 @@ export default function MentalHealthCheckinPage() {
       ]);
       setStatus(`Risk level: ${assessment.riskLevel}`);
     } catch (err) {
-      setError(getApiErrorMessage(err, t("unableLoadMentalHealth")));
+      setError(getApiErrorMessage(err, "Unable to load mental health guidance."));
     } finally {
       setLoading(false);
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate(buildLoginRedirect(""), { replace: true });
+  };
+
   return (
-    <div className="space-y-6">
-      <SectionCard
-        title="Mental health check-in"
-        action={
-          <div className="flex flex-wrap gap-2">
-            <Badge tone="success" className="gap-1 normal-case tracking-normal">
-              <ShieldCheck className="h-3.5 w-3.5" />
-              Private & secure
-            </Badge>
-            <Badge tone="info" className="gap-1 normal-case tracking-normal">
-              <HeartHandshake className="h-3.5 w-3.5" />
-              Gentle guided flow
-            </Badge>
-          </div>
-        }
-      >
-        <div className="rounded-[1.8rem] bg-gradient-to-br from-blue-50 via-white to-emerald-50 p-6">
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-center">
+    <div id="tct-root">
+      <div className="app">
+        <PatientSidebar />
+        
+        <main id="page-main" role="main">
+          <div className="topbar">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                Step {step + 1} of {steps.length}
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold text-ink text-decoration-none">{currentStep.title}</h2>
-              <p className="mt-2 max-w-2xl text-sm text-slate-600">{currentStep.description}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Badge tone="info">{progress}% complete</Badge>
-                <Badge tone="success">Calm guided flow</Badge>
+              <h1 className="serif">Mental Health Check-in</h1>
+              <p>Track your well-being with daily structured reflections.</p>
+              <div className="eyebrow-pill" style={{ marginTop: '12px' }}>
+                <Brain />Support
+              </div>
+              <div className="signed-in" style={{ marginTop: '12px', marginLeft: '8px' }}>
+                <User />
+                Signed in as {auth?.fullName || "Anita Patient"}
               </div>
             </div>
-            <div className="mx-auto w-full max-w-[220px]">
-              <MentalHealthIllustration />
+            <div className="topbar-right">
+              <LanguageSwitcher customClass="lang" hideLabel />
+              <button className="btn-ghost" onClick={handleLogout} aria-label="Log out">
+                <LogOut />Logout
+              </button>
             </div>
           </div>
 
-          <div className="mt-5 h-2 overflow-hidden rounded-full bg-slate-200">
-            <div className="h-full rounded-full bg-gradient-to-r from-blue-600 to-emerald-500 transition-all duration-300" style={{ width: `${progress}%` }} />
-          </div>
+          <div className="booking-layout">
+            <div style={{ flex: 1, padding: '32px', maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
+              
+              <div className="tct-animate-in">
+                
+                {/* Guided Flow */}
+                <div className="doctor-card" style={{ cursor: 'default', padding: '0', overflow: 'hidden' }}>
+                  
+                  {/* Header / Graphic */}
+                  <div style={{ background: 'var(--tct-panel)', borderBottom: '1px solid var(--tct-panel-line-strong)', padding: '32px' }}>
+                    <div className="doctors-grid" style={{ gridTemplateColumns: 'minmax(0,1fr) 180px', gap: '32px', alignItems: 'center' }}>
+                      <div>
+                        <p style={{ fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--tct-teal)' }}>
+                          Step {step + 1} of {steps.length}
+                        </p>
+                        <h2 style={{ fontSize: '24px', fontWeight: '600', color: '#FFFFFF', marginTop: '8px', marginBottom: '8px' }}>{currentStep.title}</h2>
+                        <p style={{ fontSize: '15px', color: 'var(--tct-text-secondary)', lineHeight: '1.5', maxWidth: '600px' }}>{currentStep.description}</p>
+                        
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+                          <span style={{ fontSize: '11px', padding: '4px 10px', background: 'rgba(255,255,255,0.05)', color: 'var(--tct-text-muted)', borderRadius: '100px', fontWeight: '600' }}>{progress}% Complete</span>
+                          <span style={{ fontSize: '11px', padding: '4px 10px', background: 'var(--tct-teal-dim)', color: 'var(--tct-teal)', borderRadius: '100px', fontWeight: '600' }}>Private & Secure</span>
+                        </div>
+                      </div>
+                      <div style={{ margin: '0 auto', opacity: 0.8 }}>
+                        <MentalHealthIllustration />
+                      </div>
+                    </div>
 
-          <div className="mt-8">
-            {currentStep.key === "mood" ? (
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-                {moodOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    className={`rounded-[1.4rem] border bg-white p-5 text-left shadow-sm transition ${form.mood === option.value ? "border-blue-300 ring-2 ring-blue-100" : "border-slate-200 hover:border-slate-300"}`}
-                    onClick={() => setForm((current) => ({ ...current, mood: option.value }))}
-                  >
-                    <div className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                      option.tone === "danger"
-                        ? "bg-rose-50 text-rose-600"
-                        : option.tone === "warning"
-                          ? "bg-amber-50 text-amber-600"
-                          : option.tone === "success"
-                            ? "bg-emerald-50 text-emerald-600"
-                            : "bg-blue-50 text-blue-600"
-                    }`}>{option.emoji}</div>
-                    <p className="mt-4 text-base font-semibold text-ink">{option.label}</p>
-                  </button>
-                ))}
-              </div>
-            ) : null}
+                    <div style={{ height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '100px', overflow: 'hidden', marginTop: '32px' }}>
+                      <div style={{ height: '100%', width: `${progress}%`, background: 'var(--tct-teal)', transition: 'width 0.3s ease' }}></div>
+                    </div>
+                  </div>
 
-            {currentStep.key === "stress" || currentStep.key === "anxiety" ? (
-              <div className="rounded-[1.6rem] bg-white p-6 shadow-sm">
-                <div className="flex items-center justify-between gap-4 text-sm text-slate-500">
-                  <span>0 - calm</span>
-                  <span className="text-xl font-semibold text-ink">{form[currentStep.key]}/10</span>
-                  <span>10 - intense</span>
+                  {/* Body */}
+                  <div style={{ padding: '32px' }}>
+                    
+                    {currentStep.key === "mood" ? (
+                      <div className="doctors-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px' }}>
+                        {moodOptions.map(option => (
+                          <button
+                            key={option.value}
+                            onClick={() => setForm(c => ({...c, mood: option.value}))}
+                            style={{
+                              padding: '24px 16px',
+                              background: form.mood === option.value ? 'var(--tct-teal-dim)' : 'rgba(255,255,255,0.02)',
+                              border: form.mood === option.value ? '1px solid var(--tct-teal)' : '1px solid var(--tct-panel-line-strong)',
+                              borderRadius: '16px',
+                              textAlign: 'center',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease',
+                              outline: 'none',
+                              color: form.mood === option.value ? 'var(--tct-teal)' : '#FFFFFF'
+                            }}
+                          >
+                            <div style={{ 
+                              display: 'inline-flex', padding: '4px 12px', borderRadius: '100px', fontSize: '13px', fontWeight: '600', marginBottom: '16px',
+                              background: option.tone === 'danger' ? 'rgba(239, 68, 68, 0.1)' : option.tone === 'warning' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(255,255,255,0.05)',
+                              color: option.tone === 'danger' ? 'var(--tct-coral)' : option.tone === 'warning' ? '#C9A24B' : 'var(--tct-text-secondary)'
+                            }}>
+                              {option.emoji}
+                            </div>
+                            <p style={{ fontSize: '16px', fontWeight: '600' }}>{option.label}</p>
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+
+                    {currentStep.key === "stress" || currentStep.key === "anxiety" ? (
+                      <div style={{ padding: '32px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--tct-panel-line-strong)', borderRadius: '16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: 'var(--tct-text-muted)', fontSize: '14px', fontWeight: '500', marginBottom: '24px' }}>
+                          <span>0 - Calm</span>
+                          <span style={{ fontSize: '24px', fontWeight: '700', color: '#FFFFFF' }}>{form[currentStep.key]}/10</span>
+                          <span>10 - Intense</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="10"
+                          value={form[currentStep.key]}
+                          onChange={(e) => setForm(c => ({...c, [currentStep.key]: Number(e.target.value)}))}
+                          style={{ width: '100%', cursor: 'pointer', accentColor: 'var(--tct-teal)' }}
+                        />
+                      </div>
+                    ) : null}
+
+                    {currentStep.key === "notes" ? (
+                      <div>
+                        <textarea
+                          placeholder="Share anything that may help your care team understand today better."
+                          value={form.notes}
+                          onChange={(e) => setForm(c => ({...c, notes: e.target.value}))}
+                          style={{
+                            width: '100%', minHeight: '160px', padding: '16px', background: 'rgba(255,255,255,0.03)',
+                            border: '1px solid var(--tct-panel-line-strong)', borderRadius: '12px', color: '#FFFFFF', fontSize: '15px', resize: 'vertical', outline: 'none', lineHeight: '1.5'
+                          }}
+                        />
+                      </div>
+                    ) : null}
+
+                    {error && <p style={{ fontSize: '14px', color: 'var(--tct-coral)', marginTop: '16px', fontWeight: '500' }}>{error}</p>}
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '32px' }}>
+                      <button className="btn-secondary" disabled={step === 0 || loading} onClick={goBack} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <ArrowLeft size={16} /> Back
+                      </button>
+                      
+                      {step < steps.length - 1 ? (
+                        <button className="btn-primary" onClick={goNext} disabled={loading} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          Continue <ArrowRight size={16} />
+                        </button>
+                      ) : (
+                        <button className="btn-primary" onClick={submitCheckin} disabled={loading} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {loading ? "Saving..." : "Save check-in"}
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="10"
-                  value={form[currentStep.key]}
-                  className="mt-6 w-full accent-blue-600"
-                  onChange={(event) => setForm((current) => ({ ...current, [currentStep.key]: Number(event.target.value) }))}
-                />
-              </div>
-            ) : null}
 
-            {currentStep.key === "notes" ? (
-              <div className="rounded-[1.6rem] bg-white p-6 shadow-sm">
-                <textarea
-                  className="field min-h-40 resize-y"
-                  placeholder="Share anything that may help your care team understand today better."
-                  value={form.notes}
-                  onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
-                />
-              </div>
-            ) : null}
-          </div>
+                {/* History & AI Guidance */}
+                <div className="doctors-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '24px', marginTop: '24px', alignItems: 'start' }}>
+                  
+                  {/* Mood Pattern */}
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+                       <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#FFFFFF' }}>Mood History Snapshot</h3>
+                       <div style={{ flex: 1, height: '1px', background: 'var(--tct-panel-line)' }}></div>
+                    </div>
+                    
+                    <div className="doctor-card" style={{ cursor: 'default', padding: '24px' }}>
+                      
+                      <div style={{ display: 'flex', height: '140px', alignItems: 'flex-end', gap: '12px', marginBottom: '24px' }}>
+                        {[42, 54, 46, 68, 58, 72, 64].map((value, idx) => (
+                          <div key={idx} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ width: '100%', height: `${value}%`, background: idx === 6 ? 'var(--tct-teal)' : 'rgba(255,255,255,0.1)', borderRadius: '4px 4px 0 0', transition: 'height 0.3s ease' }}></div>
+                            <span style={{ fontSize: '11px', fontWeight: '600', color: idx === 6 ? 'var(--tct-teal)' : 'var(--tct-text-muted)' }}>
+                              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][idx]}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
 
-          {error ? <p className="mt-4 text-sm text-red-600">{error}</p> : null}
+                      <div style={{ background: 'rgba(255,255,255,0.02)', borderLeft: '3px solid var(--tct-teal)', padding: '16px', borderRadius: '8px', marginBottom: '16px' }}>
+                        <p style={{ fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', color: 'var(--tct-teal)', marginBottom: '8px' }}>Pattern Insight</p>
+                        <p style={{ fontSize: '14px', lineHeight: '1.5', color: '#E2E8F0' }}>Stress tends to rise mid-week. Completing a short check-in earlier in the day can help us spot patterns faster.</p>
+                      </div>
 
-          <div className="mt-8 flex flex-wrap justify-between gap-3">
-            <Button variant="secondary" leftIcon={<ArrowLeft className="h-4 w-4" />} onClick={goBack} disabled={step === 0 || loading}>
-              Back
-            </Button>
-            {step < steps.length - 1 ? (
-              <Button rightIcon={<ArrowRight className="h-4 w-4" />} onClick={goNext} disabled={loading}>
-                Continue
-              </Button>
-            ) : (
-              <Button loading={loading} leftIcon={<Brain className="h-4 w-4" />} onClick={submitCheckin}>
-                Save check-in
-              </Button>
-            )}
-          </div>
-        </div>
-      </SectionCard>
+                      <div style={{ background: 'rgba(239, 68, 68, 0.1)', borderLeft: '3px solid var(--tct-coral)', padding: '16px', borderRadius: '8px' }}>
+                        <p style={{ fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', color: 'var(--tct-coral)', marginBottom: '8px' }}>Support Prompt</p>
+                        <p style={{ fontSize: '14px', lineHeight: '1.5', color: '#E2E8F0' }}>If you are feeling overwhelmed or unsafe, contact your doctor or trusted caregiver immediately.</p>
+                      </div>
 
-      <SectionCard title="Mood history snapshot">
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_0.9fr]">
-          <div className="rounded-[1.6rem] bg-white p-5 shadow-sm">
-            <div className="flex h-52 items-end gap-3">
-              {[42, 54, 46, 68, 58, 72, 64].map((value, index) => (
-                <div key={`mood-${index}`} className="flex flex-1 flex-col items-center gap-2">
-                  <div
-                    className="w-full rounded-full bg-gradient-to-t from-blue-600 via-sky-500 to-emerald-400"
-                    style={{ height: `${value}%` }}
-                  />
-                  <span className="text-[11px] font-medium text-slate-400">
-                    {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][index]}
-                  </span>
+                    </div>
+                  </div>
+
+                  {/* AI Output */}
+                  {(status || messages.length > 0) && (
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+                         <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#FFFFFF' }}>AI Guidance</h3>
+                         <div style={{ flex: 1, height: '1px', background: 'var(--tct-panel-line)' }}></div>
+                      </div>
+
+                      <div className="doctor-card" style={{ cursor: 'default', padding: '24px' }}>
+                        {status && (
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '16px', padding: '12px 16px', background: 'rgba(255,255,255,0.05)', borderRadius: '100px' }}>
+                            <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--tct-teal)' }}>{status}</span>
+                          </div>
+                        )}
+                        
+                        <div className="space-y-4">
+                          {messages.map((msg, idx) => (
+                            <div key={idx} style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--tct-panel-line-strong)', borderRadius: '12px' }}>
+                              <p style={{ fontSize: '14px', lineHeight: '1.6', color: '#E2E8F0' }}>{msg.text}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                 </div>
-              ))}
-            </div>
-          </div>
-          <div className="space-y-4">
-            <div className="rounded-[1.6rem] bg-blue-50 p-5">
-              <p className="text-sm font-semibold text-blue-700">Pattern insight</p>
-              <p className="mt-3 text-sm leading-6 text-slate-700">
-                Stress tends to rise mid-week. Completing a short check-in earlier in the day can help us spot patterns faster.
-              </p>
-            </div>
-            <div className="rounded-[1.6rem] bg-emerald-50 p-5">
-              <p className="text-sm font-semibold text-emerald-700">Support prompt</p>
-              <p className="mt-3 text-sm leading-6 text-slate-700">
-                If you are feeling overwhelmed or unsafe, contact your doctor or trusted caregiver immediately.
-              </p>
-            </div>
-          </div>
-        </div>
-      </SectionCard>
 
-      {status || messages.length ? (
-        <SectionCard title="AI guidance">
-          {status ? <p className="mb-4 text-sm font-medium text-amber-700">{status}</p> : null}
-          <div className="space-y-3">
-            {messages.map((message, index) => (
-              <div key={`${message.role}-${index}`} className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                {message.text}
               </div>
-            ))}
+
+            </div>
           </div>
-        </SectionCard>
-      ) : null}
+        </main>
+      </div>
     </div>
   );
 }

@@ -21,7 +21,9 @@ public class PharmacistDtos {
             String formulation,
             @Min(0) int quantityAvailable,
             @Min(0) int reorderLevel,
-            @NotBlank String unitLabel
+            @NotBlank String unitLabel,
+            LocalDate expiryDate,
+            String batchNumber
     ) {}
 
     public record InventoryResponse(
@@ -31,7 +33,9 @@ public class PharmacistDtos {
             int quantityAvailable,
             int reorderLevel,
             String unitLabel,
-            boolean lowStock
+            boolean lowStock,
+            LocalDate expiryDate,
+            String batchNumber
     ) {}
 
     public record DispenseActionRequest(

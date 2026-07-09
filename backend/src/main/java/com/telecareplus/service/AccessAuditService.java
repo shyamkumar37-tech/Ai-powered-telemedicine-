@@ -35,4 +35,28 @@ public class AccessAuditService {
         entry.setUserAgent(request == null ? null : request.getHeader("User-Agent"));
         accessAuditLogRepository.save(entry);
     }
+
+    @Transactional
+    public void logAuditAction(
+            CustomUserPrincipal principal,
+            String action,
+            String resourceType,
+            String outcome,
+            String denialReason,
+            HttpServletRequest request
+    ) {
+        AccessAuditLog entry = new AccessAuditLog();
+        entry.setActorUserId(principal == null ? null : principal.getUserId());
+        entry.setActorRole(principal == null || principal.getRole() == null ? null : principal.getRole().name());
+        // Since we don't have a specific patient ID in all generic requests, we can leave it null or extract it if needed.
+        // If we want it, we'd need to pull it from path variables, but that's complex. Null is okay for generic actions.
+        entry.setAction(action);
+        entry.setResourceType(resourceType);
+        entry.setOutcome(outcome);
+        entry.setDenialReason(denialReason);
+        entry.setRequestId(request == null ? null : request.getHeader("X-Request-Id"));
+        entry.setSourceIp(request == null ? null : request.getRemoteAddr());
+        entry.setUserAgent(request == null ? null : request.getHeader("User-Agent"));
+        accessAuditLogRepository.save(entry);
+    }
 }

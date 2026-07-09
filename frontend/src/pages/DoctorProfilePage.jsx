@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import FormField from "../components/FormField";
 import LocalizedText from "../components/LocalizedText";
-import SectionCard from "../components/SectionCard";
+import PremiumSectionCard from "../components/PremiumSectionCard";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { fetchDoctorProfile, updateDoctorProfile } from "../services/telecareService";
@@ -40,19 +39,23 @@ export default function DoctorProfilePage() {
 
   if (error) {
     return (
-      <SectionCard title={t("doctorProfile")}>
-        <ErrorStateCard
-          title={t("unableLoadProfile")}
-          body={error}
-        />
-      </SectionCard>
+      <div className="tcd-animate-in">
+        <PremiumSectionCard title={t("doctorProfile")}>
+          <ErrorStateCard
+            title={t("unableLoadProfile")}
+            body={error}
+          />
+        </PremiumSectionCard>
+      </div>
     );
   }
   if (!form) {
     return (
-      <SectionCard title={t("doctorProfile")}>
-        <LoadingSkeleton lines={4} />
-      </SectionCard>
+      <div className="tcd-animate-in">
+        <PremiumSectionCard title={t("doctorProfile")}>
+          <LoadingSkeleton lines={4} />
+        </PremiumSectionCard>
+      </div>
     );
   }
 
@@ -75,36 +78,37 @@ export default function DoctorProfilePage() {
   ]);
 
   return (
-    <SectionCard
-      title={t("doctorProfile")}
-      action={
-        <button
-          className="btn-primary"
-          onClick={async () => {
-            try {
-              const data = await updateDoctorProfile(auth.profileId ?? auth.userId, form);
-              pushToast({
-                type: "success",
-                title: t("saveProfile"),
-                message: t("profileSavedFor").replace("{name}", data?.user?.fullName || form.fullName || t("doctor"))
-              });
-            } catch (err) {
-              const message = getApiErrorMessage(err, t("unableSaveProfile"));
-              pushToast({ type: "error", title: t("unableSaveProfile"), message });
-            }
-          }}
-        >
-          {t("saveProfile")}
-        </button>
-      }
-    >
-      <div className="grid gap-4 md:grid-cols-2">
+    <div className="tcd-animate-in space-y-6">
+      <PremiumSectionCard
+        title={t("doctorProfile")}
+        action={
+          <button
+            className="doc-btn doc-btn-primary"
+            onClick={async () => {
+              try {
+                const data = await updateDoctorProfile(auth.profileId ?? auth.userId, form);
+                pushToast({
+                  type: "success",
+                  title: t("saveProfile"),
+                  message: t("profileSavedFor").replace("{name}", data?.user?.fullName || form.fullName || t("doctor"))
+                });
+              } catch (err) {
+                const message = getApiErrorMessage(err, t("unableSaveProfile"));
+                pushToast({ type: "error", title: t("unableSaveProfile"), message });
+              }
+            }}
+          >
+            {t("saveProfile")}
+          </button>
+        }
+      >
+      <div className="doc-grid-2">
         {Object.entries(form).map(([key, value]) => {
           if (key === "preferredLanguage") {
             return (
               <label key={key} className="block space-y-2">
-                <span className="text-sm font-medium text-slate-600">{fieldLabels[key]}</span>
-                <select className="field" value={value ?? "en"} onChange={(e) => setForm({ ...form, [key]: e.target.value })}>
+                <span className="text-sm font-medium text-slate-400">{fieldLabels[key]}</span>
+                <select className="doc-input" value={value ?? "en"} onChange={(e) => setForm({ ...form, [key]: e.target.value })}>
                   {languageOptions.map((option) => (
                     <option key={option.code} value={option.code}>{translateDisplayText(language, option.code)}</option>
                   ))}
@@ -113,23 +117,34 @@ export default function DoctorProfilePage() {
             );
           }
 
+          const isTextArea = key === 'bio' || key === 'availabilitySummary' || key === 'specialization';
+
           return (
-            <FormField
-              key={key}
-              label={fieldLabels[key] || key}
-              value={value ?? ""}
-              helperText={translatableValueFields.has(key) && value && language !== "en"
-                ? (
-                  <span className="text-xs text-slate-500">
-                    {translateUiText("Preview")}: <LocalizedText as="span" value={value} />
-                  </span>
-                )
-                : null}
-              onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-            />
+            <label key={key} className={`block space-y-2 ${isTextArea ? 'col-span-1 md:col-span-2' : ''}`}>
+              <span className="text-sm font-medium text-slate-400">{fieldLabels[key] || key}</span>
+              {isTextArea ? (
+                <textarea
+                  className="doc-input min-h-28 resize-y"
+                  value={value ?? ""}
+                  onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+                />
+              ) : (
+                <input
+                  className="doc-input"
+                  value={value ?? ""}
+                  onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+                />
+              )}
+              {translatableValueFields.has(key) && value && language !== "en" && (
+                <span className="text-xs text-slate-400 block mt-1">
+                  {translateUiText("Preview")}: <LocalizedText as="span" className="text-teal-400" value={value} />
+                </span>
+              )}
+            </label>
           );
         })}
       </div>
-    </SectionCard>
+    </PremiumSectionCard>
+    </div>
   );
 }

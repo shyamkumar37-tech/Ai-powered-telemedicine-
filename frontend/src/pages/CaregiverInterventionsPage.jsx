@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Badge from "../components/Badge";
 import LocalizedText from "../components/LocalizedText";
-import SectionCard from "../components/SectionCard";
+import CaregiverPremiumCard from "../components/CaregiverPremiumCard";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { createCaregiverIntervention, fetchCaregiverAlerts, fetchCaregiverInterventions, fetchLinkedPatients, updateCaregiverInterventionStatus } from "../services/telecareService";
@@ -9,6 +9,7 @@ import { getApiErrorMessage } from "../utils/apiError";
 import { translateDisplayText } from "../utils/i18n";
 import LoadingSkeleton from "../components/ui/LoadingSkeleton";
 import EmptyStateCard from "../components/ui/EmptyStateCard";
+import { ClipboardList, Users, Phone, Car, Stethoscope, Home, UserCheck, ShieldAlert, CheckCircle } from "lucide-react";
 
 export default function CaregiverInterventionsPage() {
   const { auth } = useAuth();
@@ -84,17 +85,22 @@ export default function CaregiverInterventionsPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="tcd-animate-in space-y-6">
       <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-        <SectionCard
-          title={t("interventionHub")}
-        action={
-          <button
-            className="btn-primary"
-            type="button"
-            aria-label={t("logIntervention")}
-            data-voice-label={t("logIntervention")}
-            onClick={async () => {
+        <CaregiverPremiumCard
+          title={
+            <span className="inline-flex items-center gap-2">
+              <ClipboardList className="h-5 w-5 text-indigo-400" />
+              <span>{t("interventionHub")}</span>
+            </span>
+          }
+          action={
+            <button
+              className="cg-btn cg-btn-primary"
+              type="button"
+              aria-label={t("logIntervention")}
+              data-voice-label={t("logIntervention")}
+              onClick={async () => {
                 const trimmedNotes = form.notes.trim();
                 if (!trimmedNotes) {
                   setFieldErrors({ notes: t("caregiverNotesRequired") });
@@ -126,40 +132,42 @@ export default function CaregiverInterventionsPage() {
             </button>
           }
         >
-          <div className="grid gap-4">
+          <div className="grid gap-5">
             <label className="block space-y-2">
-              <span className="text-sm font-medium text-slate-600">{t("patient")}</span>
-              <select className="field" aria-label={t("patient")} data-voice-label={t("patient")} value={form.patientId} onChange={(e) => setForm({ ...form, patientId: e.target.value })}>
+              <span className="text-sm font-medium text-slate-300">{t("patient")}</span>
+              <select className="cg-input" aria-label={t("patient")} data-voice-label={t("patient")} value={form.patientId} onChange={(e) => setForm({ ...form, patientId: e.target.value })}>
                 {patients.map((patient) => (
                   <option key={patient.patientId} value={patient.patientId}>{patient.patientName}</option>
                 ))}
               </select>
             </label>
             <label className="block space-y-2">
-              <span className="text-sm font-medium text-slate-600">{t("linkedAlert")}</span>
-              <select className="field" aria-label={t("linkedAlert")} data-voice-label={t("linkedAlert")} value={form.alertNotificationId} onChange={(e) => setForm({ ...form, alertNotificationId: e.target.value })}>
+              <span className="text-sm font-medium text-slate-300">{t("linkedAlert")}</span>
+              <select className="cg-input" aria-label={t("linkedAlert")} data-voice-label={t("linkedAlert")} value={form.alertNotificationId} onChange={(e) => setForm({ ...form, alertNotificationId: e.target.value })}>
                 <option value="">{t("noLinkedAlert")}</option>
                 {alerts.map((alert) => (
                   <option key={alert.id} value={alert.id}>{alert.patientName} - {translateDisplayText(language, alert.severity)}</option>
                 ))}
               </select>
             </label>
+            <div className="grid grid-cols-2 gap-4">
+              <label className="block space-y-2">
+                <span className="text-sm font-medium text-slate-300">{t("actionTaken")}</span>
+                <select className="cg-input" aria-label={t("actionTaken")} data-voice-label={t("actionTaken")} value={form.actionType} onChange={(e) => setForm({ ...form, actionType: e.target.value })}>
+                  {actionOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                </select>
+              </label>
+              <label className="block space-y-2">
+                <span className="text-sm font-medium text-slate-300">{t("patientWellbeing")}</span>
+                <select className="cg-input" aria-label={t("patientWellbeing")} data-voice-label={t("patientWellbeing")} value={form.wellbeingStatus} onChange={(e) => setForm({ ...form, wellbeingStatus: e.target.value })}>
+                  {wellbeingOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                </select>
+              </label>
+            </div>
             <label className="block space-y-2">
-              <span className="text-sm font-medium text-slate-600">{t("actionTaken")}</span>
-              <select className="field" aria-label={t("actionTaken")} data-voice-label={t("actionTaken")} value={form.actionType} onChange={(e) => setForm({ ...form, actionType: e.target.value })}>
-                {actionOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-              </select>
-            </label>
-            <label className="block space-y-2">
-              <span className="text-sm font-medium text-slate-600">{t("patientWellbeing")}</span>
-              <select className="field" aria-label={t("patientWellbeing")} data-voice-label={t("patientWellbeing")} value={form.wellbeingStatus} onChange={(e) => setForm({ ...form, wellbeingStatus: e.target.value })}>
-                {wellbeingOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-              </select>
-            </label>
-            <label className="block space-y-2">
-              <span className="text-sm font-medium text-slate-600">{t("caregiverNotes")}</span>
+              <span className="text-sm font-medium text-slate-300">{t("caregiverNotes")}</span>
               <textarea
-                className="field min-h-28 resize-y"
+                className="cg-input min-h-[120px] resize-y"
                 aria-label={t("caregiverNotes")}
                 data-voice-label={t("caregiverNotes")}
                 aria-invalid={Boolean(fieldErrors.notes)}
@@ -172,17 +180,24 @@ export default function CaregiverInterventionsPage() {
                   }
                 }}
               />
-              {fieldErrors.notes ? <p id="caregiver-intervention-notes-error" className="text-xs text-red-600" role="alert">{fieldErrors.notes}</p> : null}
+              {fieldErrors.notes ? <p id="caregiver-intervention-notes-error" className="text-xs text-red-400" role="alert">{fieldErrors.notes}</p> : null}
             </label>
-            <label className="flex items-center gap-3 text-sm text-slate-600">
-              <input type="checkbox" aria-label={t("followUpNeeded")} data-voice-label={t("followUpNeeded")} checked={form.followUpNeeded} onChange={(e) => setForm({ ...form, followUpNeeded: e.target.checked })} />
+            <label className="flex items-center gap-3 text-sm text-slate-300 bg-white/5 p-3 rounded-xl border border-white/10 cursor-pointer hover:bg-white/10 transition-colors">
+              <input type="checkbox" className="w-4 h-4 text-indigo-500 rounded bg-black/50 border-white/20 focus:ring-indigo-500 focus:ring-offset-slate-900" aria-label={t("followUpNeeded")} data-voice-label={t("followUpNeeded")} checked={form.followUpNeeded} onChange={(e) => setForm({ ...form, followUpNeeded: e.target.checked })} />
               {t("followUpNeeded")}
             </label>
           </div>
-          {message ? <p className="mt-4 text-sm text-emerald-600" role="status" aria-live="polite">{message}</p> : null}
-          {error ? <p className="mt-4 text-sm text-red-600" role="alert">{error}</p> : null}
-        </SectionCard>
-        <SectionCard title={t("priorityPatientQueue")}>
+          {message ? <p className="mt-4 text-sm text-emerald-400 bg-emerald-500/10 p-3 rounded-lg flex items-center gap-2" role="status" aria-live="polite"><CheckCircle className="w-4 h-4"/>{message}</p> : null}
+          {error ? <p className="mt-4 text-sm text-red-400 bg-red-500/10 p-3 rounded-lg flex items-center gap-2" role="alert"><ShieldAlert className="w-4 h-4"/>{error}</p> : null}
+        </CaregiverPremiumCard>
+        <CaregiverPremiumCard 
+          title={
+            <span className="inline-flex items-center gap-2">
+              <Users className="h-5 w-5 text-indigo-400" />
+              <span>{t("priorityPatientQueue")}</span>
+            </span>
+          }
+        >
           {loading ? <LoadingSkeleton lines={4} /> : null}
           {!loading && !priorityPatients.length ? (
             <EmptyStateCard
@@ -191,31 +206,41 @@ export default function CaregiverInterventionsPage() {
             />
           ) : null}
           <div className="space-y-4">
-            {priorityPatients.map((patient) => (
-              <div key={patient.patientId} className="rounded-2xl bg-mist p-5">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-ink">{patient.patientName}</p>
-                    <p className="text-sm text-slate-500">{t("pendingRemindersLabel")}: {patient.pendingReminders} | {t("adherenceLabel")}: {patient.adherencePercentage}%</p>
+            {priorityPatients.map((patient) => {
+              const needsReview = (Array.isArray(patient.activeAlerts) ? patient.activeAlerts.length : 0) > 0;
+              return (
+                <div key={patient.patientId} className={`rounded-xl p-5 border ${needsReview ? 'bg-indigo-500/10 border-indigo-500/20' : 'bg-white/5 border-white/10'} hover:border-white/20 transition-colors`}>
+                  <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                    <div>
+                      <p className="font-semibold text-white">{patient.patientName}</p>
+                      <p className="text-sm text-slate-400 mt-1">{t("pendingRemindersLabel")}: <span className="text-amber-400">{patient.pendingReminders}</span> | {t("adherenceLabel")}: <span className="text-teal-400">{patient.adherencePercentage}%</span></p>
+                    </div>
+                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${needsReview ? 'bg-indigo-500 text-white shadow-[0_0_10px_rgba(99,102,241,0.5)]' : 'bg-white/10 text-slate-300'}`}>
+                      {needsReview ? t("needsReview") : t("stableQueue")}
+                    </span>
                   </div>
-                  <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-clinic">
-                    {(Array.isArray(patient.activeAlerts) ? patient.activeAlerts.length : 0) > 0 ? t("needsReview") : t("stableQueue")}
-                  </span>
+                  {Array.isArray(patient.activeAlerts) && patient.activeAlerts.length ? (
+                    <div className="mt-3 space-y-2 border-t border-white/10 pt-3">
+                      {(Array.isArray(patient.activeAlerts) ? patient.activeAlerts : []).slice(0, 2).map((item) => (
+                        <LocalizedText key={item} as="div" className="text-sm text-slate-300 bg-black/20 p-2 rounded-lg" value={item} />
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
-                {Array.isArray(patient.activeAlerts) && patient.activeAlerts.length ? (
-                  <div className="mt-3 space-y-2">
-                    {(Array.isArray(patient.activeAlerts) ? patient.activeAlerts : []).slice(0, 2).map((item) => (
-                      <LocalizedText key={item} as="div" className="rounded-2xl bg-white px-4 py-3 text-sm text-slate-700" value={item} />
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-            ))}
+              );
+            })}
           </div>
-        </SectionCard>
+        </CaregiverPremiumCard>
       </div>
 
-      <SectionCard title={t("interventionTimeline")}>
+      <CaregiverPremiumCard 
+        title={
+          <span className="inline-flex items-center gap-2">
+            <ClipboardList className="h-5 w-5 text-indigo-400" />
+            <span>{t("interventionTimeline")}</span>
+          </span>
+        }
+      >
         {loading ? <LoadingSkeleton lines={4} /> : null}
         {!loading && !interventions.length ? (
           <EmptyStateCard
@@ -223,52 +248,96 @@ export default function CaregiverInterventionsPage() {
             body={translateDisplayText(language, "Interventions will appear here after you log an action.")}
           />
         ) : null}
-        <div className="space-y-4">
-          {interventions.map((item) => (
-            <div key={item.id} className="rounded-2xl bg-mist p-5">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="font-semibold text-ink">{item.patientName}</p>
-                  <p className="text-sm text-slate-500">{new Date(item.actionAt).toLocaleString()}</p>
+        <div className="relative border-l-2 border-white/10 ml-4 space-y-8 py-4">
+          {interventions.map((item) => {
+            const isResolved = item.status === "RESOLVED";
+            
+            // Map action type to icon
+            let ActionIcon = UserCheck;
+            if (item.actionType === "CALLED_PATIENT") ActionIcon = Phone;
+            if (item.actionType === "CONFIRMED_MEDICINE_TAKEN") ActionIcon = CheckCircle;
+            if (item.actionType === "TOOK_PATIENT_TO_HOSPITAL") ActionIcon = Car;
+            if (item.actionType === "DOCTOR_INFORMED") ActionIcon = Stethoscope;
+            if (item.actionType === "HOME_CHECK_COMPLETED") ActionIcon = Home;
+            
+            return (
+              <div key={item.id} className="relative pl-6">
+                <div className={`absolute -left-[13px] top-1 h-6 w-6 rounded-full border-4 border-[var(--cg-panel)] flex items-center justify-center ${isResolved ? 'bg-teal-500' : 'bg-amber-500'}`}>
+                  {isResolved ? <CheckCircle className="h-3 w-3 text-[var(--cg-panel)]" /> : <div className="h-2 w-2 rounded-full bg-[var(--cg-panel)]" />}
                 </div>
-                <div className="flex items-center gap-3">
-                  {item.alertSeverity ? <Badge value={item.alertSeverity} /> : null}
-                  <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">{translateDisplayText(language, item.status)}</span>
+                
+                <div className="rounded-xl border border-white/10 bg-white/5 p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-3 mb-4 border-b border-white/10 pb-4">
+                    <div>
+                      <p className="font-semibold text-white">{item.patientName}</p>
+                      <p className="text-xs text-slate-400 mt-1">{new Date(item.actionAt).toLocaleString()}</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {item.alertSeverity ? <Badge value={item.alertSeverity} /> : null}
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${isResolved ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}>
+                        {translateDisplayText(language, item.status)}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="p-1.5 rounded-md bg-white/10 text-indigo-400">
+                      <ActionIcon className="w-4 h-4" />
+                    </div>
+                    <p className="font-medium text-white">{translateDisplayText(language, item.actionType)}</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="bg-black/20 p-3 rounded-lg">
+                      <p className="text-xs text-slate-400 mb-1">{t("wellbeingStatus")}</p>
+                      <p className="text-sm font-medium text-slate-200">{translateDisplayText(language, item.wellbeingStatus)}</p>
+                    </div>
+                    {item.alertMessage ? (
+                      <div className="bg-black/20 p-3 rounded-lg">
+                        <p className="text-xs text-slate-400 mb-1">{t("linkedAlert")}</p>
+                        <LocalizedText as="p" className="text-sm font-medium text-red-400 line-clamp-1" value={item.alertMessage} />
+                      </div>
+                    ) : null}
+                  </div>
+                  
+                  {item.notes ? (
+                    <div className="bg-white/5 p-3 rounded-lg border border-white/5 mb-4">
+                      <LocalizedText as="p" className="text-sm text-slate-300" value={item.notes} />
+                    </div>
+                  ) : null}
+                  
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                    {item.followUpNeeded ? (
+                      <span className="rounded-full bg-amber-500/10 border border-amber-500/20 px-3 py-1 text-xs font-semibold text-amber-400">
+                        {t("followUpNeeded")}
+                      </span>
+                    ) : <span />}
+                    {!isResolved ? (
+                      <button
+                        className="cg-btn cg-btn-ghost text-xs"
+                        type="button"
+                        aria-label={t("markResolved")}
+                        data-voice-label={t("markResolved")}
+                        onClick={async () => {
+                          try {
+                            await updateCaregiverInterventionStatus(item.id, { status: "RESOLVED" });
+                            await load();
+                          } catch (err) {
+                            setError(getApiErrorMessage(err, t("unableUpdateIntervention")));
+                          }
+                        }}
+                      >
+                        <CheckCircle className="w-3.5 h-3.5" />
+                        {t("markResolved")}
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
               </div>
-              <p className="mt-3 text-sm font-semibold text-clinic">{translateDisplayText(language, item.actionType)}</p>
-              <p className="mt-2 text-sm text-slate-600">{t("wellbeingStatus")}: {translateDisplayText(language, item.wellbeingStatus)}</p>
-              {item.alertMessage ? (
-                <p className="mt-2 text-sm text-slate-500">
-                  {t("linkedAlert")}: <LocalizedText value={item.alertMessage} />
-                </p>
-              ) : null}
-              {item.notes ? <LocalizedText as="p" className="mt-2 text-sm text-slate-700" value={item.notes} /> : null}
-              <div className="mt-4 flex flex-wrap items-center gap-3">
-                {item.followUpNeeded ? <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">{t("followUpNeeded")}</span> : null}
-                {item.status !== "RESOLVED" ? (
-                  <button
-                    className="btn-secondary"
-                    type="button"
-                    aria-label={t("markResolved")}
-                    data-voice-label={t("markResolved")}
-                    onClick={async () => {
-                      try {
-                        await updateCaregiverInterventionStatus(item.id, { status: "RESOLVED" });
-                        await load();
-                      } catch (err) {
-                        setError(getApiErrorMessage(err, t("unableUpdateIntervention")));
-                      }
-                    }}
-                  >
-                    {t("markResolved")}
-                  </button>
-                ) : null}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
-      </SectionCard>
+      </CaregiverPremiumCard>
     </div>
   );
 }

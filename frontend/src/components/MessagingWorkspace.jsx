@@ -45,13 +45,29 @@ export default function MessagingWorkspace({ role, title }) {
         (requestSignal) => loader(profileId, { signal: requestSignal }),
         { signal }
       );
+      
       const safeContacts = Array.isArray(data?.contacts) ? data.contacts : [];
       const safeMessages = Array.isArray(data?.messages) ? data.messages : [];
-      const dedupedContacts = safeContacts.filter((contact, index, list) =>
+      
+      // Filter out test/dev/QA data
+      const isTestEntity = (str) => {
+        if (!str) return false;
+        const s = str.toLowerCase();
+        return s.includes("test") || s.includes("qa ") || s.includes("ui send");
+      };
+
+      const filteredContacts = safeContacts.filter(c => !isTestEntity(c.displayName));
+      const filteredMessages = safeMessages.filter(m => 
+        !isTestEntity(m.subject) && !isTestEntity(m.body) && 
+        !isTestEntity(m.senderName) && !isTestEntity(m.recipientName)
+      );
+
+      const dedupedContacts = filteredContacts.filter((contact, index, list) =>
         list.findIndex((item) => item.userId === contact.userId) === index
       );
+      
       setContacts(dedupedContacts);
-      setMessages(safeMessages);
+      setMessages(filteredMessages);
       setSelectedUserId((current) => current ?? dedupedContacts[0]?.userId ?? null);
       setError("");
     } catch (err) {

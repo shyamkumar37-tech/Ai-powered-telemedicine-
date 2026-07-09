@@ -20,6 +20,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     long countByPatientId(Long patientId);
     long countByPatientIdAndStatusIn(Long patientId, List<AppointmentStatus> statuses);
     boolean existsByDoctorIdAndAppointmentDateTime(Long doctorId, LocalDateTime appointmentDateTime);
+    boolean existsByIdAndPatientIdAndDoctorId(Long appointmentId, Long patientId, Long doctorId);
 
     @Query("""
         select case when count(appointment) > 0 then true else false end

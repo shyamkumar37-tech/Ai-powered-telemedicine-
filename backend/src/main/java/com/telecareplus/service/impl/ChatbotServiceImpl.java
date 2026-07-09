@@ -120,6 +120,40 @@ public class ChatbotServiceImpl implements ChatbotService {
         boolean asksGeneralSymptoms = containsAny(lower, "headache", "tired", "fatigue", "weakness", "body ache", "aches");
         boolean emergencyQuestion = containsAny(lower, "chest pain", "severe breath", "faint", "fainting", "unconscious", "collapse");
 
+        if (generativeAiService.isConfigured()) {
+            String systemPrompt = "You are the TeleCare+ AI Assistant, an empathetic and highly knowledgeable clinical chatbot. "
+                    + "Your purpose is to answer the patient's question safely using their clinical context. "
+                    + "Do NOT prescribe new medications. Advise in-person emergency care for CRITICAL symptoms. "
+                    + "Context:\n"
+                    + "- Diseases: " + (diseases.isBlank() ? "None" : diseases) + "\n"
+                    + "- Latest Triage: " + latestTriage + "\n"
+                    + "- Latest Vitals: Temp " + latestTemperature + ", BP " + latestBloodPressure + ", SpO2 " + latestSpo2 + "\n"
+                    + "- Active Alerts: " + activeAlerts.size() + "\n"
+                    + "- Recent Medicines: " + summarizeMedicines(recentMedicationItems) + "\n"
+                    + "Respond in JSON format containing 'answer' (string), 'urgencyLabel' (INFO, ROUTINE, WARNING, or CRITICAL), and 'suggestedActions' (array of strings).";
+
+            Optional<GenerativeAiService.GeneratedReply> aiReply = generativeAiService.generateClinicalReply(systemPrompt, question);
+            if (aiReply.isPresent()) {
+                GenerativeAiService.GeneratedReply reply = aiReply.get();
+                PatientChatMessage msg = new PatientChatMessage();
+                msg.setPatient(patient);
+                msg.setQuestion(question);
+                msg.setAnswer(reply.answer());
+                msg.setUrgencyLabel(reply.urgencyLabel());
+                msg.setSuggestedActions(String.join("|", reply.suggestedActions()));
+                patientChatMessageRepository.save(msg);
+
+                return new ChatbotDtos.ChatResponse(
+                        msg.getId(),
+                        msg.getQuestion(),
+                        msg.getAnswer(),
+                        msg.getUrgencyLabel(),
+                        reply.suggestedActions(),
+                        msg.getCreatedAt() != null ? msg.getCreatedAt() : java.time.LocalDateTime.now()
+                );
+            }
+        }
+
         if (emergencyQuestion) {
             urgency = "CRITICAL";
             answer = "I checked your question against the latest TeleCare+ record, and these symptoms sound high risk. Do not wait for a routine teleconsult. Seek immediate in-person medical attention and inform your caregiver now.";

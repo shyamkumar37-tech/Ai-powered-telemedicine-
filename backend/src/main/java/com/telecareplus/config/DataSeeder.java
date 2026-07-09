@@ -594,6 +594,8 @@ public class DataSeeder implements CommandLineRunner {
             metformin.setQuantityAvailable(120);
             metformin.setReorderLevel(40);
             metformin.setUnitLabel("tablets");
+            metformin.setBatchNumber("B-90210");
+            metformin.setExpiryDate(java.time.LocalDate.now().plusMonths(14));
             pharmacyInventoryItemRepository.save(metformin);
 
             PharmacyInventoryItem amoxicillin = new PharmacyInventoryItem();
@@ -603,7 +605,20 @@ public class DataSeeder implements CommandLineRunner {
             amoxicillin.setQuantityAvailable(24);
             amoxicillin.setReorderLevel(30);
             amoxicillin.setUnitLabel("capsules");
+            amoxicillin.setBatchNumber("AX-330");
+            amoxicillin.setExpiryDate(java.time.LocalDate.now().plusDays(45)); // Expiring soon
             pharmacyInventoryItemRepository.save(amoxicillin);
+
+            PharmacyInventoryItem lisinopril = new PharmacyInventoryItem();
+            lisinopril.setPharmacist(pharmacist);
+            lisinopril.setMedicineName("Lisinopril");
+            lisinopril.setFormulation("10mg tablet");
+            lisinopril.setQuantityAvailable(15);
+            lisinopril.setReorderLevel(50);
+            lisinopril.setUnitLabel("tablets");
+            lisinopril.setBatchNumber("L-4412");
+            lisinopril.setExpiryDate(java.time.LocalDate.now().plusYears(2));
+            pharmacyInventoryItemRepository.save(lisinopril);
         }
 
         if (dispenseRecordRepository.findByPrescriptionId(prescription.getId()).isEmpty()) {

@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Badge from "../components/Badge";
-import SectionCard from "../components/SectionCard";
+import PharmacistPremiumCard from "../components/PharmacistPremiumCard";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { fetchPharmacistDispensing, updateDispenseRecord } from "../services/telecareService";
@@ -10,6 +10,7 @@ import { translateDisplayText } from "../utils/i18n";
 import LoadingSkeleton from "../components/ui/LoadingSkeleton";
 import EmptyStateCard from "../components/ui/EmptyStateCard";
 import ErrorStateCard from "../components/ui/ErrorStateCard";
+import { Clock, Filter, ShoppingBag } from "lucide-react";
 
 export default function PharmacistDispensingPage() {
   const { auth } = useAuth();
@@ -19,6 +20,8 @@ export default function PharmacistDispensingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [edits, setEdits] = useState({});
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [sortBy, setSortBy] = useState("NEWEST");
 
   useEffect(() => {
     setLoading(true);
@@ -43,8 +46,70 @@ export default function PharmacistDispensingPage() {
       .finally(() => setLoading(false));
   }, [pharmacistId, t]);
 
+  const getTimeInQueue = (createdAt) => {
+    if (!createdAt) return "Unknown";
+    const created = new Date(createdAt);
+    const now = new Date();
+    const diffMs = now - created;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHrs = Math.floor(diffMins / 60);
+    if (diffHrs > 24) return `${Math.floor(diffHrs / 24)} days`;
+    if (diffHrs > 0) return `${diffHrs} hr ${diffMins % 60} min`;
+    return `${diffMins} min`;
+  };
+
+  const filteredAndSortedRecords = useMemo(() => {
+    let result = [...records];
+    if (statusFilter !== "ALL") {
+      result = result.filter(r => r.status === statusFilter);
+    }
+    
+    result.sort((a, b) => {
+      const dateA = new Date(a.createdAt || 0).getTime();
+      const dateB = new Date(b.createdAt || 0).getTime();
+      if (sortBy === "NEWEST") return dateB - dateA;
+      if (sortBy === "OLDEST") return dateA - dateB;
+      // URGENT: prioritize pending, then oldest
+      if (sortBy === "URGENT") {
+        if (a.status === "PENDING_VERIFICATION" && b.status !== "PENDING_VERIFICATION") return -1;
+        if (a.status !== "PENDING_VERIFICATION" && b.status === "PENDING_VERIFICATION") return 1;
+        return dateA - dateB; // oldest pending first
+      }
+      return 0;
+    });
+    return result;
+  }, [records, statusFilter, sortBy]);
+
   return (
-    <SectionCard title={t("dispensingQueue")}>
+    <PharmacistPremiumCard
+      title={
+        <span className="inline-flex items-center gap-2">
+          <ShoppingBag className="h-5 w-5 text-emerald-400" />
+          {t("dispensingQueue")}
+        </span>
+      }
+      action={
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10 text-sm">
+            <Filter className="h-4 w-4 text-slate-400" />
+            <select className="bg-transparent text-white outline-none" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+              <option value="ALL" className="text-slate-900">All Statuses</option>
+              <option value="PENDING_VERIFICATION" className="text-slate-900">Pending</option>
+              <option value="VERIFIED" className="text-slate-900">Verified</option>
+              <option value="DISPENSED" className="text-slate-900">Dispensed</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10 text-sm">
+            <Clock className="h-4 w-4 text-slate-400" />
+            <select className="bg-transparent text-white outline-none" value={sortBy} onChange={e => setSortBy(e.target.value)}>
+              <option value="NEWEST" className="text-slate-900">Newest First</option>
+              <option value="OLDEST" className="text-slate-900">Oldest First</option>
+              <option value="URGENT" className="text-slate-900">Urgent (Wait Time)</option>
+            </select>
+          </div>
+        </div>
+      }
+    >
       {loading ? <LoadingSkeleton lines={4} /> : null}
       {error ? (
         <ErrorStateCard
@@ -52,37 +117,45 @@ export default function PharmacistDispensingPage() {
           body={error}
         />
       ) : null}
-      {!loading && !error && !records.length ? (
+      {!loading && !error && !filteredAndSortedRecords.length ? (
         <EmptyStateCard
           title={t("noDispensingQueue")}
-          body={translateDisplayText(language, "Dispensing requests will appear here once prescriptions are approved.")}
+          body={translateDisplayText(language, "No requests match the current filters.")}
         />
       ) : null}
       <div className="space-y-4">
-        {records.map((record) => (
-          <div key={record.id} className="rounded-2xl bg-mist p-5">
+        {filteredAndSortedRecords.map((record) => (
+          <div key={record.id} className="rounded-2xl bg-white/5 p-5 border border-white/10 hover:bg-white/10 transition-colors">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="font-semibold text-ink">{record.patientName}</p>
-                <p className="text-sm text-slate-500">{record.doctorName}</p>
+                <p className="text-lg font-bold text-white">{record.patientName}</p>
+                <p className="text-sm text-slate-400">Prescribed by {record.doctorName}</p>
               </div>
-              <div className="flex items-center gap-3">
-                <Badge value={record.status} />
-                <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">{t("pickupCode")}: {record.pickupCode}</span>
+              <div className="flex flex-col items-end gap-2">
+                <div className="flex items-center gap-3">
+                  <Badge value={record.status} />
+                  <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold text-emerald-400 border border-emerald-400/20">
+                    {t("pickupCode")}: {record.pickupCode}
+                  </span>
+                </div>
+                {record.status === "PENDING_VERIFICATION" && (
+                  <span className="text-xs font-medium text-amber-400 flex items-center gap-1">
+                    <Clock className="h-3 w-3" /> Waiting: {getTimeInQueue(record.createdAt)}
+                  </span>
+                )}
               </div>
             </div>
             <div className="mt-4 space-y-2">
               {(Array.isArray(record.medicines) ? record.medicines : []).map((item) => (
-                <div key={item} className="rounded-2xl bg-white px-4 py-3 text-sm text-slate-700">
+                <div key={item} className="rounded-xl bg-slate-900/50 border border-white/5 px-4 py-3 text-sm text-slate-200">
                   {item}
                 </div>
               ))}
             </div>
-            <div className="mt-4 grid gap-4 md:grid-cols-[180px_1fr_auto]">
+            <div className="mt-5 grid gap-4 md:grid-cols-[200px_1fr_auto]">
               <select
-                className="field"
+                className="ph-input"
                 aria-label={t("dispensedStatus")}
-                data-voice-label={t("dispensedStatus")}
                 value={edits[record.id]?.status || record.status}
                 onChange={(event) =>
                   setEdits((current) => ({
@@ -96,10 +169,9 @@ export default function PharmacistDispensingPage() {
                 <option value="DISPENSED">{t("dispensedStatus")}</option>
               </select>
               <input
-                className="field"
+                className="ph-input"
                 placeholder={t("verificationNotes")}
                 aria-label={t("verificationNotes")}
-                data-voice-label={t("verificationNotes")}
                 value={edits[record.id]?.verificationNotes || ""}
                 onChange={(event) =>
                   setEdits((current) => ({
@@ -110,9 +182,8 @@ export default function PharmacistDispensingPage() {
               />
               <button
                 type="button"
-                className="btn-primary"
+                className="ph-btn ph-btn-primary"
                 aria-label={t("update")}
-                data-voice-label={t("update")}
                 onClick={async () => {
                   try {
                     const updated = await updateDispenseRecord(record.id, edits[record.id]);
@@ -126,12 +197,14 @@ export default function PharmacistDispensingPage() {
                 {t("update")}
               </button>
             </div>
-            {record.dispensedAt ? <p className="mt-3 text-sm text-slate-500">{t("dispensedAt")}: {new Date(record.dispensedAt).toLocaleString()}</p> : null}
-            {record.followUpDate ? <p className="mt-1 text-sm text-slate-500">{t("followUpDateLabel")}: {record.followUpDate}</p> : null}
-            {record.status ? <p className="mt-1 text-xs font-semibold text-slate-400">{translateDisplayText(language, formatDisplayValue(record.status))}</p> : null}
+            <div className="mt-4 flex items-center gap-4 text-xs text-slate-500 border-t border-white/10 pt-4">
+              {record.createdAt && <p>Received: {new Date(record.createdAt).toLocaleString()}</p>}
+              {record.dispensedAt && <p>Dispensed: {new Date(record.dispensedAt).toLocaleString()}</p>}
+              {record.followUpDate && <p>{t("followUpDateLabel")}: {record.followUpDate}</p>}
+            </div>
           </div>
         ))}
       </div>
-    </SectionCard>
+    </PharmacistPremiumCard>
   );
 }

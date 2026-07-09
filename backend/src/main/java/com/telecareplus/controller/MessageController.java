@@ -39,7 +39,7 @@ public class MessageController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('PATIENT','DOCTOR','CAREGIVER','PHARMACIST') and @accessScopeAuthorizer.canSendPatientMessage(authentication, #request.patientId(), #request.senderUserId())")
+    @PreAuthorize("hasAnyRole('PATIENT','DOCTOR','CAREGIVER','PHARMACIST') and @accessScopeAuthorizer.canSendPatientMessage(authentication, #request.patientId(), #request.senderUserId(), #request.recipientUserId())")
     public MessageDtos.MessageResponse send(@Valid @RequestBody MessageDtos.MessageRequest request) {
         return messagingService.sendMessage(request);
     }

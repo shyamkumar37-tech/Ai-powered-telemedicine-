@@ -14,4 +14,10 @@ public class CaregiverDtos {
             double adherencePercentage,
             List<String> activeAlerts
     ) {}
+
+    public record CaregiverInviteRequest(
+            @NotNull Long patientId,
+            @NotNull String email,
+            @NotNull String relationship
+    ) {}
 }

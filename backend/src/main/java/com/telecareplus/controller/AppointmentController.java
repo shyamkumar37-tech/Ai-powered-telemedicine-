@@ -16,7 +16,7 @@ public class AppointmentController {
     private final AppointmentService appointmentService;
 
     @PostMapping
-    @PreAuthorize("hasRole('PATIENT') and @accessScopeAuthorizer.canAccessPatient(authentication, #request.patientId())")
+    @PreAuthorize("hasRole('PATIENT') and @accessScopeAuthorizer.canCreateAppointment(authentication, #request.patientId(), #request.triageAssessmentId())")
     public AppointmentDtos.AppointmentResponse create(@Valid @RequestBody AppointmentDtos.AppointmentRequest request) {
         return appointmentService.createAppointment(request);
     }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import AlertStrip from "../components/AlertStrip";
-import SectionCard from "../components/SectionCard";
+import CaregiverPremiumCard from "../components/CaregiverPremiumCard";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { fetchLinkedPatients, linkCaregiver } from "../services/telecareService";
@@ -8,17 +8,20 @@ import { getApiErrorMessage } from "../utils/apiError";
 import LoadingSkeleton from "../components/ui/LoadingSkeleton";
 import EmptyStateCard from "../components/ui/EmptyStateCard";
 import ErrorStateCard from "../components/ui/ErrorStateCard";
-import { Activity, Users } from "lucide-react";
+import { useToast } from "../components/ui/ToastProvider";
+import { Activity, Users, Link as LinkIcon, UserCircle, ShieldAlert } from "lucide-react";
 
 export default function CaregiverMonitoringPage() {
   const { auth } = useAuth();
   const { language, t } = useLanguage();
   const caregiverId = auth.profileId ?? auth.userId;
   const [linkedPatients, setLinkedPatients] = useState([]);
-  const [patientId, setPatientId] = useState("1");
-  const [message, setMessage] = useState("");
+  const [patientId, setPatientId] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const { pushToast } = useToast();
+  
+  const lastUpdated = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   const load = () => {
     setLoading(true);
@@ -36,44 +39,61 @@ export default function CaregiverMonitoringPage() {
   }, [caregiverId]);
 
   return (
-    <div className="space-y-6">
-      <SectionCard
-        title={(
+    <div className="tcd-animate-in space-y-6">
+      <CaregiverPremiumCard
+        title={
           <span className="inline-flex items-center gap-2">
-            <Users className="h-5 w-5 text-teal-600" />
+            <LinkIcon className="h-5 w-5 text-indigo-400" />
             <span>{t("linkPatient")}</span>
           </span>
-        )}
-        action={
+        }
+      >
+        <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 max-w-xl">
+          <label className="flex-1 w-full block space-y-2">
+            <span className="text-sm font-medium text-slate-400">Patient ID or Invite Code</span>
+            <input 
+              className="cg-input w-full" 
+              placeholder="e.g. 1 or P-98765"
+              value={patientId} 
+              onChange={(e) => setPatientId(e.target.value)} 
+            />
+          </label>
           <button
-            className="btn-primary"
+            className="cg-btn cg-btn-primary w-full sm:w-auto"
             onClick={async () => {
+              if (!patientId.trim()) {
+                setError("Please enter a valid Patient ID");
+                return;
+              }
               try {
                 setError("");
-                setMessage("");
                 await linkCaregiver({ patientId: Number(patientId), caregiverId });
-                setMessage(t("patientLinkedSuccessfully"));
+                pushToast({ type: "success", title: "Patient Linked", message: t("patientLinkedSuccessfully") });
+                setPatientId("");
                 await load();
               } catch (err) {
-                setError(getApiErrorMessage(err, t("unableLinkPatient")));
+                const errMsg = getApiErrorMessage(err, t("unableLinkPatient"));
+                setError(errMsg);
+                pushToast({ type: "error", title: "Linking Failed", message: errMsg });
               }
             }}
           >
             {t("link")}
           </button>
+        </div>
+        {error ? <p className="mt-3 text-sm text-red-400 flex items-center gap-1"><ShieldAlert className="w-4 h-4" />{error}</p> : null}
+      </CaregiverPremiumCard>
+      
+      <CaregiverPremiumCard
+        title={
+          <div className="flex items-center justify-between w-full">
+            <span className="inline-flex items-center gap-2">
+              <Activity className="h-5 w-5 text-indigo-400" />
+              <span>{t("linkedPatientMonitoring")}</span>
+            </span>
+            <span className="text-xs font-medium text-slate-400">Updated {lastUpdated}</span>
+          </div>
         }
-      >
-        <input className="field max-w-xs" value={patientId} onChange={(e) => setPatientId(e.target.value)} />
-        {message ? <p className="mt-4 text-sm text-emerald-600">{message}</p> : null}
-        {error ? <p className="mt-4 text-sm text-red-600">{error}</p> : null}
-      </SectionCard>
-      <SectionCard
-        title={(
-          <span className="inline-flex items-center gap-2">
-            <Activity className="h-5 w-5 text-teal-600" />
-            <span>{t("linkedPatientMonitoring")}</span>
-          </span>
-        )}
       >
         {loading ? <LoadingSkeleton lines={4} /> : null}
         {error ? (
@@ -90,23 +110,45 @@ export default function CaregiverMonitoringPage() {
             body={t("linkPatient")}
           />
         ) : null}
-        <div className="space-y-4">
+        
+        <div className="grid gap-6 lg:grid-cols-2 mt-4">
           {(Array.isArray(linkedPatients) ? linkedPatients : []).map((patient) => (
-            <div key={patient.patientId} className="rounded-2xl bg-mist p-5">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="font-semibold text-ink">{patient.patientName}</p>
-                  <p className="text-sm text-slate-500">{t("pendingReminders")}: {patient.pendingReminders}</p>
+            <div key={patient.patientId} className="rounded-xl border border-white/5 bg-white/5 p-5 hover:bg-white/10 transition-colors">
+              <div className="flex items-center gap-4 mb-5 pb-5 border-b border-white/10">
+                <div className="w-12 h-12 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                  <UserCircle className="w-8 h-8" />
                 </div>
-                <p className="text-sm font-semibold text-clinic">{t("adherence")}: {patient.adherencePercentage}%</p>
+                <div>
+                  <h3 className="font-semibold text-lg text-white">{patient.patientName}</h3>
+                  <p className="text-sm text-slate-400">ID: {patient.patientId}</p>
+                </div>
               </div>
-              <div className="mt-4">
-                <AlertStrip items={Array.isArray(patient.activeAlerts) ? patient.activeAlerts : []} />
+              
+              <div className="grid grid-cols-2 gap-4 mb-5">
+                <div className="bg-black/20 rounded-lg p-3 text-center">
+                  <p className="text-xs text-slate-400 mb-1">{t("pendingReminders")}</p>
+                  <p className="text-xl font-semibold text-amber-400">{patient.pendingReminders}</p>
+                </div>
+                <div className="bg-black/20 rounded-lg p-3 text-center">
+                  <p className="text-xs text-slate-400 mb-1">{t("adherence")}</p>
+                  <p className="text-xl font-semibold text-teal-400">{patient.adherencePercentage}%</p>
+                </div>
               </div>
+
+              {patient.activeAlerts && patient.activeAlerts.length > 0 ? (
+                <div>
+                  <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Active Alerts</p>
+                  <AlertStrip items={patient.activeAlerts} />
+                </div>
+              ) : (
+                <div className="bg-teal-500/10 text-teal-400 rounded-lg p-3 text-sm text-center">
+                  No active alerts for this patient
+                </div>
+              )}
             </div>
           ))}
         </div>
-      </SectionCard>
+      </CaregiverPremiumCard>
     </div>
   );
 }

@@ -1,64 +1,56 @@
-import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
+import * as ToastPrimitive from "@radix-ui/react-toast";
+import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { X } from "lucide-react";
 
 const ToastContext = createContext({ pushToast: () => {} });
 
-const DEFAULT_DURATION = 4200;
-
-function buildId() {
-  return `toast-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
-
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
-  const timers = useRef(new Map());
 
-  const removeToast = useCallback((id) => {
-    setToasts((current) => current.filter((toast) => toast.id !== id));
-    const timer = timers.current.get(id);
-    if (timer) {
-      clearTimeout(timer);
-      timers.current.delete(id);
-    }
+  const pushToast = useCallback(({ title, message, type = "info", duration = 4200 }) => {
+    const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    setToasts((prev) => [...prev, { id, title, message, type, duration }]);
   }, []);
-
-  const pushToast = useCallback((toast) => {
-    const next = {
-      id: buildId(),
-      type: toast?.type || "info",
-      title: toast?.title || "",
-      message: toast?.message || "",
-      duration: Number.isFinite(toast?.duration) ? toast.duration : DEFAULT_DURATION
-    };
-    setToasts((current) => [next, ...current].slice(0, 4));
-    if (next.duration > 0) {
-      const timer = setTimeout(() => removeToast(next.id), next.duration);
-      timers.current.set(next.id, timer);
-    }
-  }, [removeToast]);
 
   const value = useMemo(() => ({ pushToast }), [pushToast]);
 
   return (
     <ToastContext.Provider value={value}>
-      {children}
-      <div className="toast-stack" role="status" aria-live="polite">
-        {toasts.map((toast) => (
-          <div key={toast.id} className={`toast-card toast-card--${toast.type}`}>
-            <div>
-              {toast.title ? <p className="toast-title">{toast.title}</p> : null}
-              {toast.message ? <p className="toast-message">{toast.message}</p> : null}
+      <ToastPrimitive.Provider swipeDirection="right">
+        {children}
+        {toasts.map(({ id, title, message, type, duration }) => (
+          <ToastPrimitive.Root
+            key={id}
+            duration={duration}
+            onOpenChange={(open) => {
+              if (!open) {
+                setToasts((prev) => prev.filter((t) => t.id !== id));
+              }
+            }}
+            className={`
+              bg-tcd-panel border border-tcd-panel-line text-white p-4 rounded-lg shadow-lg
+              data-[state=open]:animate-in data-[state=open]:slide-in-from-right-full
+              data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right-full
+              data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)]
+              data-[swipe=cancel]:translate-x-0 data-[swipe=cancel]:transition-transform
+              data-[swipe=end]:animate-out data-[swipe=end]:slide-out-to-right-full
+              ${type === 'error' ? 'border-red-500/50 bg-red-500/10' : ''}
+              ${type === 'success' ? 'border-emerald-500/50 bg-emerald-500/10' : ''}
+            `}
+          >
+            <div className="flex gap-3 items-start justify-between">
+              <div>
+                {title && <ToastPrimitive.Title className="font-semibold text-sm">{title}</ToastPrimitive.Title>}
+                {message && <ToastPrimitive.Description className="text-sm text-slate-300 mt-1">{message}</ToastPrimitive.Description>}
+              </div>
+              <ToastPrimitive.Close className="text-slate-400 hover:text-white transition-colors">
+                <X className="w-4 h-4" />
+              </ToastPrimitive.Close>
             </div>
-            <button
-              className="toast-close"
-              type="button"
-              onClick={() => removeToast(toast.id)}
-              aria-label="Dismiss notification"
-            >
-              x
-            </button>
-          </div>
+          </ToastPrimitive.Root>
         ))}
-      </div>
+        <ToastPrimitive.Viewport className="fixed bottom-0 right-0 p-6 flex flex-col gap-2 w-[390px] max-w-[100vw] m-0 list-none z-[100] outline-none" />
+      </ToastPrimitive.Provider>
     </ToastContext.Provider>
   );
 }

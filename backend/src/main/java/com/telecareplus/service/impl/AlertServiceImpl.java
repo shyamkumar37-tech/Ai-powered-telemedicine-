@@ -75,6 +75,19 @@ public class AlertServiceImpl implements AlertService {
         return alertStreamService.registerCaregiverStream(caregiverId);
     }
 
+    @Override
+    public AlertDtos.AlertResponse actionAlert(Long alertId, String action) {
+        AlertNotification alert = alertNotificationRepository.findById(alertId)
+                .orElseThrow(() -> new ResourceNotFoundException("Alert not found"));
+        
+        if ("acknowledge".equalsIgnoreCase(action) || "dismiss".equalsIgnoreCase(action) || "snooze".equalsIgnoreCase(action)) {
+            alert.setActive(false);
+            alert = alertNotificationRepository.save(alert);
+        }
+        
+        return toAlertResponse(alert);
+    }
+
     private AlertDtos.AlertResponse toAlertResponse(AlertNotification alert) {
         return new AlertDtos.AlertResponse(
                 alert.getId(),

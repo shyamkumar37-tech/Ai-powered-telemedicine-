@@ -1,14 +1,24 @@
 import { useEffect, useState } from "react";
 import LocalizedText from "../components/LocalizedText";
-import SectionCard from "../components/SectionCard";
+import PremiumSectionCard from "../components/PremiumSectionCard";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { fetchPopulationInsights } from "../services/telecareService";
 import { getApiErrorMessage } from "../utils/apiError";
 import { translateDisplayText } from "../utils/i18n";
-import LoadingSkeleton from "../components/ui/LoadingSkeleton";
 import EmptyStateCard from "../components/ui/EmptyStateCard";
 import ErrorStateCard from "../components/ui/ErrorStateCard";
+import { Globe, Users, TrendingUp, BarChart3, Activity } from "lucide-react";
+
+function PopulationSkeleton() {
+  return (
+    <div className="doc-grid-3">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="doc-skeleton h-32 w-full rounded-xl" />
+      ))}
+    </div>
+  );
+}
 
 export default function DoctorPopulationInsightsPage() {
   const { auth } = useAuth();
@@ -27,32 +37,57 @@ export default function DoctorPopulationInsightsPage() {
       })
       .catch((err) => setError(getApiErrorMessage(err, t("unableLoadPopulationInsights"))))
       .finally(() => setLoading(false));
-  }, [doctorId]);
+  }, [doctorId, t]);
+
+  const getIconForTitle = (title) => {
+    const tLower = String(title).toLowerCase();
+    if (tLower.includes("risk") || tLower.includes("critical")) return <Activity className="h-5 w-5 text-rose-400" />;
+    if (tLower.includes("trend") || tLower.includes("increase")) return <TrendingUp className="h-5 w-5 text-teal-400" />;
+    if (tLower.includes("population") || tLower.includes("patient")) return <Users className="h-5 w-5 text-indigo-400" />;
+    return <BarChart3 className="h-5 w-5 text-blue-400" />;
+  };
 
   return (
-    <SectionCard title={t("populationHealthInsights")}>
-      {loading ? <LoadingSkeleton lines={4} /> : null}
-      {error ? (
-        <ErrorStateCard
-          title={t("unableLoadPopulationInsights")}
-          body={error}
-        />
-      ) : null}
-      {!loading && !error && !insights.length ? (
-        <EmptyStateCard
-          title={t("noPopulationInsights")}
-          body={translateDisplayText(language, "Insights will appear once population signals are available.")}
-        />
-      ) : null}
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {insights.map((item) => (
-          <div key={`${item.title}-${item.value}`} className="rounded-2xl bg-mist p-5">
-            <LocalizedText as="p" className="text-sm text-slate-500" value={item.title} />
-            <p className="mt-2 text-2xl font-semibold text-ink">{item.value}</p>
-            <LocalizedText as="p" className="mt-3 text-sm text-slate-700" value={item.detail} />
-          </div>
-        ))}
-      </div>
-    </SectionCard>
+    <div className="space-y-6 tcd-animate-in">
+      <PremiumSectionCard title={(
+        <span className="flex items-center gap-2">
+          <Globe className="h-5 w-5 text-teal-400" />
+          {t("populationHealthInsights")}
+        </span>
+      )}>
+        {loading ? <PopulationSkeleton /> : null}
+        {error ? (
+          <ErrorStateCard
+            title={t("unableLoadPopulationInsights")}
+            body={error}
+          />
+        ) : null}
+        {!loading && !error && !insights.length ? (
+          <EmptyStateCard
+            title={t("noPopulationInsights")}
+            body={translateDisplayText(language, "Insights will appear once population signals are available.")}
+          />
+        ) : null}
+        <div className="doc-grid-3">
+          {insights.map((item, index) => (
+            <div key={`${item.title}-${index}`} className="group flex flex-col justify-between rounded-xl border border-white/5 bg-white/5 p-5 transition-colors hover:bg-white/10 hover:border-white/10">
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-black/20">
+                    {getIconForTitle(item.title)}
+                  </div>
+                </div>
+                <LocalizedText as="p" className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-2" value={item.title} />
+                <p className="text-3xl font-semibold text-white tracking-tight">{item.value}</p>
+              </div>
+              
+              <div className="mt-6 border-t border-white/5 pt-4">
+                <LocalizedText as="p" className="text-sm text-slate-400 leading-relaxed" value={item.detail} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </PremiumSectionCard>
+    </div>
   );
 }

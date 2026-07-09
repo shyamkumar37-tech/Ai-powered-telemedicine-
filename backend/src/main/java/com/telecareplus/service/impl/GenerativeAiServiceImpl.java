@@ -49,7 +49,7 @@ public class GenerativeAiServiceImpl implements GenerativeAiService {
             return Optional.empty();
         }
 
-        Optional<String> generatedText = generateTextResponse(systemPrompt, userPrompt);
+        Optional<String> generatedText = generateRawText(systemPrompt, userPrompt);
         return generatedText.flatMap((content) -> parseGeneratedReply(content, currentProviderName()));
     }
 
@@ -81,13 +81,14 @@ public class GenerativeAiServiceImpl implements GenerativeAiService {
                 + System.lineSeparator()
                 + text;
 
-        return generateTextResponse(systemPrompt, userPrompt)
+        return generateRawText(systemPrompt, userPrompt)
                 .map(String::trim)
                 .filter((value) -> !value.isBlank())
                 .map((value) -> new TranslatedText(value, currentProviderName(), normalizedSource, normalizedTarget));
     }
 
-    private Optional<String> generateTextResponse(String systemPrompt, String userPrompt) {
+    @Override
+    public Optional<String> generateRawText(String systemPrompt, String userPrompt) {
         if (!isConfigured()) {
             return Optional.empty();
         }

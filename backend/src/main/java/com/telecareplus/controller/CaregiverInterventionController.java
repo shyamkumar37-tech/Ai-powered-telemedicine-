@@ -16,7 +16,7 @@ public class CaregiverInterventionController {
     private final CaregiverInterventionService caregiverInterventionService;
 
     @PostMapping
-    @PreAuthorize("hasRole('CAREGIVER') and @accessScopeAuthorizer.canAccessCaregiver(authentication, #request.caregiverId()) and @accessScopeAuthorizer.canAccessPatientCare(authentication, #request.patientId())")
+    @PreAuthorize("hasRole('CAREGIVER') and @accessScopeAuthorizer.canAccessCaregiver(authentication, #request.caregiverId()) and @accessScopeAuthorizer.canReferencePatientAlert(authentication, #request.patientId(), #request.alertNotificationId())")
     public CaregiverInterventionDtos.CaregiverInterventionResponse create(@Valid @RequestBody CaregiverInterventionDtos.CaregiverInterventionRequest request) {
         return caregiverInterventionService.create(request);
     }

@@ -14,6 +14,7 @@ public interface DispenseRecordRepository extends JpaRepository<DispenseRecord, 
     long countByPharmacistIdAndStatus(Long pharmacistId, DispenseStatus status);
     long countByPharmacistIdAndDispensedAtAfter(Long pharmacistId, LocalDateTime after);
     Optional<DispenseRecord> findByPrescriptionId(Long prescriptionId);
+    boolean existsByPatientIdAndPharmacistUserId(Long patientId, Long userId);
 
     @Query("""
         select case when count(record) > 0 then true else false end

@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
-import SectionCard from "../components/SectionCard";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "../utils/queryKeys";
+import PharmacistPremiumCard from "../components/PharmacistPremiumCard";
 import StatCard from "../components/StatCard";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
@@ -18,69 +20,22 @@ export default function PharmacistDashboardPage() {
   const { language, t } = useLanguage();
   const translateUiText = (value) => translateDisplayText(language, value);
   const pharmacistId = auth.profileId ?? auth.userId;
-  const [dashboard, setDashboard] = useState(null);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
   const [reloadToken, setReloadToken] = useState(0);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    let active = true;
+  const { data: dashboard, error: queryError, isLoading: loading } = useQuery({
+    queryKey: queryKeys.pharmacist.dashboard(pharmacistId),
+    queryFn: async ({ signal }) => {
+      const data = await runWithRequestTimeout(
+        (s) => fetchPharmacistDashboard(pharmacistId, { signal: s }),
+        { signal }
+      );
+      return data;
+    },
+    enabled: !!pharmacistId && auth?.role === "PHARMACIST",
+    retry: 1
+  });
 
-    const loadDashboard = async (attempt = 0) => {
-      if (!pharmacistId || auth?.role !== "PHARMACIST") {
-        if (active) {
-          setLoading(false);
-        }
-        return;
-      }
-
-      if (attempt === 0) {
-        setLoading(true);
-      }
-
-      try {
-        const data = await runWithRequestTimeout(
-          (signal) => fetchPharmacistDashboard(pharmacistId, { signal }),
-          { signal: controller.signal }
-        );
-        if (!active) {
-          return;
-        }
-        setDashboard(data);
-        setError("");
-      } catch (err) {
-        if (!active) {
-          return;
-        }
-
-        const status = err?.response?.status;
-        const isTransient = !err?.response || status === 408 || status === 429 || status >= 500;
-        if (attempt === 0 && isTransient) {
-          window.setTimeout(() => {
-            if (active) {
-              loadDashboard(1);
-            }
-          }, 450);
-          return;
-        }
-
-        setError(getApiErrorMessage(err, t("unableLoadPharmacistDashboard")));
-        logAsyncFailure("pharmacist-dashboard", err, { pharmacistId, attempt });
-      } finally {
-        if (active) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadDashboard();
-
-    return () => {
-      active = false;
-      controller.abort();
-    };
-  }, [auth?.role, pharmacistId, reloadToken, t]);
+  const error = queryError ? getApiErrorMessage(queryError, t("unableLoadPharmacistDashboard")) : "";
 
   if (loading) {
     return (
@@ -193,27 +148,27 @@ export default function PharmacistDashboardPage() {
         <StatCard title={t("dispensedToday")} value={dashboard?.dispensedToday ?? 0} hint={t("completedPickupsToday")} icon={<ShoppingBag className="h-4 w-4" />} />
         <StatCard title={t("inventoryItems")} value={dashboard?.activeInventoryItems ?? 0} hint={t("activeStockEntries")} icon={<Pill className="h-4 w-4" />} />
       </div>
-      <SectionCard
-        title={(
+      <PharmacistPremiumCard
+        title={
           <span className="inline-flex items-center gap-2">
-            <Package className="h-4 w-4 text-teal-600" />
+            <Package className="h-5 w-5 text-emerald-400" />
             {t("pharmacyWorkflow")}
           </span>
-        )}
+        }
       >
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl bg-mist p-4">
-            <p className="text-sm text-slate-500">{t("inventoryCoordination")}</p>
-            <p className="mt-2 text-xl font-semibold text-ink">{t("ready")}</p>
-            <p className="mt-1 text-sm text-slate-600">{t("addMedicineStockMonitor")}</p>
+          <div className="rounded-2xl bg-white/5 p-5 border border-white/10 hover:bg-white/10 transition-colors">
+            <p className="text-sm font-medium text-slate-400">{t("inventoryCoordination")}</p>
+            <p className="mt-3 text-2xl font-bold text-white">{t("ready")}</p>
+            <p className="mt-1 text-sm text-slate-400">{t("addMedicineStockMonitor")}</p>
           </div>
-          <div className="rounded-2xl bg-mist p-4">
-            <p className="text-sm text-slate-500">{t("dispensingVerification")}</p>
-            <p className="mt-2 text-xl font-semibold text-ink">{t("ready")}</p>
-            <p className="mt-1 text-sm text-slate-600">{t("verifyPrescriptionsTrackPickup")}</p>
+          <div className="rounded-2xl bg-white/5 p-5 border border-white/10 hover:bg-white/10 transition-colors">
+            <p className="text-sm font-medium text-slate-400">{t("dispensingVerification")}</p>
+            <p className="mt-3 text-2xl font-bold text-white">{t("ready")}</p>
+            <p className="mt-1 text-sm text-slate-400">{t("verifyPrescriptionsTrackPickup")}</p>
           </div>
         </div>
-      </SectionCard>
+      </PharmacistPremiumCard>
       <AiPharmacistInsightsPanel pharmacistId={pharmacistId} />
     </>
   );

@@ -12,6 +12,49 @@ services:
       - "5432:5432"
     volumes:
       - telecareplus-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d telecareplus"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: telecareplus-redis
+    ports:
+      - "6380:6379"
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.1
+    container_name: telecareplus-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200 >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0.7
+    container_name: telecareplus-keycloak
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY: edge
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./ops/telecareplus-realm.json:/opt/keycloak/data/import/telecareplus-realm.json
+    depends_on:
+      - postgres
+    command: start-dev --import-realm
 
   backend:
     build:
@@ -19,10 +62,22 @@ services:
       dockerfile: Dockerfile
     container_name: telecareplus-backend
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      keycloak:
+        condition: service_started
+      elasticsearch:
+        condition: service_started
     environment:
       SERVER_PORT: 8080
       TELECARE_DB_URL: ${TELECARE_DB_URL:-jdbc:postgresql://postgres:5432/telecareplus}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/telecareplus
+      SPRING_ELASTICSEARCH_URIS: http://elasticsearch:9200
+      SPRING_DATA_ELASTICSEARCH_REPOSITORIES_ENABLED: "true"
       TELECARE_DB_USERNAME: ${TELECARE_DB_USERNAME:-postgres}
       TELECARE_DB_PASSWORD: ${TELECARE_DB_PASSWORD:?Set TELECARE_DB_PASSWORD in .env}
       TELECARE_JPA_DDL_AUTO: ${TELECARE_JPA_DDL_AUTO:-update}

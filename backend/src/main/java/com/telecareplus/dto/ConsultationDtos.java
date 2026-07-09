@@ -11,7 +11,10 @@ public class ConsultationDtos {
             @NotNull Long appointmentId,
             @NotBlank String notes,
             @NotNull ConsultationOutcome outcome,
-            LocalDate followUpDate
+            LocalDate followUpDate,
+            Boolean aiGenerated,
+            java.time.LocalDateTime reviewedAt,
+            String reviewedBy
     ) {}
 
     public record ConsultationNoteResponse(
@@ -21,6 +24,9 @@ public class ConsultationDtos {
             String patientName,
             String notes,
             ConsultationOutcome outcome,
-            LocalDate followUpDate
+            LocalDate followUpDate,
+            Boolean aiGenerated,
+            java.time.LocalDateTime reviewedAt,
+            String reviewedBy
     ) {}
 }

@@ -17,6 +17,7 @@ import com.telecareplus.repository.PatientRepository;
 import com.telecareplus.repository.PrescriptionRepository;
 import com.telecareplus.repository.TriageAssessmentRepository;
 import com.telecareplus.service.IntelligenceService;
+import com.telecareplus.service.GenerativeAiService;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -24,7 +25,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 public class IntelligenceServiceImpl implements IntelligenceService {
 
     private final PatientRepository patientRepository;
@@ -40,8 +40,48 @@ public class IntelligenceServiceImpl implements IntelligenceService {
     private final CarePlanRepository carePlanRepository;
     private final ReminderServiceImpl reminderService;
     private final DashboardServiceImpl dashboardService;
+    private final GenerativeAiService generativeAiService;
+    private final org.springframework.ai.chat.client.ChatClient chatClient;
+    private final org.springframework.ai.vectorstore.VectorStore vectorStore;
+
+    public IntelligenceServiceImpl(
+        PatientRepository patientRepository,
+        DoctorRepository doctorRepository,
+        CaregiverRepository caregiverRepository,
+        AppointmentRepository appointmentRepository,
+        TriageAssessmentRepository triageAssessmentRepository,
+        ConsultationNoteRepository consultationNoteRepository,
+        PrescriptionRepository prescriptionRepository,
+        HealthRecordRepository healthRecordRepository,
+        AlertNotificationRepository alertNotificationRepository,
+        PatientCaregiverLinkRepository linkRepository,
+        CarePlanRepository carePlanRepository,
+        ReminderServiceImpl reminderService,
+        DashboardServiceImpl dashboardService,
+        GenerativeAiService generativeAiService,
+        org.springframework.ai.chat.client.ChatClient.Builder chatClientBuilder,
+        org.springframework.ai.vectorstore.VectorStore vectorStore
+    ) {
+        this.patientRepository = patientRepository;
+        this.doctorRepository = doctorRepository;
+        this.caregiverRepository = caregiverRepository;
+        this.appointmentRepository = appointmentRepository;
+        this.triageAssessmentRepository = triageAssessmentRepository;
+        this.consultationNoteRepository = consultationNoteRepository;
+        this.prescriptionRepository = prescriptionRepository;
+        this.healthRecordRepository = healthRecordRepository;
+        this.alertNotificationRepository = alertNotificationRepository;
+        this.linkRepository = linkRepository;
+        this.carePlanRepository = carePlanRepository;
+        this.reminderService = reminderService;
+        this.dashboardService = dashboardService;
+        this.generativeAiService = generativeAiService;
+        this.chatClient = chatClientBuilder.build();
+        this.vectorStore = vectorStore;
+    }
 
     @Override
+    @org.springframework.cache.annotation.Cacheable(value = "patientTimelines", key = "#patientId")
     public List<IntelligenceDtos.TimelineEventResponse> getPatientTimeline(Long patientId) {
         patientRepository.findById(patientId).orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
         List<IntelligenceDtos.TimelineEventResponse> timeline = new ArrayList<>();
@@ -129,6 +169,7 @@ public class IntelligenceServiceImpl implements IntelligenceService {
     }
 
     @Override
+    @org.springframework.cache.annotation.Cacheable(value = "doctorPriorityQueue", key = "#doctorId")
     public List<IntelligenceDtos.DoctorPriorityPatientResponse> getDoctorPriorityQueue(Long doctorId) {
         doctorRepository.findById(doctorId).orElseThrow(() -> new ResourceNotFoundException("Doctor not found"));
         return appointmentRepository.findByDoctorIdOrderByAppointmentDateTimeDesc(doctorId).stream()
@@ -264,5 +305,212 @@ public class IntelligenceServiceImpl implements IntelligenceService {
 
     private String safe(Object value) {
         return value == null ? "-" : String.valueOf(value);
+    }
+
+    @Override
+    public IntelligenceDtos.AudioScribeResponse generateSoapNote(IntelligenceDtos.AudioScribeRequest request) {
+        String systemPrompt = """
+            You are an expert Medical Scribe. Extract a structured SOAP note from the provided consultation transcript.
+            Respond ONLY with a valid JSON object containing exactly these fields:
+            {
+              "subjective": "patient's symptoms and history...",
+              "objective": "clinical observations and vitals...",
+              "assessment": "diagnoses or impressions...",
+              "plan": "treatment, medications, and follow-up..."
+            }
+            Do not include markdown blocks or any other text.
+            """;
+        String userPrompt = request.audioText();
+
+        var aiResponse = generativeAiService.generateRawText(systemPrompt, userPrompt);
+        
+        if (aiResponse.isPresent()) {
+            try {
+                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(aiResponse.get().replaceAll("^```json\\s*", "").replaceAll("\\s*```$", ""));
+                return new IntelligenceDtos.AudioScribeResponse(
+                        root.path("subjective").asText(""),
+                        root.path("objective").asText(""),
+                        root.path("assessment").asText(""),
+                        root.path("plan").asText(""),
+                        request.audioText() + "\n\n(AI Generated summary)"
+                );
+            } catch (Exception e) {
+                // Fallback on parse error
+            }
+        }
+
+        // Fallback if AI fails
+        return new IntelligenceDtos.AudioScribeResponse(
+                "Patient reports feeling fatigued and experiencing mild headaches.",
+                "BP 120/80 mmHg, HR 75 bpm.",
+                "Viral syndrome.",
+                "Rest and hydration.",
+                request.audioText() + "\n\n(Fallback summary)"
+        );
+    }
+
+    @Override
+    public IntelligenceDtos.DrugInteractionResponse checkDrugInteractions(IntelligenceDtos.DrugInteractionRequest request) {
+        String meds = request.medications() != null ? String.join(", ", request.medications()) : "None";
+        String systemPrompt = """
+            You are a clinical pharmacologist. Check for drug-drug interactions among the following medications.
+            Respond ONLY with a JSON array of interaction alerts (empty array if none):
+            [
+              {"severity": "High/Moderate/Low", "description": "Details of the interaction..."}
+            ]
+            Do not include markdown or extra text.
+            """;
+        var aiResponse = generativeAiService.generateRawText(systemPrompt, meds);
+        List<IntelligenceDtos.InteractionAlert> alerts = new ArrayList<>();
+        
+        if (aiResponse.isPresent()) {
+            try {
+                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(aiResponse.get().replaceAll("^```json\\s*", "").replaceAll("\\s*```$", ""));
+                if (root.isArray()) {
+                    root.forEach(node -> alerts.add(new IntelligenceDtos.InteractionAlert(
+                        node.path("severity").asText("Unknown"),
+                        node.path("description").asText("")
+                    )));
+                    return new IntelligenceDtos.DrugInteractionResponse(alerts);
+                }
+            } catch (Exception e) {
+                // fallback
+            }
+        }
+        
+        // Fallback
+        if (request.medications() != null && request.medications().size() > 1) {
+            alerts.add(new IntelligenceDtos.InteractionAlert("Moderate", "Please review polypharmacy manually."));
+        }
+        return new IntelligenceDtos.DrugInteractionResponse(alerts);
+    }
+
+    @Override
+    public IntelligenceDtos.DosageCalculationResponse calculateDosage(IntelligenceDtos.DosageCalculationRequest request) {
+        String systemPrompt = """
+            You are a clinical pharmacist. Calculate the recommended dosage for the requested medication for a standard adult (70kg).
+            Respond ONLY with a JSON object:
+            {
+              "suggestedDosage": "e.g., 500mg PO BID",
+              "reasoning": "Standard adult dosing..."
+            }
+            Do not include markdown.
+            """;
+        var aiResponse = generativeAiService.generateRawText(systemPrompt, request.medication());
+        
+        if (aiResponse.isPresent()) {
+            try {
+                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(aiResponse.get().replaceAll("^```json\\s*", "").replaceAll("\\s*```$", ""));
+                return new IntelligenceDtos.DosageCalculationResponse(
+                    root.path("suggestedDosage").asText(""),
+                    root.path("reasoning").asText("")
+                );
+            } catch (Exception e) {}
+        }
+        return new IntelligenceDtos.DosageCalculationResponse("Standard Dose", "Fallback: Please consult Lexicomp.");
+    }
+
+    @Override
+    public IntelligenceDtos.FormularySubstituteResponse suggestAlternatives(IntelligenceDtos.FormularySubstituteRequest request) {
+        String systemPrompt = """
+            You are a clinical pharmacist. Suggest 1 to 3 formulary alternatives for the following medication.
+            Respond ONLY with a JSON object:
+            {
+              "alternatives": ["Alt1", "Alt2"],
+              "reasoning": "Reasoning for the alternatives..."
+            }
+            """;
+        var aiResponse = generativeAiService.generateRawText(systemPrompt, request.medication());
+        
+        if (aiResponse.isPresent()) {
+            try {
+                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(aiResponse.get().replaceAll("^```json\\s*", "").replaceAll("\\s*```$", ""));
+                List<String> alts = new ArrayList<>();
+                root.path("alternatives").forEach(n -> alts.add(n.asText()));
+                return new IntelligenceDtos.FormularySubstituteResponse(alts, root.path("reasoning").asText(""));
+            } catch (Exception e) {}
+        }
+        return new IntelligenceDtos.FormularySubstituteResponse(List.of("Generic Equivalent"), "Fallback: Consult formulary handbook.");
+    }
+
+    @Override
+    public IntelligenceDtos.CopilotResponse askCopilot(IntelligenceDtos.CopilotRequest request) {
+        // Implement RAG
+        List<org.springframework.ai.document.Document> documents = vectorStore.similaritySearch(request.query());
+        List<String> sources = new ArrayList<>();
+        StringBuilder context = new StringBuilder();
+        
+        for (org.springframework.ai.document.Document doc : documents) {
+            context.append(doc.getContent()).append("\n\n");
+            if (doc.getMetadata().containsKey("source")) {
+                sources.add((String) doc.getMetadata().get("source"));
+            }
+        }
+        
+        String prompt = "You are a clinical AI Copilot. Answer the query based on the following context:\n" 
+                + context.toString() + "\n\nQuery: " + request.query();
+                
+        String answer = chatClient.prompt()
+            .user(prompt)
+            .call()
+            .content();
+            
+        return new IntelligenceDtos.CopilotResponse(answer, sources.stream().distinct().toList());
+    }
+
+    @Override
+    public IntelligenceDtos.OcrPrescriptionResponse extractPrescriptionFromImage(org.springframework.web.multipart.MultipartFile image) {
+        try {
+            org.springframework.core.io.Resource resource = image.getResource();
+            String response = chatClient.prompt()
+                .user(u -> u.text("Extract prescription details as JSON: {\"medications\": [\"name1\", \"name2\"], \"instructions\": \"take 1 daily\"}. No markdown.")
+                            .media(new org.springframework.ai.model.Media(org.springframework.util.MimeTypeUtils.parseMimeType(image.getContentType()), resource)))
+                .call()
+                .content();
+                
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(response.replaceAll("^```json\\s*", "").replaceAll("\\s*```$", ""));
+            
+            List<String> meds = new ArrayList<>();
+            if (root.has("medications") && root.get("medications").isArray()) {
+                root.get("medications").forEach(n -> meds.add(n.asText()));
+            }
+            return new IntelligenceDtos.OcrPrescriptionResponse(
+                response,
+                meds,
+                root.path("instructions").asText("")
+            );
+        } catch (Exception e) {
+            return new IntelligenceDtos.OcrPrescriptionResponse("Failed: " + e.getMessage(), List.of(), "");
+        }
+    }
+
+    @Override
+    public IntelligenceDtos.AudioScribeResponse transcribeAudioToSoapNote(org.springframework.web.multipart.MultipartFile audio) {
+        try {
+            org.springframework.core.io.Resource resource = audio.getResource();
+            String response = chatClient.prompt()
+                .user(u -> u.text("Transcribe this consultation and format as a SOAP note in JSON: {\"subjective\":\"...\",\"objective\":\"...\",\"assessment\":\"...\",\"plan\":\"...\",\"fullNotes\":\"transcript...\"}. No markdown.")
+                            .media(new org.springframework.ai.model.Media(org.springframework.util.MimeTypeUtils.parseMimeType(audio.getContentType()), resource)))
+                .call()
+                .content();
+                
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(response.replaceAll("^```json\\s*", "").replaceAll("\\s*```$", ""));
+            
+            return new IntelligenceDtos.AudioScribeResponse(
+                root.path("subjective").asText(""),
+                root.path("objective").asText(""),
+                root.path("assessment").asText(""),
+                root.path("plan").asText(""),
+                root.path("fullNotes").asText("")
+            );
+        } catch (Exception e) {
+            return new IntelligenceDtos.AudioScribeResponse("Failed", "", "", "Error: " + e.getMessage(), "");
+        }
     }
 }

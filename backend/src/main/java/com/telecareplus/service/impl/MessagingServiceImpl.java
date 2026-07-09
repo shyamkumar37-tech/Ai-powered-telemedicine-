@@ -24,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -39,6 +40,7 @@ public class MessagingServiceImpl implements MessagingService {
     private final AppointmentRepository appointmentRepository;
     private final DispenseRecordRepository dispenseRecordRepository;
     private final UserRepository userRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Override
     public MessageDtos.MessageInboxResponse getPatientInbox(Long patientId) {
@@ -80,7 +82,17 @@ public class MessagingServiceImpl implements MessagingService {
         message.setSubject(request.subject());
         message.setBody(request.body());
         message.setAcknowledged(false);
-        return toMessageResponse(careMessageRepository.save(message));
+        
+        MessageDtos.MessageResponse response = toMessageResponse(careMessageRepository.save(message));
+        
+        // Push to real-time STOMP queue
+        messagingTemplate.convertAndSendToUser(
+                recipient.getId().toString(),
+                "/queue/messages",
+                response
+        );
+        
+        return response;
     }
 
     @Override

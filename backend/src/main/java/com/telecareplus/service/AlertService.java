@@ -11,4 +11,5 @@ public interface AlertService {
     AlertDtos.AlertResponse createAlert(Long patientId, AlertSeverity severity, String message);
     SseEmitter streamPatientAlerts(Long patientId);
     SseEmitter streamCaregiverAlerts(Long caregiverId);
+    AlertDtos.AlertResponse actionAlert(Long alertId, String action);
 }
