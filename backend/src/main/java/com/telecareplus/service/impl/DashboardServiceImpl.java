@@ -74,6 +74,20 @@ public class DashboardServiceImpl implements DashboardService {
     public DashboardDtos.DashboardSummaryResponse getDoctorDashboard(Long doctorId) {
         doctorRepository.findById(doctorId).orElseThrow(() -> new ResourceNotFoundException("Doctor not found"));
         var appointments = appointmentRepository.findByDoctorIdOrderByAppointmentDateTimeDesc(doctorId);
+        
+        List<Long> patientIds = appointments.stream().map(a -> a.getPatient().getId()).distinct().toList();
+        var criticalAlerts = alertNotificationRepository.findAll().stream()
+                .filter(a -> patientIds.contains(a.getPatient().getId()) && a.isActive() && a.getSeverity() == AlertSeverity.CRITICAL)
+                .limit(4)
+                .map(a -> a.getPatient().getUser().getFullName() + " - CRITICAL: " + a.getMessage())
+                .toList();
+        
+        var alertsToReturn = criticalAlerts.isEmpty() ?
+                appointments.stream().filter(a -> a.getTriageAssessment() != null)
+                        .limit(4)
+                        .map(a -> a.getPatient().getUser().getFullName() + " - " + a.getTriageAssessment().getLevel().name())
+                        .toList() : criticalAlerts;
+
         return new DashboardDtos.DashboardSummaryResponse(
                 appointments.size(),
                 appointments.stream().filter(a -> a.getStatus() == AppointmentStatus.BOOKED || a.getStatus() == AppointmentStatus.REQUESTED || a.getStatus() == AppointmentStatus.CONFIRMED).count(),
@@ -82,10 +96,7 @@ public class DashboardServiceImpl implements DashboardService {
                 0,
                 "Patients with triage: " + appointments.stream().filter(a -> a.getTriageAssessment() != null).count(),
                 0,
-                appointments.stream().filter(a -> a.getTriageAssessment() != null)
-                        .limit(4)
-                        .map(a -> a.getPatient().getUser().getFullName() + " - " + a.getTriageAssessment().getLevel().name())
-                        .toList(),
+                alertsToReturn,
                 0,
                 RiskLevel.LOW,
                 0
@@ -126,9 +137,7 @@ public class DashboardServiceImpl implements DashboardService {
             HealthRecord latestHealth
     ) {
         int score = 0;
-        if (patient.getAge() != null && patient.getAge() >= 60) {
-            score += 15;
-        }
+        // Age check removed as it's now DOB String, implement properly later
         if (patient.getDiseases() != null && !patient.getDiseases().isBlank()) {
             score += 10;
             if (patient.getDiseases().contains(",")) {

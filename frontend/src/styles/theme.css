@@ -1,88 +1,117 @@
 :root {
-  --primary: #2563eb;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --bg: #f8fafc;
-  --card: #ffffff;
-  --text-primary: #0f172a;
-  --text-secondary: #64748b;
-  --space-1: 8px;
-  --space-2: 16px;
-  --space-3: 24px;
-  --space-4: 32px;
-  --font-size-xs: clamp(0.78rem, 0.75rem + 0.14vw, 0.88rem);
-  --font-size-sm: clamp(0.9rem, 0.84rem + 0.18vw, 1rem);
-  --font-size-md: clamp(1rem, 0.92rem + 0.24vw, 1.125rem);
-  --font-size-lg: clamp(1.12rem, 1rem + 0.45vw, 1.35rem);
-  --font-size-xl: clamp(1.35rem, 1.08rem + 0.92vw, 1.85rem);
-  --font-size-2xl: clamp(1.7rem, 1.2rem + 1.6vw, 2.5rem);
-  --tc-bg: #f8fafc;
-  --tc-page-bg: #f8fafc;
-  --tc-surface: #ffffff;
-  --tc-surface-elevated: #ffffff;
-  --tc-surface-muted: #f1f5f9;
-  --tc-sidebar-bg: rgba(255, 255, 255, 0.94);
-  --tc-border: #e2e8f0;
-  --tc-border-subtle: rgba(148, 163, 184, 0.2);
-  --tc-text: var(--text-primary);
-  --tc-text-muted: #475569;
-  --tc-text-soft: var(--text-secondary);
+  /* Core Brand Colors */
+  --primary: #10B981;
+  --primary-dark: #047857;
+  --primary-light: #34D399;
+  --primary-dim: rgba(16, 185, 129, 0.12);
+  
+  --secondary: #14B8A6;
+  --secondary-dim: rgba(20, 184, 166, 0.12);
+  
+  --success: #10B981;
+  --warning: #F59E0B;
+  --warning-dim: rgba(245, 158, 11, 0.12);
+  --danger: #EF4444;
+  --danger-dim: rgba(239, 68, 68, 0.12);
+
+  /* Backgrounds & Surfaces (Premium Deep Dark) */
+  --bg: #040914; /* Deeper background */
+  --tc-bg: #040914;
+  --tc-page-bg: #040914;
+  --tc-surface: #0B1121; /* Slightly lighter surface */
+  --tc-surface-elevated: #111A2E;
+  --tc-surface-muted: rgba(255, 255, 255, 0.03);
+  --tc-sidebar-bg: rgba(4, 9, 20, 0.95);
+
+  /* Borders & Dividers */
+  --tc-border: rgba(16, 185, 129, 0.15); /* Emerald tinted border */
+  --tc-border-subtle: rgba(255, 255, 255, 0.04);
+  --tc-border-strong: rgba(16, 185, 129, 0.3);
+
+  /* Typography */
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --tc-text: #F8FAFC;
+  --tc-text-muted: #94A3B8;
+  --tc-text-soft: #64748B;
+  
+  /* Font Family & Sizing */
+  --tc-font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-size-xs: 0.75rem; /* 12px */
+  --font-size-sm: 0.875rem; /* 14px */
+  --font-size-md: 1rem; /* 16px */
+  --font-size-lg: 1.125rem; /* 18px */
+  --font-size-xl: 1.25rem; /* 20px */
+  --font-size-2xl: 1.5rem; /* 24px */
+  
+  /* Spacing */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --tc-space-1: 0.25rem;
+  --tc-space-2: 0.5rem;
+  --tc-space-3: 0.75rem;
+  --tc-space-4: 1rem;
+  --tc-space-5: 1.25rem;
+  --tc-space-6: 1.5rem;
+  --tc-space-7: 2rem;
+
+  /* Legacy Mapping (Do not remove, used across app) */
   --tc-primary: var(--primary);
-  --tc-primary-strong: #1d4ed8;
-  --tc-primary-soft: rgba(37, 99, 235, 0.12);
-  --tc-accent: #0f766e;
+  --tc-primary-strong: var(--primary-dark);
+  --tc-primary-soft: var(--primary-dim);
+  --tc-accent: var(--secondary);
   --tc-success: var(--success);
   --tc-warning: var(--warning);
   --tc-error: var(--danger);
-  --tc-info: #3b82f6;
-  --tc-radius-md: 0.9rem;
-  --tc-radius-lg: 1.15rem;
-  --tc-radius-xl: 1.6rem;
-  --tc-shadow-sm: 0 6px 12px rgba(15, 23, 42, 0.06);
-  --tc-shadow-md: 0 16px 32px rgba(15, 23, 42, 0.08);
-  --tc-shadow-lg: 0 24px 54px rgba(15, 23, 42, 0.12);
-  --tc-shadow-card: 0 12px 24px rgba(15, 23, 42, 0.08);
-  --tc-shadow-lift: 0 18px 36px rgba(15, 23, 42, 0.14);
-  --tc-transition: 180ms cubic-bezier(0.22, 1, 0.36, 1);
-  --tc-glow: rgba(0, 255, 200, 0.2);
-  --tc-glow-soft: rgba(0, 255, 200, 0.14);
-  --tc-font-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
-  --tc-space-1: 4px;
-  --tc-space-2: 8px;
-  --tc-space-3: 12px;
-  --tc-space-4: 16px;
-  --tc-space-5: 20px;
-  --tc-space-6: 24px;
-  --tc-space-7: 32px;
+  --tc-info: var(--secondary);
+
+  /* Border Radius */
+  --tc-radius-sm: 0.375rem; /* 6px */
+  --tc-radius-md: 0.5rem; /* 8px */
+  --tc-radius-lg: 0.75rem; /* 12px */
+  --tc-radius-xl: 1rem; /* 16px */
+  --tc-radius-2xl: 1.5rem; /* 24px */
+
+  /* Shadows & Depth */
+  --tc-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+  --tc-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.6), 0 2px 4px -2px rgba(0, 0, 0, 0.6);
+  --tc-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.7), 0 4px 6px -4px rgba(0, 0, 0, 0.7);
+  --tc-shadow-card: 0 12px 30px -10px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(16, 185, 129, 0.05); /* Glow effect */
+  --tc-shadow-lift: 0 20px 40px -10px rgba(0, 0, 0, 0.9), 0 0 20px rgba(16, 185, 129, 0.15); /* Hover glow */
+  --tc-shadow-primary: 0 8px 24px -8px rgba(16, 185, 129, 0.6);
+  
+  /* Transitions */
+  --tc-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --tc-transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --tc-transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --tc-ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --tc-bg: #0b1220;
-    --tc-page-bg: #0b1220;
-    --tc-surface: #111827;
-    --tc-surface-elevated: #0f172a;
-    --tc-surface-muted: #0f172a;
-    --tc-sidebar-bg: rgba(17, 24, 39, 0.92);
-    --tc-border: rgba(148, 163, 184, 0.35);
-    --tc-border-subtle: rgba(148, 163, 184, 0.25);
-    --tc-text: #f8fafc;
-    --tc-text-muted: #cbd5f5;
-    --tc-text-soft: #94a3b8;
+    --tc-bg: #040914;
+    --tc-page-bg: #040914;
+    --tc-surface: #0B1121;
+    --tc-surface-elevated: #111A2E;
+    --tc-sidebar-bg: rgba(4, 9, 20, 0.95);
+    --tc-border: rgba(16, 185, 129, 0.15);
+    --tc-text: #F8FAFC;
+    --tc-text-muted: #94A3B8;
+    --tc-text-soft: #64748B;
+    --tc-border-subtle: rgba(255, 255, 255, 0.04);
+    --tc-border-strong: rgba(16, 185, 129, 0.3);
   }
 }
 
 .telecare-dark {
-  --tc-bg: #0b1220;
-  --tc-page-bg: #0b1220;
-  --tc-surface: #111827;
-  --tc-surface-elevated: #0f172a;
-  --tc-surface-muted: #0f172a;
-  --tc-sidebar-bg: rgba(17, 24, 39, 0.92);
-  --tc-border: rgba(148, 163, 184, 0.35);
-  --tc-border-subtle: rgba(148, 163, 184, 0.25);
-  --tc-text: #f8fafc;
-  --tc-text-muted: #cbd5f5;
-  --tc-text-soft: #94a3b8;
+  --tc-bg: #0B1220;
+  --tc-page-bg: #0B1220;
+  --tc-surface: #0F172A;
+  --tc-surface-elevated: #111827;
+  --tc-sidebar-bg: rgba(11, 18, 32, 0.95);
+  --tc-border: rgba(255, 255, 255, 0.08);
+  --tc-text: #F8FAFC;
+  --tc-text-muted: #94A3B8;
 }

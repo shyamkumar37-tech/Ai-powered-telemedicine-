@@ -65,6 +65,24 @@ public class CommunicationServiceImpl implements CommunicationService {
         return receipts;
     }
 
+    @Override
+    public void sendEmail(String to, String subject, String body) {
+        notificationChannelProviders.stream()
+                .filter(provider -> provider.channel() == com.telecareplus.service.communication.OutboundNotificationChannel.EMAIL)
+                .filter(NotificationChannelProvider::isEnabled)
+                .findFirst()
+                .ifPresentOrElse(
+                        provider -> {
+                            try {
+                                provider.send(new OutboundNotification(provider.channel(), to, subject, body, "email-direct"));
+                            } catch (Exception ex) {
+                                log.warn("Failed to send direct email to {}: {}", to, ex.getMessage());
+                            }
+                        },
+                        () -> log.warn("No active EMAIL provider found to send email to {}", to)
+                );
+    }
+
     private List<DeliveryReceipt> dispatchForProvider(
             NotificationChannelProvider provider,
             Patient patient,
@@ -76,16 +94,34 @@ public class CommunicationServiceImpl implements CommunicationService {
         List<DeliveryReceipt> receipts = new ArrayList<>();
         switch (provider.channel()) {
             case SMS, WHATSAPP -> {
-                addIfPresent(receipts, provider, patient.getUser().getPhone(), subject, body, referenceId);
-                caregivers.forEach(caregiver -> addIfPresent(receipts, provider, caregiver.getUser().getPhone(), subject, body, referenceId));
+                if (patient.getUser().isSmsNotificationsEnabled()) {
+                    addIfPresent(receipts, provider, patient.getUser().getPhone(), subject, body, referenceId);
+                }
+                caregivers.forEach(caregiver -> {
+                    if (caregiver.getUser().isSmsNotificationsEnabled()) {
+                        addIfPresent(receipts, provider, caregiver.getUser().getPhone(), subject, body, referenceId);
+                    }
+                });
             }
             case EMAIL -> {
-                addIfPresent(receipts, provider, patient.getUser().getEmail(), subject, body, referenceId);
-                caregivers.forEach(caregiver -> addIfPresent(receipts, provider, caregiver.getUser().getEmail(), subject, body, referenceId));
+                if (patient.getUser().isEmailNotificationsEnabled()) {
+                    addIfPresent(receipts, provider, patient.getUser().getEmail(), subject, body, referenceId);
+                }
+                caregivers.forEach(caregiver -> {
+                    if (caregiver.getUser().isEmailNotificationsEnabled()) {
+                        addIfPresent(receipts, provider, caregiver.getUser().getEmail(), subject, body, referenceId);
+                    }
+                });
             }
             case PUSH -> {
-                addIfPresent(receipts, provider, "patient:" + patient.getId(), subject, body, referenceId);
-                caregivers.forEach(caregiver -> addIfPresent(receipts, provider, "caregiver:" + caregiver.getId(), subject, body, referenceId));
+                if (patient.getUser().isPushNotificationsEnabled()) {
+                    addIfPresent(receipts, provider, "patient:" + patient.getId(), subject, body, referenceId);
+                }
+                caregivers.forEach(caregiver -> {
+                    if (caregiver.getUser().isPushNotificationsEnabled()) {
+                        addIfPresent(receipts, provider, "caregiver:" + caregiver.getId(), subject, body, referenceId);
+                    }
+                });
             }
         }
         return receipts;

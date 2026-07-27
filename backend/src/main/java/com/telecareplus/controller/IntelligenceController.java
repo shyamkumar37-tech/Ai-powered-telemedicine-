@@ -7,12 +7,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import com.telecareplus.security.FileValidator;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+
 @RestController
 @RequestMapping("/api/intelligence")
 @RequiredArgsConstructor
 public class IntelligenceController {
 
     private final IntelligenceService intelligenceService;
+    private final FileValidator fileValidator;
 
     @GetMapping("/patient/{patientId}/timeline")
     @PreAuthorize("hasRole('PATIENT') and @accessScopeAuthorizer.canAccessPatient(authentication, #patientId)")
@@ -70,21 +74,26 @@ public class IntelligenceController {
 
     @PostMapping("/doctor/copilot")
     @PreAuthorize("hasRole('DOCTOR')")
+    @RateLimiter(name = "ai-services")
     public IntelligenceDtos.CopilotResponse askCopilot(@RequestBody IntelligenceDtos.CopilotRequest request) {
         return intelligenceService.askCopilot(request);
     }
 
     @PostMapping(value = "/doctor/ocr", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('DOCTOR')")
+    @RateLimiter(name = "ai-services")
     public IntelligenceDtos.OcrPrescriptionResponse extractPrescriptionFromImage(
             @RequestParam("image") org.springframework.web.multipart.MultipartFile image) {
+        fileValidator.validateFile(image);
         return intelligenceService.extractPrescriptionFromImage(image);
     }
 
     @PostMapping(value = "/doctor/scribe/audio", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('DOCTOR')")
+    @RateLimiter(name = "ai-services")
     public IntelligenceDtos.AudioScribeResponse transcribeAudioToSoapNote(
             @RequestParam("audio") org.springframework.web.multipart.MultipartFile audio) {
+        fileValidator.validateFile(audio);
         return intelligenceService.transcribeAudioToSoapNote(audio);
     }
 }

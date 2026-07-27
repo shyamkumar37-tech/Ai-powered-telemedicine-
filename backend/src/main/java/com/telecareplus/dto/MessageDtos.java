@@ -18,6 +18,32 @@ public class MessageDtos {
             String descriptor
     ) {}
 
+    public record ChatConversationResponse(
+            Long id,
+            Long contactUserId,
+            String contactName,
+            String contactRole,
+            String lastMessage,
+            LocalDateTime lastMessageAt,
+            long unreadCount
+    ) {}
+
+    public record ChatMessageRequest(
+            Long conversationId,
+            @NotNull Long recipientId,
+            @NotBlank @jakarta.validation.constraints.Size(max = MAX_BODY_LENGTH, message = "Message content must be at most 2000 characters") String content
+    ) {}
+
+    public record ChatMessageResponse(
+            Long id,
+            Long conversationId,
+            Long senderId,
+            String content,
+            LocalDateTime sentAt,
+            LocalDateTime readAt
+    ) {}
+
+    // Legacy requests for compatibility if needed elsewhere
     public record MessageRequest(
             @NotNull Long patientId,
             @NotNull Long senderUserId,

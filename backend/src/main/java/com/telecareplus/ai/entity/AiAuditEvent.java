@@ -29,4 +29,8 @@ public class AiAuditEvent extends BaseEntity {
 
     @Column(length = 120)
     private String riskLevel;
+    public void setInputSummary(String inputSummary) { this.inputSummary = inputSummary; }
+    public void setOutputSummary(String outputSummary) { this.outputSummary = outputSummary; }
+    public void setRiskLevel(String riskLevel) { this.riskLevel = riskLevel; }
 }
+

@@ -1,0 +1,100 @@
+[
+  {
+    "file": "﻿src/components/Layout.tsx",
+    "row": "168",
+    "col": "96",
+    "code": "TS2362",
+    "msg": "The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type."
+  },
+  {
+    "file": "src/components/caregiver/GeofenceMap.tsx",
+    "row": "5",
+    "col": "15",
+    "code": "TS7016",
+    "msg": "Could not find a declaration file for module 'leaflet'. 'C:/Users/shyamkumar/Desktop/oose pro/frontend/node_modules/leaflet/dist/leaflet-src.js' implicitly has an 'any' type."
+  },
+  {
+    "file": "src/components/caregiver/GeofenceMap.tsx",
+    "row": "78",
+    "col": "11",
+    "code": "TS2322",
+    "msg": "Type '{ attribution: string; url: string; }' is not assignable to type 'IntrinsicAttributes & TileLayerProps & RefAttributes<LeafletTileLayer>'."
+  },
+  {
+    "file": "src/components/ui/DashboardSkeleton.tsx",
+    "row": "15",
+    "col": "19",
+    "code": "TS2322",
+    "msg": "Type '{ hidden: { opacity: number; }; visible: { opacity: number; transition: { repeat: number; duration: number; repeatType: string; ease: string; }; }; }' is not assignable to type 'Variants'."
+  },
+  {
+    "file": "src/components/ui/DashboardSkeleton.tsx",
+    "row": "18",
+    "col": "31",
+    "code": "TS2322",
+    "msg": "Type '{ hidden: { opacity: number; }; visible: { opacity: number; transition: { repeat: number; duration: number; repeatType: string; ease: string; }; }; }' is not assignable to type 'Variants'."
+  },
+  {
+    "file": "src/components/ui/DashboardSkeleton.tsx",
+    "row": "22",
+    "col": "21",
+    "code": "TS2322",
+    "msg": "Type '{ hidden: { opacity: number; }; visible: { opacity: number; transition: { repeat: number; duration: number; repeatType: string; ease: string; }; }; }' is not assignable to type 'Variants'."
+  },
+  {
+    "file": "src/components/ui/DashboardSkeleton.tsx",
+    "row": "23",
+    "col": "21",
+    "code": "TS2322",
+    "msg": "Type '{ hidden: { opacity: number; }; visible: { opacity: number; transition: { repeat: number; duration: number; repeatType: string; ease: string; }; }; }' is not assignable to type 'Variants'."
+  },
+  {
+    "file": "src/pages/PatientCarePlansPage.tsx",
+    "row": "177",
+    "col": "161",
+    "code": "TS2362",
+    "msg": "The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type."
+  },
+  {
+    "file": "src/pages/PatientPrescriptionsPage.tsx",
+    "row": "13",
+    "col": "20",
+    "code": "TS7016",
+    "msg": "Could not find a declaration file for module 'sockjs-client'. 'C:/Users/shyamkumar/Desktop/oose pro/frontend/node_modules/sockjs-client/lib/entry.js' implicitly has an 'any' type."
+  },
+  {
+    "file": "src/pages/PatientPrescriptionsPage.tsx",
+    "row": "15",
+    "col": "15",
+    "code": "TS7016",
+    "msg": "Could not find a declaration file for module 'leaflet'. 'C:/Users/shyamkumar/Desktop/oose pro/frontend/node_modules/leaflet/dist/leaflet-src.js' implicitly has an 'any' type."
+  },
+  {
+    "file": "src/pages/PatientPrescriptionsPage.tsx",
+    "row": "48",
+    "col": "13",
+    "code": "TS2345",
+    "msg": "Argument of type '() => (() => Promise<void>) | undefined' is not assignable to parameter of type 'EffectCallback'."
+  },
+  {
+    "file": "src/pages/PatientPrescriptionsPage.tsx",
+    "row": "130",
+    "col": "163",
+    "code": "TS2322",
+    "msg": "Type '(options?: RefetchOptions | undefined) => Promise<QueryObserverResult<any, Error>>' is not assignable to type 'MouseEventHandler<HTMLButtonElement>'."
+  },
+  {
+    "file": "src/pages/PatientPrescriptionsPage.tsx",
+    "row": "138",
+    "col": "170",
+    "code": "TS2322",
+    "msg": "Type '(options?: RefetchOptions | undefined) => Promise<QueryObserverResult<any, Error>>' is not assignable to type 'MouseEventHandler<HTMLButtonElement>'."
+  },
+  {
+    "file": "src/pages/PatientPrescriptionsPage.tsx",
+    "row": "195",
+    "col": "29",
+    "code": "TS2322",
+    "msg": "Type '{ attribution: string; url: string; }' is not assignable to type 'IntrinsicAttributes & TileLayerProps & RefAttributes<LeafletTileLayer>'."
+  }
+]

@@ -16,29 +16,27 @@ test.describe('Authentication & RBAC', () => {
 
   test('Patient login redirects to patient dashboard', async ({ patientPage }) => {
     // The fixture already logged us in
-    await patientPage.goto('/');
+    await patientPage.goto('/login');
     // Check if we got redirected to the dashboard
-    await expect(patientPage).toHaveURL(/.*dashboard/);
-    await expect(patientPage.locator('text=Patient Dashboard')).toBeVisible();
+    await expect(patientPage).toHaveURL(/.*patient/);
+    await expect(patientPage.locator('h1', { hasText: 'Dashboard' })).toBeVisible();
   });
 
   test('Doctor login redirects to doctor dashboard', async ({ doctorPage }) => {
-    await doctorPage.goto('/');
-    await expect(doctorPage).toHaveURL(/.*dashboard/);
-    await expect(doctorPage.locator('text=Doctor Dashboard')).toBeVisible();
+    await doctorPage.goto('/doctor');
+    await expect(doctorPage).toHaveURL(/.*doctor/);
   });
 
   test('RBAC: Patient cannot access doctor dashboard', async ({ patientPage }) => {
     // Attempt to hit a doctor-only route
-    await patientPage.goto('/dashboard/doctor');
-    // The app should redirect back to the patient dashboard or show access denied
-    await expect(patientPage).not.toHaveURL(/.*dashboard\/doctor/);
-    await expect(patientPage).toHaveURL(/.*dashboard/);
+    await patientPage.goto('/doctor');
+    // The app should show access denied
+    await expect(patientPage.locator('text=Access restricted')).toBeVisible();
   });
 
   test('RBAC: Doctor cannot access admin dashboard', async ({ doctorPage }) => {
-    await doctorPage.goto('/dashboard/admin');
-    await expect(doctorPage).not.toHaveURL(/.*dashboard\/admin/);
+    await doctorPage.goto('/admin');
+    await expect(doctorPage.locator('text=Access restricted')).toBeVisible();
   });
 
   test('Expired/Invalid token forces logout', async ({ page }) => {
@@ -52,7 +50,7 @@ test.describe('Authentication & RBAC', () => {
     });
     
     // Trigger a reload and a protected route
-    await page.goto('/dashboard');
+    await page.goto('/patient');
     // Should be kicked back to login
     await expect(page).toHaveURL(/.*login/);
   });

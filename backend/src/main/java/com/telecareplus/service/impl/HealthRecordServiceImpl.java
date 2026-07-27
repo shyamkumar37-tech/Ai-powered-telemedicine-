@@ -16,6 +16,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import com.telecareplus.event.EventPublisher;
+import com.telecareplus.event.VitalLoggedEvent;
+import com.telecareplus.service.VitalThresholdService;
+
 @Service
 @RequiredArgsConstructor
 public class HealthRecordServiceImpl implements HealthRecordService {
@@ -23,6 +27,8 @@ public class HealthRecordServiceImpl implements HealthRecordService {
     private final PatientRepository patientRepository;
     private final HealthRecordRepository healthRecordRepository;
     private final AlertService alertService;
+    private final VitalThresholdService vitalThresholdService;
+    private final EventPublisher eventPublisher;
 
     @Override
     public HealthDtos.HealthRecordResponse createRecord(HealthDtos.HealthRecordRequest request) {
@@ -53,6 +59,23 @@ public class HealthRecordServiceImpl implements HealthRecordService {
         if (severity != AlertSeverity.INFO) {
             alertService.createAlert(patient.getId(), severity, message);
         }
+        
+        if (request.bloodPressure() != null && vitalThresholdService.isCritical("blood pressure", request.bloodPressure())) {
+            eventPublisher.publishVitalLogged(new VitalLoggedEvent(patient.getId(), "blood pressure", request.bloodPressure(), "mmHg", record.getRecordedAt(), true));
+        }
+        if (request.sugar() != null && request.sugar() > 320) {
+            eventPublisher.publishVitalLogged(new VitalLoggedEvent(patient.getId(), "sugar", String.valueOf(request.sugar()), "mg/dL", record.getRecordedAt(), true));
+        }
+        if (request.spo2() != null && vitalThresholdService.isCritical("spo2", String.valueOf(request.spo2()))) {
+            eventPublisher.publishVitalLogged(new VitalLoggedEvent(patient.getId(), "spo2", String.valueOf(request.spo2()), "%", record.getRecordedAt(), true));
+        }
+        if (request.pulse() != null && vitalThresholdService.isCritical("heart rate", String.valueOf(request.pulse()))) {
+            eventPublisher.publishVitalLogged(new VitalLoggedEvent(patient.getId(), "heart rate", String.valueOf(request.pulse()), "bpm", record.getRecordedAt(), true));
+        }
+        if (request.temperature() != null && vitalThresholdService.isCritical("temperature", String.valueOf(request.temperature()))) {
+            eventPublisher.publishVitalLogged(new VitalLoggedEvent(patient.getId(), "temperature", String.valueOf(request.temperature()), "F", record.getRecordedAt(), true));
+        }
+        
         return MapperUtil.toHealthResponse(record);
     }
 

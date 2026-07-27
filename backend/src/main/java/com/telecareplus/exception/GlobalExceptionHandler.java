@@ -75,6 +75,11 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.TOO_MANY_REQUESTS, "Too many requests", request, response);
     }
 
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<?> handleRateLimitExceeded(RateLimitExceededException ex, HttpServletRequest request, HttpServletResponse response) {
+        return build(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage(), request, response);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleOther(Exception ex, HttpServletRequest request, HttpServletResponse response) {
         String message = ex.getMessage() != null ? ex.getMessage() : "Unexpected error";

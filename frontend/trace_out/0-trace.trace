@@ -1,0 +1,26 @@
+{"version":8,"type":"context-options","origin":"library","browserName":"","playwrightVersion":"1.59.1","options":{},"platform":"win32","wallTime":1784390783881,"monotonicTime":64118.373,"sdkLanguage":"javascript","contextId":"request-context@b0bd1b93a4b1fd473c22cb3e08972e25","title":"auth\\login.spec.js:25 › Auth - Live Login Flow › should login successfully with newly registered dynamic user"}
+{"type":"before","callId":"call@16","startTime":64137.011,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/auth/register","method":"POST","jsonData":"{\"email\":\"patient-1784390783885@example.com\",\"password\":\"Password123!\",\"fullName\":\"Test PATIENT 1784390783885\",\"role\":\"PATIENT\",\"phone\":\"+15550783885\"}","timeout":0},"stepId":"pw:api@38"}
+{"type":"log","callId":"call@16","time":64185.975,"message":"→ POST http://localhost:5173/api/auth/register"}
+{"type":"log","callId":"call@16","time":64186.121,"message":"  user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Safari/605.1.15"}
+{"type":"log","callId":"call@16","time":64186.149,"message":"  accept: */*"}
+{"type":"log","callId":"call@16","time":64186.211,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@16","time":64186.262,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@16","time":64186.277,"message":"  content-length: 151"}
+{"type":"log","callId":"call@16","time":64346.495,"message":"← 200 "}
+{"type":"log","callId":"call@16","time":64346.565,"message":"  server: nginx/1.27.5"}
+{"type":"log","callId":"call@16","time":64346.588,"message":"  date: Sat, 18 Jul 2026 16:06:24 GMT"}
+{"type":"log","callId":"call@16","time":64346.637,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@16","time":64346.664,"message":"  transfer-encoding: chunked"}
+{"type":"log","callId":"call@16","time":64346.679,"message":"  connection: keep-alive"}
+{"type":"log","callId":"call@16","time":64346.69,"message":"  vary: Origin, Access-Control-Request-Method, Access-Control-Request-Headers"}
+{"type":"log","callId":"call@16","time":64346.703,"message":"  x-request-id: 6a4095a9-94ed-4cea-8cc4-0dbfb0e32ea0"}
+{"type":"log","callId":"call@16","time":64346.715,"message":"  set-cookie: jwt=eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJwYXRpZW50LTE3ODQzOTA3ODM4ODVAZXhhbXBsZS5jb20iLCJ1c2VySWQiOjE0NzksInJvbGUiOiJQQVRJRU5UIiwiaWF0IjoxNzg0MzkwNzg0LCJleHAiOjE3ODQ0NzcxODQsInByb2ZpbGVJZCI6NzgxfQ.04ViyMQGkEzUjtU7i-GO7AOvg5lLf0h3fakwVQeg60zlJtCBCPYJjOB3QWni-hf-; Max-Age=86400; Expires=Sun, 19 Jul 2026 16:06:24 GMT; Path=/; Secure; HttpOnly"}
+{"type":"log","callId":"call@16","time":64346.727,"message":"  x-content-type-options: nosniff, nosniff"}
+{"type":"log","callId":"call@16","time":64346.739,"message":"  x-xss-protection: 0, 1; mode=block"}
+{"type":"log","callId":"call@16","time":64346.75,"message":"  cache-control: no-cache, no-store, max-age=0, must-revalidate"}
+{"type":"log","callId":"call@16","time":64346.762,"message":"  pragma: no-cache"}
+{"type":"log","callId":"call@16","time":64346.773,"message":"  expires: 0"}
+{"type":"log","callId":"call@16","time":64346.783,"message":"  x-frame-options: DENY, SAMEORIGIN"}
+{"type":"log","callId":"call@16","time":64346.794,"message":"  referrer-policy: no-referrer, strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@16","time":64346.805,"message":"  permissions-policy: camera=(), microphone=(self), geolocation=(), payment=(), usb=(), fullscreen=(self)"}
+{"type":"after","callId":"call@16","endTime":64353.867,"result":{"response":{"url":"http://localhost:5173/api/auth/register","status":200,"statusText":"","headers":[{"name":"Server","value":"nginx/1.27.5"},{"name":"Date","value":"Sat, 18 Jul 2026 16:06:24 GMT"},{"name":"Content-Type","value":"application/json"},{"name":"Transfer-Encoding","value":"chunked"},{"name":"Connection","value":"keep-alive"},{"name":"Vary","value":"Origin"},{"name":"Vary","value":"Access-Control-Request-Method"},{"name":"Vary","value":"Access-Control-Request-Headers"},{"name":"X-Request-Id","value":"6a4095a9-94ed-4cea-8cc4-0dbfb0e32ea0"},{"name":"Set-Cookie","value":"jwt=eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJwYXRpZW50LTE3ODQzOTA3ODM4ODVAZXhhbXBsZS5jb20iLCJ1c2VySWQiOjE0NzksInJvbGUiOiJQQVRJRU5UIiwiaWF0IjoxNzg0MzkwNzg0LCJleHAiOjE3ODQ0NzcxODQsInByb2ZpbGVJZCI6NzgxfQ.04ViyMQGkEzUjtU7i-GO7AOvg5lLf0h3fakwVQeg60zlJtCBCPYJjOB3QWni-hf-; Max-Age=86400; Expires=Sun, 19 Jul 2026 16:06:24 GMT; Path=/; Secure; HttpOnly"},{"name":"X-Content-Type-Options","value":"nosniff"},{"name":"X-XSS-Protection","value":"0"},{"name":"Cache-Control","value":"no-cache, no-store, max-age=0, must-revalidate"},{"name":"Pragma","value":"no-cache"},{"name":"Expires","value":"0"},{"name":"X-Frame-Options","value":"DENY"},{"name":"Referrer-Policy","value":"no-referrer"},{"name":"Permissions-Policy","value":"camera=(), microphone=(self), geolocation=(), payment=(), usb=(), fullscreen=(self)"},{"name":"X-Frame-Options","value":"SAMEORIGIN"},{"name":"X-XSS-Protection","value":"1; mode=block"},{"name":"X-Content-Type-Options","value":"nosniff"},{"name":"Referrer-Policy","value":"strict-origin-when-cross-origin"}],"fetchUid":"bb167b898f1422c72bf8cd4d6346c339"}}}

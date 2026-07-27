@@ -10,11 +10,19 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import com.telecareplus.event.EventPublisher;
+import com.telecareplus.event.MedicationMissedEvent;
+import com.telecareplus.entity.enums.AlertSeverity;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
+
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ReminderServiceImpl implements ReminderService {
 
     private final MedicationReminderRepository medicationReminderRepository;
+    private final EventPublisher eventPublisher;
 
     @Override
     public List<ReminderDtos.ReminderResponse> getPatientReminders(Long patientId) {
@@ -67,5 +75,24 @@ public class ReminderServiceImpl implements ReminderService {
                 reminder.getScheduledDate(),
                 status
         );
+    }
+
+    @Scheduled(fixedRate = 60000)
+    public void sweepForMissedMedications() {
+        LocalDate today = LocalDate.now();
+        List<com.telecareplus.entity.MedicationReminder> pastDue = medicationReminderRepository.findByStatusAndScheduledDateBefore(ReminderStatus.PENDING, today);
+        if (!pastDue.isEmpty()) {
+            log.info("Found {} past-due pending reminders. Marking as MISSED and publishing events.", pastDue.size());
+            for (com.telecareplus.entity.MedicationReminder reminder : pastDue) {
+                reminder.setStatus(ReminderStatus.MISSED);
+                medicationReminderRepository.save(reminder);
+                eventPublisher.publishMedicationMissed(new MedicationMissedEvent(
+                        reminder.getPatient().getId(),
+                        reminder.getId(),
+                        reminder.getMedicationItem().getMedicineName(),
+                        reminder.getScheduledDate()
+                ));
+            }
+        }
     }
 }

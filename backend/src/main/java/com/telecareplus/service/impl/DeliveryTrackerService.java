@@ -16,6 +16,7 @@ import java.util.UUID;
 public class DeliveryTrackerService {
 
     private final SimpMessagingTemplate messagingTemplate;
+    private final com.telecareplus.repository.PrescriptionRepository prescriptionRepository;
 
     // In a real app, this would be persisted in DB.
     // Map of orderId to current coordinates {lat, lng}
@@ -32,9 +33,19 @@ public class DeliveryTrackerService {
     }
 
     public String startTrackingOrder(Long prescriptionId) {
-        String orderId = UUID.randomUUID().toString();
-        // Start somewhere around NYC
-        activeDeliveries.put(orderId, new Location(40.7128, -74.0060));
+        String orderId = String.valueOf(prescriptionId);
+        
+        double startLat = 40.7128; // Fallback NYC
+        double startLng = -74.0060;
+
+        try {
+            var prescription = prescriptionRepository.findById(prescriptionId).orElse(null);
+            // Pharmacy tracking uses hardcoded starting coordinates for now since Pharmacy entity is not linked to Prescription.
+        } catch (Exception e) {
+            log.error("Failed to load pharmacy coordinates", e);
+        }
+
+        activeDeliveries.put(orderId, new Location(startLat, startLng));
         return orderId;
     }
 

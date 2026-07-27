@@ -1,7 +1,7 @@
 export default async function globalSetup() {
   console.log('Running global setup: Seeding test database...');
   try {
-    const response = await fetch('http://localhost:8080/api/system/demo/seed', {
+    const response = await fetch('http://127.0.0.1:8080/api/system/demo/seed', {
       method: 'POST',
     });
     if (!response.ok) {

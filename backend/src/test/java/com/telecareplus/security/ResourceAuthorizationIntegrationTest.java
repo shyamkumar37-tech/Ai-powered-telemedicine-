@@ -44,16 +44,15 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import com.telecareplus.repository.elasticsearch.PatientSearchRepository;
 
 import org.springframework.test.context.ActiveProfiles;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test")
-class ResourceAuthorizationIntegrationTest {
+import com.telecareplus.IntegrationTestBase;
+
+class ResourceAuthorizationIntegrationTest extends IntegrationTestBase {
 
     @MockBean
     private ElasticsearchOperations elasticsearchOperations;

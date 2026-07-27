@@ -14,21 +14,7 @@ public class AuthDtos {
             @NotBlank @Email String email,
             @NotBlank @Size(min = 6, message = "Password must be at least 6 characters") String password,
             @NotBlank String phone,
-            @NotNull RoleType role,
-            String preferredLanguage,
-            Integer age,
-            String gender,
-            String bloodGroup,
-            String allergies,
-            String diseases,
-            String emergencyContactName,
-            String emergencyContactPhone,
-            String medicalHistorySummary,
-            String specialization,
-            String qualification,
-            String availabilitySummary,
-            String bio,
-            String relationshipLabel
+            @NotNull RoleType role
     ) {}
 
     public record LoginRequest(
@@ -69,6 +55,7 @@ public class AuthDtos {
             String fullName,
             String email,
             String phone,
-            UserSummary user
+            UserSummary user,
+            Boolean isProfileComplete
     ) {}
 }

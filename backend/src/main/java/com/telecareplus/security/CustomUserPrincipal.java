@@ -22,21 +22,22 @@ public class CustomUserPrincipal implements UserDetails {
     private final String fullName;
     private final String phone;
     private final String preferredLanguage;
+    private final boolean active;
     private final Collection<? extends GrantedAuthority> authorities;
 
-    public CustomUserPrincipal(Long userId, String username, String password, RoleType role) {
-        this(userId, null, username, password, role, null, null, null);
+    public CustomUserPrincipal(Long userId, String username, String password, RoleType role, boolean active) {
+        this(userId, null, username, password, role, null, null, null, active);
     }
 
-    public CustomUserPrincipal(Long userId, Long profileId, String username, String password, RoleType role) {
-        this(userId, profileId, username, password, role, null, null, null);
+    public CustomUserPrincipal(Long userId, Long profileId, String username, String password, RoleType role, boolean active) {
+        this(userId, profileId, username, password, role, null, null, null, active);
     }
 
-    public CustomUserPrincipal(Long userId, String username, String password, RoleType role, String fullName, String phone, String preferredLanguage) {
-        this(userId, null, username, password, role, fullName, phone, preferredLanguage);
+    public CustomUserPrincipal(Long userId, String username, String password, RoleType role, String fullName, String phone, String preferredLanguage, boolean active) {
+        this(userId, null, username, password, role, fullName, phone, preferredLanguage, active);
     }
 
-    public CustomUserPrincipal(Long userId, Long profileId, String username, String password, RoleType role, String fullName, String phone, String preferredLanguage) {
+    public CustomUserPrincipal(Long userId, Long profileId, String username, String password, RoleType role, String fullName, String phone, String preferredLanguage, boolean active) {
         this.userId = userId;
         this.profileId = profileId;
         this.username = username;
@@ -45,12 +46,16 @@ public class CustomUserPrincipal implements UserDetails {
         this.fullName = fullName;
         this.phone = phone;
         this.preferredLanguage = preferredLanguage;
+        this.active = active;
         this.authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
 
     public Long getProfileId() {
         return profileId;
     }
+    
+    public Long getUserId() { return userId; }
+    public RoleType getRole() { return role; }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -74,7 +79,7 @@ public class CustomUserPrincipal implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return active;
     }
 
     @Override
@@ -84,6 +89,6 @@ public class CustomUserPrincipal implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return active;
     }
 }

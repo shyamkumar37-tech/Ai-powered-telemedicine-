@@ -48,11 +48,17 @@ public class DataSeeder implements CommandLineRunner {
         if (appProperties.getDemo() == null || !appProperties.getDemo().isSeedEnabled()) {
             return;
         }
-
+        
         seedDemoData();
     }
 
-    public void seedDemoData() {
+    public synchronized void seedDemoData() {
+        // Unsuspend all users to fix persistent test state
+        userRepository.findAll().forEach(u -> {
+            u.setActive(true);
+            userRepository.save(u);
+        });
+
         if (userRepository.existsByEmail("patient@telecareplus.com")) {
             seedExtensionDataForExistingDemoUsers();
             ensureAdditionalDemoAccounts();
@@ -71,7 +77,8 @@ public class DataSeeder implements CommandLineRunner {
 
         Patient patient = new Patient();
         patient.setUser(patientUser);
-        patient.setAge(58);
+        patient.setProfileComplete(true);
+        patient.setDateOfBirth("1968-01-01");
         patient.setGender("Female");
         patient.setBloodGroup("B+");
         patient.setAllergies("Penicillin");
@@ -205,7 +212,8 @@ public class DataSeeder implements CommandLineRunner {
             if (patient == null) {
                 Patient newPatient = new Patient();
                 newPatient.setUser(patientUser);
-                newPatient.setAge(57);
+                newPatient.setProfileComplete(true);
+                newPatient.setDateOfBirth("1969-01-01");
                 newPatient.setGender("Female");
                 newPatient.setBloodGroup("B+");
                 newPatient.setAllergies("Penicillin");

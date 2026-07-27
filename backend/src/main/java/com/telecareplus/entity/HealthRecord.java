@@ -36,4 +36,10 @@ public class HealthRecord extends BaseEntity {
     private String alertMessage;
 
     private LocalDateTime recordedAt;
+    public String getBloodPressure() { return bloodPressure; }
+    public Double getSugar() { return sugar; }
+    public Double getSpo2() { return spo2; }
+    public Double getPulse() { return pulse; }
+    public Double getTemperature() { return temperature; }
 }
+

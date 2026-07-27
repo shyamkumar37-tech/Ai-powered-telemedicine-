@@ -24,6 +24,7 @@ public class PharmacistServiceImpl implements PharmacistService {
     private final PharmacyInventoryItemRepository inventoryRepository;
     private final DispenseRecordRepository dispenseRecordRepository;
     private final MedicationItemRepository medicationItemRepository;
+    private final DeliveryTrackerService deliveryTrackerService;
 
     @Override
     public PharmacistDtos.DashboardResponse getDashboard(Long pharmacistId) {
@@ -77,6 +78,8 @@ public class PharmacistServiceImpl implements PharmacistService {
             record.setStatus(request.status());
             if (request.status() == DispenseStatus.DISPENSED) {
                 record.setDispensedAt(java.time.LocalDateTime.now());
+            } else if (request.status() == DispenseStatus.OUT_FOR_DELIVERY) {
+                deliveryTrackerService.startTrackingOrder(record.getPrescription().getId());
             }
         }
         if (request.verificationNotes() != null) {

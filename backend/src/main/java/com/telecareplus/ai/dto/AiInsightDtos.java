@@ -163,4 +163,18 @@ public class AiInsightDtos {
             List<String> rationale,
             String disclaimer
     ) {}
+
+    public record SymptomTrendResponse(
+            String summary,
+            List<String> trends,
+            List<String> rationale,
+            String disclaimer
+    ) {}
+
+    public record ConsultationPrepResponse(
+            String summary,
+            List<String> talkingPoints,
+            List<String> rationale,
+            String disclaimer
+    ) {}
 }

@@ -68,38 +68,30 @@ public class AuthServiceImpl implements AuthService {
         user.setPassword(passwordEncoder.encode(request.password()));
         user.setPhone(request.phone());
         user.setRole(request.role());
-        user.setPreferredLanguage(request.preferredLanguage() == null ? "en" : request.preferredLanguage());
+        user.setPreferredLanguage("en"); // Or default
         user = userRepository.save(user);
+
+        Boolean isProfileComplete = resolveIsProfileComplete(user.getId(), user.getRole());
 
         Long profileId = null;
         if (request.role() == RoleType.PATIENT) {
             Patient patient = new Patient();
             patient.setUser(user);
-            patient.setAge(request.age() == null ? 0 : request.age());
-            patient.setGender(request.gender() == null ? "Unknown" : request.gender());
-            patient.setBloodGroup(request.bloodGroup());
-            patient.setAllergies(request.allergies());
-            patient.setDiseases(request.diseases());
-            patient.setEmergencyContactName(request.emergencyContactName());
-            patient.setEmergencyContactPhone(request.emergencyContactPhone());
-            patient.setMedicalHistorySummary(request.medicalHistorySummary());
+            patient.setGender("Unknown");
             patient = patientRepository.save(patient);
             profileId = patient.getId();
+            isProfileComplete = patient.isProfileComplete();
         } else if (request.role() == RoleType.DOCTOR) {
             Doctor doctor = new Doctor();
             doctor.setUser(user);
-            doctor.setSpecialization(request.specialization() == null ? "General Medicine" : request.specialization());
+            doctor.setSpecialization("General Medicine");
             doctor.setExperienceYears(5);
             doctor.setConsultationFee(new BigDecimal("500.00"));
-            doctor.setQualification(request.qualification());
-            doctor.setAvailabilitySummary(request.availabilitySummary());
-            doctor.setBio(request.bio());
             doctor = doctorRepository.save(doctor);
             profileId = doctor.getId();
         } else if (request.role() == RoleType.CAREGIVER) {
             Caregiver caregiver = new Caregiver();
             caregiver.setUser(user);
-            caregiver.setRelationshipLabel(request.relationshipLabel());
             caregiver = caregiverRepository.save(caregiver);
             profileId = caregiver.getId();
         } else if (request.role() == RoleType.PHARMACIST) {
@@ -127,7 +119,8 @@ public class AuthServiceImpl implements AuthService {
                         user.getPhone(),
                         user.getRole(),
                         user.getPreferredLanguage()
-                )
+                ),
+                isProfileComplete
         );
     }
 
@@ -136,6 +129,7 @@ public class AuthServiceImpl implements AuthService {
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.email(), request.password()));
         CustomUserPrincipal principal = (CustomUserPrincipal) authentication.getPrincipal();
         Long profileId = resolveProfileId(principal.getUserId(), principal.getRole());
+        Boolean isProfileComplete = resolveIsProfileComplete(principal.getUserId(), principal.getRole());
         return new AuthDtos.AuthResponse(
                 jwtService.generateToken(principal.getUserId(), principal.getUsername(), principal.getRole().name(), profileId),
                 principal.getUserId(),
@@ -151,7 +145,8 @@ public class AuthServiceImpl implements AuthService {
                         principal.getPhone(),
                         principal.getRole(),
                         principal.getPreferredLanguage()
-                )
+                ),
+                isProfileComplete
         );
     }
 
@@ -200,6 +195,7 @@ public class AuthServiceImpl implements AuthService {
         resetOtpAttempts(user.getPhone());
 
         Long profileId = resolveProfileId(user);
+        Boolean isProfileComplete = resolveIsProfileComplete(user.getId(), user.getRole());
 
         return new AuthDtos.AuthResponse(
                 jwtService.generateToken(user.getId(), user.getEmail(), user.getRole().name(), profileId),
@@ -216,7 +212,8 @@ public class AuthServiceImpl implements AuthService {
                         user.getPhone(),
                         user.getRole(),
                         user.getPreferredLanguage()
-                )
+                ),
+                isProfileComplete
         );
     }
 
@@ -279,6 +276,13 @@ public class AuthServiceImpl implements AuthService {
             case PHARMACIST -> pharmacistRepository.findByUserId(userId).map(Pharmacist::getId).orElse(null);
             default -> null;
         };
+    }
+
+    private Boolean resolveIsProfileComplete(Long userId, RoleType role) {
+        if (role == RoleType.PATIENT) {
+            return patientRepository.findByUserId(userId).map(Patient::isProfileComplete).orElse(false);
+        }
+        return true;
     }
 
     private static class OtpAttemptState {

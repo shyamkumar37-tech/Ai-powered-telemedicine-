@@ -1,0 +1,35 @@
+import { test as base, expect } from '@playwright/test';
+import { LoginPage } from '../page-objects/LoginPage.js';
+import { PatientDashboardPage } from '../page-objects/PatientDashboardPage.js';
+import { DoctorConsultationPage } from '../page-objects/DoctorConsultationPage.js';
+import { AdminDashboardPage } from '../page-objects/AdminDashboardPage.js';
+import { PharmacistDashboardPage } from '../page-objects/PharmacistDashboardPage.js';
+import { CaregiverDashboardPage } from '../page-objects/CaregiverDashboardPage.js';
+import { registerTestUser } from '../utils/api-helpers.js';
+
+export const test = base.extend({
+  loginPage: async ({ page }, use) => await use(new LoginPage(page)),
+  patientDashboardPage: async ({ page }, use) => await use(new PatientDashboardPage(page)),
+  doctorConsultationPage: async ({ page }, use) => await use(new DoctorConsultationPage(page)),
+  adminDashboardPage: async ({ page }, use) => await use(new AdminDashboardPage(page)),
+  pharmacistDashboardPage: async ({ page }, use) => await use(new PharmacistDashboardPage(page)),
+  caregiverDashboardPage: async ({ page }, use) => await use(new CaregiverDashboardPage(page)),
+  
+  // Fixtures that automatically register a live user and login
+  livePatient: async ({ request, page, loginPage }, use) => {
+    const creds = await registerTestUser(request, 'PATIENT');
+    await loginPage.goto();
+    await loginPage.login(creds.email, creds.password);
+    await expect(page).toHaveURL(/.*patient.*/, { timeout: 15000 });
+    await use({ page, creds });
+  },
+  liveDoctor: async ({ request, page, loginPage }, use) => {
+    const creds = await registerTestUser(request, 'DOCTOR');
+    await loginPage.goto();
+    await loginPage.login(creds.email, creds.password);
+    await expect(page).toHaveURL(/.*doctor.*/, { timeout: 15000 });
+    await use({ page, creds });
+  }
+});
+
+export { expect } from '@playwright/test';

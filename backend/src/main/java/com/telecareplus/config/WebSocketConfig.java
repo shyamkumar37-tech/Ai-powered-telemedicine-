@@ -17,16 +17,19 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/topic", "/queue");
+        config.enableSimpleBroker("/topic", "/queue", "/topic/vitals", "/topic/delivery");
         config.setApplicationDestinationPrefixes("/app");
         config.setUserDestinationPrefix("/user");
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws-telecare")
+        registry.addEndpoint("/api/ws-telecare")
                 .setAllowedOriginPatterns("*")
                 .withSockJS();
+                
+        registry.addEndpoint("/ws/webrtc")
+                .setAllowedOriginPatterns("*");
     }
 
     @Override

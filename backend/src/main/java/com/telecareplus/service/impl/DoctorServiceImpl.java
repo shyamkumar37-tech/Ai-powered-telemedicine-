@@ -19,16 +19,18 @@ public class DoctorServiceImpl implements DoctorService {
     private final DoctorRepository doctorRepository;
 
     @Override
+    @org.springframework.cache.annotation.Cacheable(value = com.telecareplus.config.CacheConfig.CACHE_MEDIUM, key = "'allDoctors'")
     public List<DoctorDtos.DoctorSummaryResponse> getAllDoctors() {
         return doctorRepository.findAll().stream()
                 .sorted(Comparator
                         .comparing(Doctor::getSpecialization, Comparator.nullsLast(String::compareToIgnoreCase))
-                        .thenComparing(doctor -> doctor.getUser().getFullName(), Comparator.nullsLast(String::compareToIgnoreCase)))
+                        .thenComparing(doctor -> doctor.getUser() != null ? doctor.getUser().getFullName() : "", Comparator.nullsLast(String::compareToIgnoreCase)))
                 .map(this::toSummary)
                 .toList();
     }
 
     @Override
+    @org.springframework.cache.annotation.Cacheable(value = com.telecareplus.config.CacheConfig.CACHE_MEDIUM, key = "'doctor:' + #doctorId")
     public DoctorDtos.DoctorDetailsResponse getDoctor(long doctorId) {
         Doctor doctor = doctorRepository.findById(doctorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found"));
@@ -38,7 +40,7 @@ public class DoctorServiceImpl implements DoctorService {
     private DoctorDtos.DoctorSummaryResponse toSummary(Doctor doctor) {
         return new DoctorDtos.DoctorSummaryResponse(
                 doctor.getId(),
-                doctor.getUser().getFullName(),
+                doctor.getUser() != null ? doctor.getUser().getFullName() : "Unknown",
                 doctor.getSpecialization(),
                 doctor.getExperienceYears(),
                 doctor.getConsultationFee(),
@@ -49,9 +51,9 @@ public class DoctorServiceImpl implements DoctorService {
     private DoctorDtos.DoctorDetailsResponse toDetails(Doctor doctor) {
         return new DoctorDtos.DoctorDetailsResponse(
                 doctor.getId(),
-                doctor.getUser().getFullName(),
-                doctor.getUser().getEmail(),
-                doctor.getUser().getPhone(),
+                doctor.getUser() != null ? doctor.getUser().getFullName() : "Unknown",
+                doctor.getUser() != null ? doctor.getUser().getEmail() : "Unknown",
+                doctor.getUser() != null ? doctor.getUser().getPhone() : "Unknown",
                 doctor.getSpecialization(),
                 doctor.getExperienceYears(),
                 doctor.getConsultationFee(),

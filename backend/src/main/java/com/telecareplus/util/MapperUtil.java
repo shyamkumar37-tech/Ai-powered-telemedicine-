@@ -16,14 +16,18 @@ public final class MapperUtil {
     }
 
     public static ProfileDtos.UserSummary toUserSummary(User user) {
-        return new ProfileDtos.UserSummary(user.getId(), user.getFullName(), user.getEmail(), user.getPhone(), user.getPreferredLanguage());
+        return new ProfileDtos.UserSummary(
+                user.getId(), user.getFullName(), user.getEmail(), user.getPhone(), user.getPreferredLanguage(),
+                user.isEmailNotificationsEnabled(), user.isSmsNotificationsEnabled(), user.isPushNotificationsEnabled()
+        );
     }
 
     public static ProfileDtos.PatientProfileResponse toPatientProfile(Patient patient) {
         return new ProfileDtos.PatientProfileResponse(
-                patient.getId(), toUserSummary(patient.getUser()), patient.getAge(), patient.getGender(), patient.getBloodGroup(),
+                patient.getId(), toUserSummary(patient.getUser()), patient.getDateOfBirth(), patient.getGender(), patient.getBloodGroup(),
                 patient.getAllergies(), patient.getDiseases(), patient.getEmergencyContactName(), patient.getEmergencyContactPhone(),
-                patient.getMedicalHistorySummary()
+                patient.getMedicalHistorySummary(), patient.getHeight(), patient.getWeight(), patient.getCurrentMedications(),
+                patient.getInsuranceInfo(), patient.isProfileComplete()
         );
     }
 

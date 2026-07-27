@@ -52,12 +52,35 @@ public class AuditLoggingAspect {
         Object result;
         try {
             result = joinPoint.proceed();
-            accessAuditService.logAuditAction(principal, action, resourceType, "SUCCESS", null, request);
+            accessAuditService.logAuditAction(principal, action, resourceType, "SUCCESS", null, maskRequest(request));
         } catch (Throwable e) {
-            accessAuditService.logAuditAction(principal, action, resourceType, "DENIED", e.getMessage(), request);
+            accessAuditService.logAuditAction(principal, action, resourceType, "DENIED", e.getMessage(), maskRequest(request));
             throw e;
         }
 
         return result;
+    }
+
+    private HttpServletRequest maskRequest(HttpServletRequest request) {
+        if (request == null) return null;
+        // In a real scenario, we would use a HttpServletRequestWrapper to override getHeader() and getParameter() 
+        // to mask "Authorization", "password", etc., before passing to the audit service.
+        return new jakarta.servlet.http.HttpServletRequestWrapper(request) {
+            @Override
+            public String getHeader(String name) {
+                if ("Authorization".equalsIgnoreCase(name)) {
+                    return "***MASKED***";
+                }
+                return super.getHeader(name);
+            }
+
+            @Override
+            public String getParameter(String name) {
+                if ("password".equalsIgnoreCase(name) || name.toLowerCase().contains("secret") || name.toLowerCase().contains("token")) {
+                    return "***MASKED***";
+                }
+                return super.getParameter(name);
+            }
+        };
     }
 }

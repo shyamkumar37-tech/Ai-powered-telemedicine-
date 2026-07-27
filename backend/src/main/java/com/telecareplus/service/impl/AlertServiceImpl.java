@@ -27,6 +27,7 @@ public class AlertServiceImpl implements AlertService {
     private final PatientRepository patientRepository;
     private final AlertStreamService alertStreamService;
     private final CommunicationService communicationService;
+    private final org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
 
     @Override
     public List<AlertDtos.AlertResponse> getPatientAlerts(Long patientId) {
@@ -60,7 +61,15 @@ public class AlertServiceImpl implements AlertService {
         List<Caregiver> caregivers = patientCaregiverLinkRepository.findByPatientIdAndActiveTrue(patientId).stream()
                 .map(PatientCaregiverLink::getCaregiver)
                 .toList();
-        caregivers.forEach(caregiver -> alertStreamService.publishToCaregiver(caregiver.getId(), response));
+        
+        caregivers.forEach(caregiver -> {
+            alertStreamService.publishToCaregiver(caregiver.getId(), response);
+            // Broadcast over WebSockets to ensure real-time UI updates
+            messagingTemplate.convertAndSend("/topic/caregiver/" + caregiver.getId() + "/alerts", 
+                java.util.Map.of("message", message, "patientName", patient.getUser().getFullName(), "type", "REAL_ALERT", "severity", severity.name())
+            );
+        });
+        
         communicationService.dispatchAlertNotifications(patient, caregivers, severity, message, "alert:" + alert.getId());
         return response;
     }

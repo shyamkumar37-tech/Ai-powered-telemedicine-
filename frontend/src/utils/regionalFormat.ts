@@ -1,0 +1,3 @@
+export function formatDate(dateString: string, locale = 'en-IN') { if (!dateString) return ''; const date = new Date(dateString); if (isNaN(date.getTime())) return dateString; return new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(date); }
+
+export function formatCurrency(amount: number, locale = 'en-IN', currency = 'INR') { if (amount === null || amount === undefined) return ''; return new Intl.NumberFormat(locale, { style: 'currency', currency: currency, maximumFractionDigits: 0 }).format(amount); }

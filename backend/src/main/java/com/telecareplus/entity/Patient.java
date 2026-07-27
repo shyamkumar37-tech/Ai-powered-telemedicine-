@@ -16,10 +16,9 @@ public class Patient extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
-    @Column(nullable = false)
-    private Integer age;
+    @Column
+    private String dateOfBirth;
 
-    @Column(nullable = false)
     private String gender;
 
     private String bloodGroup;
@@ -30,4 +29,13 @@ public class Patient extends BaseEntity {
 
     @Column(length = 2000)
     private String medicalHistorySummary;
+
+    private String height;
+    private String weight;
+    private String currentMedications;
+    private String preferredLanguage;
+    private String insuranceInfo;
+
+    @Column(nullable = false)
+    private boolean isProfileComplete = false;
 }

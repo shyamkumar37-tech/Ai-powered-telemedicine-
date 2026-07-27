@@ -1,10 +1,13 @@
 package com.telecareplus.controller;
 
 import com.telecareplus.dto.MessageDtos;
+import com.telecareplus.security.CustomUserPrincipal;
 import com.telecareplus.service.MessagingService;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -13,6 +16,36 @@ import org.springframework.web.bind.annotation.*;
 public class MessageController {
 
     private final MessagingService messagingService;
+
+    // --- New Generic Chat Endpoints ---
+
+    @GetMapping("/conversations")
+    public List<MessageDtos.ChatConversationResponse> getConversations(@AuthenticationPrincipal CustomUserPrincipal principal) {
+        return messagingService.getConversations(principal.getUserId());
+    }
+
+    @GetMapping("/conversations/{conversationId}")
+    public List<MessageDtos.ChatMessageResponse> getConversationHistory(
+            @PathVariable Long conversationId,
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        return messagingService.getConversationHistory(conversationId, principal.getUserId());
+    }
+
+    @PostMapping("/send")
+    public MessageDtos.ChatMessageResponse sendChatMessage(
+            @Valid @RequestBody MessageDtos.ChatMessageRequest request,
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        return messagingService.sendChatMessage(principal.getUserId(), request);
+    }
+
+    @PatchMapping("/{conversationId}/read")
+    public void markConversationRead(
+            @PathVariable Long conversationId,
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        messagingService.markConversationAsRead(conversationId, principal.getUserId());
+    }
+
+    // --- Legacy Endpoints for Compatibility ---
 
     @GetMapping("/patient/{patientId}")
     @PreAuthorize("hasRole('PATIENT') and @accessScopeAuthorizer.canAccessPatient(authentication, #patientId)")

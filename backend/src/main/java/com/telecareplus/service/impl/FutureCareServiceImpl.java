@@ -32,6 +32,9 @@ import com.telecareplus.repository.ReferralRecommendationRepository;
 import com.telecareplus.repository.TriageAssessmentRepository;
 import com.telecareplus.service.FutureCareService;
 import com.telecareplus.service.ReminderService;
+import com.telecareplus.service.VitalThresholdService;
+import com.telecareplus.event.EventPublisher;
+import com.telecareplus.event.VitalLoggedEvent;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -58,6 +61,8 @@ public class FutureCareServiceImpl implements FutureCareService {
     private final CarePlanRepository carePlanRepository;
     private final PatientObservationRepository patientObservationRepository;
     private final ReferralRecommendationRepository referralRecommendationRepository;
+    private final VitalThresholdService vitalThresholdService;
+    private final EventPublisher eventPublisher;
     private final DashboardServiceImpl dashboardService;
     private final ReminderService reminderService;
 
@@ -329,10 +334,26 @@ public class FutureCareServiceImpl implements FutureCareService {
         observation.setMetricName(request.metricName());
         observation.setMetricValue(request.metricValue());
         observation.setUnit(request.unit());
-        observation.setAbnormalFlag(Boolean.TRUE.equals(request.abnormalFlag()));
+        boolean isCritical = vitalThresholdService.isCritical(request.metricName(), request.metricValue());
+        
+        observation.setAbnormalFlag(Boolean.TRUE.equals(request.abnormalFlag()) || isCritical);
         observation.setNotes(request.notes());
         observation.setMeasuredAt(request.measuredAt() == null ? LocalDateTime.now() : request.measuredAt());
-        return toObservationResponse(patientObservationRepository.save(observation));
+        
+        PatientObservation savedObservation = patientObservationRepository.save(observation);
+        
+        if (isCritical) {
+            eventPublisher.publishVitalLogged(new VitalLoggedEvent(
+                    patient.getId(),
+                    request.metricName(),
+                    request.metricValue(),
+                    request.unit(),
+                    savedObservation.getMeasuredAt(),
+                    true
+            ));
+        }
+        
+        return toObservationResponse(savedObservation);
     }
 
     @Override
@@ -465,7 +486,21 @@ public class FutureCareServiceImpl implements FutureCareService {
                 .sum();
         long generatedReferrals = referralRecommendationRepository.findByDoctorIdOrderByCreatedAtDesc(doctorId).size();
 
+        // Calculate Pattern Alerts (e.g., Respiratory Cluster)
+        long respiratoryIssues = patients.stream()
+                .flatMap(patient -> triageAssessmentRepository.findByPatientIdOrderByAssessedAtDesc(patient.getId()).stream().limit(1))
+                .filter(t -> t.getSymptoms() != null && (t.getSymptoms().toLowerCase().contains("cough") || t.getSymptoms().toLowerCase().contains("fever") || t.getSymptoms().toLowerCase().contains("breath")))
+                .filter(t -> t.getAssessedAt().isAfter(java.time.LocalDateTime.now().minusDays(7)))
+                .count();
+
         List<FutureCareDtos.PopulationInsightResponse> insights = new ArrayList<>();
+        if (respiratoryIssues >= 2) {
+            insights.add(new FutureCareDtos.PopulationInsightResponse(
+                    "Respiratory Cluster Alert",
+                    String.valueOf(respiratoryIssues),
+                    "Recent triage logs show a spike in fever/cough symptoms among your patients in the last 7 days."
+            ));
+        }
         insights.add(new FutureCareDtos.PopulationInsightResponse(
                 "Monitored patients",
                 String.valueOf(patients.size()),

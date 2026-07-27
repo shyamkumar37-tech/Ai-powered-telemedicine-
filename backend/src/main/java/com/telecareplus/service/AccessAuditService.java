@@ -59,4 +59,24 @@ public class AccessAuditService {
         entry.setUserAgent(request == null ? null : request.getHeader("User-Agent"));
         accessAuditLogRepository.save(entry);
     }
+
+    @Transactional
+    public void logAccess(Long actorUserId, String actorRole, Long patientId, String action, String resourceType, String outcome, String requestId, String sourceIp, String userAgent) {
+        AccessAuditLog entry = new AccessAuditLog();
+        entry.setActorUserId(actorUserId);
+        entry.setActorRole(actorRole);
+        entry.setPatientId(patientId);
+        entry.setAction(action);
+        entry.setResourceType(resourceType);
+        entry.setOutcome(outcome);
+        entry.setRequestId(requestId);
+        entry.setSourceIp(sourceIp);
+        entry.setUserAgent(userAgent);
+        accessAuditLogRepository.save(entry);
+    }
+
+    @Transactional(readOnly = true)
+    public java.util.List<com.telecareplus.entity.AccessAuditLog> getPatientAccessLogs(Long patientId) {
+        return accessAuditLogRepository.findByFilters(null, patientId, null, org.springframework.data.domain.PageRequest.of(0, 50, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"))).getContent();
+    }
 }

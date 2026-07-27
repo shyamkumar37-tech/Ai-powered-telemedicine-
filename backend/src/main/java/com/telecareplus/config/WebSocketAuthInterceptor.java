@@ -9,10 +9,7 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -21,10 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class WebSocketAuthInterceptor implements ChannelInterceptor {
 
-    private final JwtDecoder jwtDecoder;
-    
-    // Fallback if needed, we can decode JWT and manually create Authentication token.
-    // In Spring Security OAuth2 resource server, you usually need a JWT Authentication converter.
+    private final com.telecareplus.security.JwtService jwtService;
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
@@ -37,10 +31,18 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
                 if (bearerToken.startsWith("Bearer ")) {
                     String token = bearerToken.substring(7);
                     try {
-                        Jwt jwt = jwtDecoder.decode(token);
-                        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-                        Authentication authentication = converter.convert(jwt);
-                        accessor.setUser(authentication);
+                        if (jwtService.isValid(token)) {
+                            Long userId = jwtService.extractUserId(token);
+                            Long profileId = jwtService.extractProfileId(token);
+                            String username = jwtService.extractUsername(token);
+                            com.telecareplus.entity.enums.RoleType role = jwtService.extractRole(token);
+                            
+                            if (userId != null && username != null && role != null) {
+                                com.telecareplus.security.CustomUserPrincipal principal = new com.telecareplus.security.CustomUserPrincipal(userId, profileId, username, "", role, true);
+                                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
+                                accessor.setUser(authentication);
+                            }
+                        }
                     } catch (Exception e) {
                         System.err.println("Failed to authenticate STOMP connection with JWT: " + e.getMessage());
                         throw new IllegalArgumentException("Invalid Token");

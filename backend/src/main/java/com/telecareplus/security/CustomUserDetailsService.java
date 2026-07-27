@@ -24,7 +24,8 @@ public class CustomUserDetailsService implements UserDetailsService {
                 user.getRole(),
                 user.getFullName(),
                 user.getPhone(),
-                user.getPreferredLanguage()
+                user.getPreferredLanguage(),
+                user.isActive()
         );
     }
 }

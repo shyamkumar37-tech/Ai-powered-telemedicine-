@@ -1,0 +1,36 @@
+import { test, expect } from '../../fixtures/test-base.js';
+import { registerTestUser } from '../../utils/api-helpers.js';
+
+test.describe('Auth - Live Login Flow', () => {
+  test.beforeEach(async ({ page }) => {
+    page.on('console', msg => console.log('BROWSER CONSOLE:', msg.text()));
+    page.on('pageerror', err => console.log('BROWSER ERROR:', err.message));
+    page.on('request', request => console.log('>>', request.method(), request.url()));
+    page.on('response', response => console.log('<<', response.status(), response.url()));
+  });
+
+  test('should display login page correctly', async ({ loginPage, page }) => {
+    await loginPage.goto();
+    await expect(page).toHaveTitle(/Telecare|Login/i);
+    await expect(loginPage.emailInput).toBeVisible();
+    await expect(loginPage.loginButton).toBeVisible();
+  });
+
+  test('should show error for invalid credentials using live backend', async ({ loginPage }) => {
+    await loginPage.goto();
+    await loginPage.login('wrong-user-live@example.com', 'badpass123!');
+    await expect(loginPage.errorMessage).toBeVisible({ timeout: 30000 });
+  });
+
+  test('should login successfully with newly registered dynamic user', async ({ request, loginPage, page }) => {
+    // 1. Register a real user in the live DB via API
+    const { email, password } = await registerTestUser(request, 'PATIENT');
+    
+    // 2. Perform real UI login
+    await loginPage.goto();
+    await loginPage.login(email, password);
+    
+    // 3. Verify real redirection to patient dashboard
+    await expect(page).toHaveURL(/.*patient.*/, { timeout: 30000 });
+  });
+});

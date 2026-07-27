@@ -5,15 +5,15 @@ import { test as base } from '@playwright/test';
 // Let's actually perform a real API login to get a real JWT.
 
 const USERS = {
-  patient: { email: 'patient@demo.com', password: 'password123' },
-  doctor: { email: 'doctor@demo.com', password: 'password123' },
-  pharmacist: { email: 'pharmacist@demo.com', password: 'password123' },
-  admin: { email: 'admin@demo.com', password: 'password123' },
+  patient: { email: 'anita@patient.com', password: 'password123' },
+  doctor: { email: 'doctor@telecareplus.com', password: 'Password123' },
+  pharmacist: { email: 'pharmacist@telecare.com', password: 'password123' },
+  admin: { email: 'admin@telecare.com', password: 'password123' },
 };
 
 async function authenticate(request, role) {
   const user = USERS[role];
-  const response = await request.post('http://localhost:8080/api/auth/login', {
+  const response = await request.post('http://127.0.0.1:8080/api/auth/login', {
     data: {
       email: user.email,
       password: user.password

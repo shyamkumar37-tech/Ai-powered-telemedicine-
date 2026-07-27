@@ -39,4 +39,8 @@ public class TriageAssessment extends BaseEntity {
     private String recommendation;
 
     private LocalDateTime assessedAt;
+    public java.time.LocalDateTime getAssessedAt() { return assessedAt; }
+    public String getSymptoms() { return symptoms; }
+    public com.telecareplus.entity.enums.TriageLevel getLevel() { return level; }
 }
+

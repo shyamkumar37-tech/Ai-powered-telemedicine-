@@ -12,14 +12,21 @@ public class ProfileDtos {
             @NotBlank @Email String email,
             @NotBlank String phone,
             String preferredLanguage,
-            @NotNull Integer age,
+            String dateOfBirth,
             @NotBlank String gender,
             String bloodGroup,
             String allergies,
             String diseases,
             String emergencyContactName,
             String emergencyContactPhone,
-            String medicalHistorySummary
+            String medicalHistorySummary,
+            String height,
+            String weight,
+            String currentMedications,
+            String insuranceInfo,
+            Boolean emailNotificationsEnabled,
+            Boolean smsNotificationsEnabled,
+            Boolean pushNotificationsEnabled
     ) {}
 
     public record DoctorProfileRequest(
@@ -48,20 +55,28 @@ public class ProfileDtos {
             String fullName,
             String email,
             String phone,
-            String preferredLanguage
+            String preferredLanguage,
+            Boolean emailNotificationsEnabled,
+            Boolean smsNotificationsEnabled,
+            Boolean pushNotificationsEnabled
     ) {}
 
     public record PatientProfileResponse(
             Long patientId,
             UserSummary user,
-            Integer age,
+            String dateOfBirth,
             String gender,
             String bloodGroup,
             String allergies,
             String diseases,
             String emergencyContactName,
             String emergencyContactPhone,
-            String medicalHistorySummary
+            String medicalHistorySummary,
+            String height,
+            String weight,
+            String currentMedications,
+            String insuranceInfo,
+            boolean isProfileComplete
     ) {}
 
     public record DoctorProfileResponse(

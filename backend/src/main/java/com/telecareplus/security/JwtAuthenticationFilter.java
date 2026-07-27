@@ -28,12 +28,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     )
             throws ServletException, IOException {
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        String token = null;
+
+        // 1. Try to get token from cookies
+        if (request.getCookies() != null) {
+            for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
+                if ("jwt".equals(cookie.getName())) {
+                    token = cookie.getValue();
+                    break;
+                }
+            }
+        }
+
+        // 2. Fallback to Authorization header if not found in cookies
+        if (token == null) {
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                token = authHeader.substring(7);
+            }
+        }
+
+        if (token == null) {
             filterChain.doFilter(request, response);
             return;
         }
-        String token = authHeader.substring(7);
         if (!jwtService.isValid(token)) {
             filterChain.doFilter(request, response);
             return;
@@ -44,7 +62,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         var role = jwtService.extractRole(token);
         if (userId != null && username != null && role != null
                 && SecurityContextHolder.getContext().getAuthentication() == null) {
-            var principal = new CustomUserPrincipal(userId, profileId, username, "", role);
+            var principal = new CustomUserPrincipal(userId, profileId, username, "", role, true);
             var authToken = new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
             authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authToken);

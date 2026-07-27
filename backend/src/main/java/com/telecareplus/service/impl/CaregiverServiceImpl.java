@@ -10,8 +10,10 @@ import com.telecareplus.repository.CaregiverRepository;
 import com.telecareplus.repository.PatientCaregiverLinkRepository;
 import com.telecareplus.repository.PatientRepository;
 import com.telecareplus.service.CaregiverService;
+import com.telecareplus.service.communication.CommunicationService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -23,6 +25,7 @@ public class CaregiverServiceImpl implements CaregiverService {
     private final CaregiverRepository caregiverRepository;
     private final AlertNotificationRepository alertNotificationRepository;
     private final ReminderServiceImpl reminderService;
+    private final CommunicationService communicationService;
 
     @Override
     public void linkPatient(CaregiverDtos.CaregiverLinkRequest request) {
@@ -70,8 +73,12 @@ public class CaregiverServiceImpl implements CaregiverService {
         String message = String.format("Hello,\n\n%s has invited you to join their Care Network on TeleCare+ as their %s.\n\nPlease click the link below to register and accept the invitation:\n%s\n\n- The TeleCare+ Team",
                 patient.getUser().getFullName(), request.relationship(), inviteLink);
 
-        // communicationService.sendEmail(request.email(), "TeleCare+ Caregiver Invitation", message);
-        // Using sysout for mock email until CommunicationService is injected if missing
-        System.out.println("Mock Email to " + request.email() + ": " + message);
+        try {
+            communicationService.sendEmail(request.email(), "TeleCare+ Caregiver Invitation", message);
+        } catch (Exception e) {
+            // Log the error but don't fail the transaction, as the invitation token is generated
+            System.err.println("Failed to send caregiver invitation email to " + request.email() + ": " + e.getMessage());
+            // In a production scenario, we would use a proper logger and a retry queue
+        }
     }
 }

@@ -11,16 +11,6 @@ We have configured a complete Docker Compose environment to spin up the entire T
 - **Backend (Spring Boot)**: The Java API.
 - **Frontend (Vite/React)**: The web portal.
 
-## Getting Started
-
-1. Ensure you have Docker and Docker Compose installed.
-2. Copy the `.env.example` file to `.env` (if applicable) or ensure variables like `TELECARE_DB_PASSWORD`, `TELECARE_JWT_SECRET`, and `TELECARE_PUSH_PRIVATE_KEY` are set in a `.env` file at the root.
-3. Run the following command from the project root:
-
-```bash
-docker-compose up --build
-```
-
 This will build the backend and frontend containers from source and start all dependencies. 
 
 ## Graceful Degradation & Elasticsearch

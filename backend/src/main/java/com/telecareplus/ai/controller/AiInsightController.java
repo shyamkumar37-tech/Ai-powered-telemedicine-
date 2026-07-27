@@ -36,6 +36,22 @@ public class AiInsightController {
         return response;
     }
 
+    @GetMapping("/symptom-trends/{patientId}")
+    @PreAuthorize("hasAnyRole('PATIENT','DOCTOR','CAREGIVER') and @accessScopeAuthorizer.canAccessPatientCare(authentication, #patientId)")
+    public AiInsightDtos.SymptomTrendResponse symptomTrends(@PathVariable Long patientId) {
+        var response = aiInsightService.buildSymptomTrends(patientId);
+        aiAuditService.recordEvent("symptom-trends", patientId, null, response.rationale(), null, response.summary(), "LOW");
+        return response;
+    }
+
+    @GetMapping("/consultation-prep/{patientId}")
+    @PreAuthorize("hasAnyRole('PATIENT','DOCTOR','CAREGIVER') and @accessScopeAuthorizer.canAccessPatientCare(authentication, #patientId)")
+    public AiInsightDtos.ConsultationPrepResponse consultationPrep(@PathVariable Long patientId) {
+        var response = aiInsightService.buildConsultationPrep(patientId);
+        aiAuditService.recordEvent("consultation-prep", patientId, null, response.rationale(), null, response.summary(), "LOW");
+        return response;
+    }
+
     @GetMapping("/follow-up/{patientId}")
     @PreAuthorize("hasAnyRole('PATIENT','DOCTOR','CAREGIVER') and @accessScopeAuthorizer.canAccessPatientCare(authentication, #patientId)")
     public AiInsightDtos.FollowUpRecommendationResponse followUp(@PathVariable Long patientId) {

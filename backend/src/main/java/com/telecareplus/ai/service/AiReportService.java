@@ -11,15 +11,21 @@ import com.telecareplus.repository.MedicationItemRepository;
 import com.telecareplus.repository.PatientRepository;
 import com.telecareplus.repository.PrescriptionRepository;
 import com.telecareplus.repository.TriageAssessmentRepository;
+import com.telecareplus.service.GenerativeAiService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AiReportService {
 
     private final PatientRepository patientRepository;
@@ -27,8 +33,69 @@ public class AiReportService {
     private final ConsultationNoteRepository consultationNoteRepository;
     private final PrescriptionRepository prescriptionRepository;
     private final MedicationItemRepository medicationItemRepository;
+    private final GenerativeAiService generativeAiService;
+    private final ObjectMapper objectMapper;
+    private final ChatClient.Builder chatClientBuilder;
 
-    public AiDtos.ReportSummaryResponse generateSummary(Long patientId) {
+    public SseEmitter generateSummaryStream(Long patientId, String language) {
+        SseEmitter emitter = new SseEmitter(120000L); // 2 minutes timeout
+        
+        try {
+            var patient = patientRepository.findById(patientId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
+
+            var triageHistory = triageAssessmentRepository.findByPatientIdOrderByAssessedAtDesc(patientId);
+            var consultations = consultationNoteRepository.findByPatientIdOrderByCreatedAtDesc(patientId);
+            var prescriptions = prescriptionRepository.findByPatientIdOrderByCreatedAtDesc(patientId);
+
+            String patientName = patient.getUser().getFullName();
+            String overview = buildOverview(patientName, 0, patient.getGender(), patient.getDiseases(), patient.getAllergies());
+            List<String> recentComplaints = buildRecentComplaints(triageHistory);
+            String diagnosisSummary = buildDiagnosisSummary(consultations);
+            List<String> prescribedMedicines = buildPrescriptionSummary(prescriptions);
+            List<String> followUpAdvice = buildFollowUpAdvice(consultations, prescriptions);
+
+            String systemPrompt = "You are a clinical AI Copilot. Summarize the patient's medical history into a concise, professional clinical summary. Format your response nicely in Markdown." +
+                    " Respond strictly in the following language locale: " + language;
+                    
+            String userPrompt = "Patient: " + patientName + "\n" +
+                    "Base Overview: " + overview + "\n" +
+                    "Raw Complaints: " + String.join(" | ", recentComplaints) + "\n" +
+                    "Raw Diagnosis: " + diagnosisSummary + "\n" +
+                    "Raw Medicines: " + String.join(" | ", prescribedMedicines) + "\n" +
+                    "Raw Follow-Up: " + String.join(" | ", followUpAdvice);
+
+            ChatClient chatClient = chatClientBuilder.build();
+            
+            chatClient.prompt()
+                      .system(systemPrompt)
+                      .user(userPrompt)
+                      .stream()
+                      .content()
+                      .subscribe(
+                              token -> {
+                                  try {
+                                      emitter.send(token);
+                                  } catch (Exception e) {
+                                      log.error("Error sending SSE", e);
+                                      emitter.completeWithError(e);
+                                  }
+                              },
+                              error -> {
+                                  log.error("Error generating stream", error);
+                                  emitter.completeWithError(error);
+                              },
+                              () -> emitter.complete()
+                      );
+        } catch (Exception e) {
+            log.error("Error in generateSummaryStream", e);
+            emitter.completeWithError(e);
+        }
+
+        return emitter;
+    }
+
+    public AiDtos.ReportSummaryResponse generateSummary(Long patientId, String language) {
         var patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
 
@@ -37,11 +104,55 @@ public class AiReportService {
         var prescriptions = prescriptionRepository.findByPatientIdOrderByCreatedAtDesc(patientId);
 
         String patientName = patient.getUser().getFullName();
-        String overview = buildOverview(patientName, patient.getAge(), patient.getGender(), patient.getDiseases(), patient.getAllergies());
+        String overview = buildOverview(patientName, 0, patient.getGender(), patient.getDiseases(), patient.getAllergies());
         List<String> recentComplaints = buildRecentComplaints(triageHistory);
         String diagnosisSummary = buildDiagnosisSummary(consultations);
         List<String> prescribedMedicines = buildPrescriptionSummary(prescriptions);
         List<String> followUpAdvice = buildFollowUpAdvice(consultations, prescriptions);
+
+        if (generativeAiService.isConfigured()) {
+            try {
+                String systemPrompt = "You are a clinical AI Copilot. Summarize the patient's medical history into a concise, professional clinical summary. Respond ONLY with a JSON object exactly matching this structure, with no markdown formatting: " +
+                        "{ \"overview\": \"string\", \"recentComplaints\": [\"string\"], \"diagnosisSummary\": \"string\", \"prescribedMedicines\": [\"string\"], \"followUpAdvice\": [\"string\"] }";
+                systemPrompt += " Respond strictly in the following language locale: " + language;
+                        
+                String userPrompt = "Patient: " + patientName + "\n" +
+                        "Base Overview: " + overview + "\n" +
+                        "Raw Complaints: " + String.join(" | ", recentComplaints) + "\n" +
+                        "Raw Diagnosis: " + diagnosisSummary + "\n" +
+                        "Raw Medicines: " + String.join(" | ", prescribedMedicines) + "\n" +
+                        "Raw Follow-Up: " + String.join(" | ", followUpAdvice);
+
+                var aiResponse = generativeAiService.generateRawText(systemPrompt, userPrompt);
+                
+                if (aiResponse.isPresent()) {
+                    String cleanJson = aiResponse.get().replaceAll("^```json\\s*", "").replaceAll("\\s*```$", "");
+                    var jsonNode = objectMapper.readTree(cleanJson);
+                    
+                    List<String> aiComplaints = new ArrayList<>();
+                    jsonNode.path("recentComplaints").forEach(n -> aiComplaints.add(n.asText()));
+                    
+                    List<String> aiMedicines = new ArrayList<>();
+                    jsonNode.path("prescribedMedicines").forEach(n -> aiMedicines.add(n.asText()));
+                    
+                    List<String> aiFollowUp = new ArrayList<>();
+                    jsonNode.path("followUpAdvice").forEach(n -> aiFollowUp.add(n.asText()));
+
+                    return new AiDtos.ReportSummaryResponse(
+                            patientName,
+                            jsonNode.path("overview").asText(overview),
+                            aiComplaints.isEmpty() ? recentComplaints : aiComplaints,
+                            jsonNode.path("diagnosisSummary").asText(diagnosisSummary),
+                            aiMedicines.isEmpty() ? prescribedMedicines : aiMedicines,
+                            aiFollowUp.isEmpty() ? followUpAdvice : aiFollowUp,
+                            "AI-generated summary for clinician review only. Verify details against full medical records.",
+                            LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                    );
+                }
+            } catch (Exception e) {
+                // Fallback to manual string builder if AI parsing fails
+            }
+        }
 
         return new AiDtos.ReportSummaryResponse(
                 patientName,
@@ -50,7 +161,7 @@ public class AiReportService {
                 diagnosisSummary,
                 prescribedMedicines,
                 followUpAdvice,
-                "AI-generated summary for clinician review only. Not a diagnosis.",
+                "Auto-generated summary. Not a diagnosis.",
                 LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
         );
     }

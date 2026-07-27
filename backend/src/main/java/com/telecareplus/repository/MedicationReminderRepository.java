@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 public interface MedicationReminderRepository extends JpaRepository<MedicationReminder, Long> {
     List<MedicationReminder> findByPatientIdOrderByScheduledDateDesc(Long patientId);
     long countByPatientIdAndStatus(Long patientId, ReminderStatus status);
+    List<MedicationReminder> findByStatusAndScheduledDateBefore(ReminderStatus status, LocalDate date);
 
     @Query("""
         select

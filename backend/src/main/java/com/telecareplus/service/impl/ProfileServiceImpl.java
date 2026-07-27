@@ -37,7 +37,7 @@ public class ProfileServiceImpl implements ProfileService {
         patient.getUser().setEmail(request.email());
         patient.getUser().setPhone(request.phone());
         patient.getUser().setPreferredLanguage(request.preferredLanguage());
-        patient.setAge(request.age());
+        patient.setDateOfBirth(request.dateOfBirth());
         patient.setGender(request.gender());
         patient.setBloodGroup(request.bloodGroup());
         patient.setAllergies(request.allergies());
@@ -45,6 +45,14 @@ public class ProfileServiceImpl implements ProfileService {
         patient.setEmergencyContactName(request.emergencyContactName());
         patient.setEmergencyContactPhone(request.emergencyContactPhone());
         patient.setMedicalHistorySummary(request.medicalHistorySummary());
+        patient.setHeight(request.height());
+        patient.setWeight(request.weight());
+        patient.setCurrentMedications(request.currentMedications());
+        patient.setInsuranceInfo(request.insuranceInfo());
+        patient.setProfileComplete(true);
+        if (request.emailNotificationsEnabled() != null) patient.getUser().setEmailNotificationsEnabled(request.emailNotificationsEnabled());
+        if (request.smsNotificationsEnabled() != null) patient.getUser().setSmsNotificationsEnabled(request.smsNotificationsEnabled());
+        if (request.pushNotificationsEnabled() != null) patient.getUser().setPushNotificationsEnabled(request.pushNotificationsEnabled());
         userRepository.save(patient.getUser());
         return MapperUtil.toPatientProfile(patientRepository.save(patient));
     }

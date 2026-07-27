@@ -32,4 +32,17 @@ public class User extends BaseEntity {
     private RoleType role;
 
     private String preferredLanguage;
+
+    @Column(nullable = false)
+    private boolean active = true;
+
+    // Notification Preferences
+    @Column(nullable = false)
+    private boolean emailNotificationsEnabled = true;
+
+    @Column(nullable = false)
+    private boolean smsNotificationsEnabled = false;
+
+    @Column(nullable = false)
+    private boolean pushNotificationsEnabled = true;
 }
