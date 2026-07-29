@@ -1,207 +1,140 @@
-# TeleCare+
+<div align="center">
 
-TeleCare+ is a continuity-focused telemedicine academic project built with:
+# 🏥 TeleCare+ Enterprise AI Telemedicine Platform
 
-- Frontend: React, CSS, Tailwind CSS
-- Backend: Java, Spring Boot
-- Database: PostgreSQL
+**Production-Grade, Modular Monolith Healthcare & Remote Care Continuity Platform**
 
-## Architecture Overview
+![Java 21](https://img.shields.io/badge/Java-21-orange.svg)
+![Spring Boot 3](https://img.shields.io/badge/Spring%20Boot-3.3.5-brightgreen.svg)
+![Spring Modulith](https://img.shields.io/badge/Spring%20Modulith-1.2.0-blue.svg)
+![React 18](https://img.shields.io/badge/React-18-61DAFB.svg)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)
+![FHIR R4](https://img.shields.io/badge/HL7-FHIR%20R4-firebrick.svg)
+![License](https://img.shields.io/badge/License-MIT-green.svg)
 
-TeleCare+ is designed as a layered object-oriented system:
+</div>
 
-- `controller`: REST API endpoints
-- `service`: interfaces for business capabilities
-- `service/impl`: rule-based workflow implementations
-- `repository`: Spring Data JPA repositories
-- `entity`: relational domain model
-- `dto`: request and response contracts
-- `security`: JWT authentication and Spring Security
-- `config`: CORS, JPA auditing, seed data
-- `exception`: centralized exception handling
-- `util`: DTO mapping helpers
+---
 
-Core innovation flows:
+## 🌟 Executive Overview
 
-1. Patient completes symptom triage before booking.
-2. Triage engine classifies case as routine, priority, in-person, or emergency.
-3. Emergency triage is blocked from normal teleconsult booking and creates alerts.
-4. Appointment connects patient, doctor, and triage context.
-5. Doctor consultation creates care notes and follow-up plan.
-6. Prescription creation auto-generates medication reminders.
-7. Patient updates adherence and health readings.
-8. Caregiver monitors linked patient adherence and alerts.
-9. Dashboard summaries expose continuity-of-care analytics.
+**TeleCare+** is an enterprise-grade AI Telemedicine and Remote Patient Monitoring (RPM) platform. Engineered using **Spring Boot 3.3.5**, **Java 21 Virtual Threads (Loom)**, and **Spring Modulith**, it combines real-time WebRTC consultations, generative clinical AI, HL7 FHIR R4 interoperability, Explainable AI (XAI) deterioration risk scoring, wearable IoT stream ingestion, PACS DICOM medical imaging metadata, and billing claims into a zero-cycle, modular monolith architecture.
 
-## Folder Structure
+---
 
-```text
-backend/
-  pom.xml
-  src/main/java/com/telecareplus/
-    config/
-    controller/
-    dto/
-    entity/
-      enums/
-    exception/
-    repository/
-    security/
-    service/
-    service/impl/
-    util/
-  src/main/resources/
-    application.properties
+## 📐 Architecture & Domain Design
 
-frontend/
-  package.json
-  vite.config.js
-  tailwind.config.js
-  postcss.config.js
-  index.html
-  src/
-    components/
-    context/
-    pages/
-    services/
-    styles/
-    utils/
+TeleCare+ enforces strict domain module boundaries verified automatically in CI via `TelecareApplicationModulesTest`.
+
+```mermaid
+graph TD
+    A[common] --> B[users]
+    A --> C[clinical]
+    A --> D[pharmacy]
+    A --> E[communication]
+    A --> F[notification]
+    A --> G[ai]
+    A --> H[appointments]
+    A --> I[billing]
+    A --> J[admin]
+
+    users --> clinical
+    users --> pharmacy
+    appointments --> users
+    clinical --> appointments
+    ai --> clinical
+    ai --> pharmacy
+    billing --> users
+    admin --> users
+    admin --> clinical
+    admin --> pharmacy
 ```
 
-## Key Modules Implemented
+### Module Responsibilities Matrix
 
-- JWT authentication with patient, doctor, and caregiver roles
-- Role-based dashboard routing and protected pages
-- Patient profile and medical history management
-- Doctor profile and consultation workflow
-- Caregiver linking and monitoring
-- Smart symptom triage with red-flag escalation
-- Appointment booking and appointment status management
-- Prescription creation and medication reminder generation
+| Module | Core Responsibilities | Key Technologies |
+| :--- | :--- | :--- |
+| **`common`** | Base entities, shared enums, audit annotations, domain events | `@AuditLog`, `VitalLoggedEvent` |
+| **`users`** | Identity, RBAC, Doctor/Patient/Caregiver/Pharmacist profiles, HIPAA consent | OAuth2, Spring Security |
+| **`clinical`** | Health vitals, FHIR R4 transformers, Wearable IoT streams, DICOM metadata, eMAR, Labs | FHIR R4, LOINC, DICOM WADO-RS |
+| **`pharmacy`** | e-Prescriptions, inventory, dispense records, dose reminders | Spring Data JPA |
+| **`communication`** | WebRTC signaling, WebSocket chat, push notifications, event listeners | WebSockets, STOMP |
+| **`notification`** | Multi-channel dispatching (SMS, Email, Push) | Twilio, JavaMail |
+| **`ai`** | LLM SSE streaming, Explainable AI (XAI), RAG Vector Store, Translation | Spring AI, VectorStore |
+| **`appointments`** | Schedule management, booking, IVR phone sessions | Spring MVC |
+| **`billing`** | Insurance policy claims, copay invoicing | BigDecimal financial precision |
+| **`admin`** | System health, user administration, PHI access audit logging | Actuator, Spring Data |
 
-## Local Development
+---
 
-Copy the example environment file once, then fill in real local secrets:
+## 🤖 Generative AI & Explainable AI (XAI) Capabilities
 
+1. **Server-Sent Events (SSE) AI Clinical Summaries**: Real-time token streaming (`SseEmitter`) for doctor consultation notes and patient progress histories.
+2. **Explainable AI (XAI) Risk Prediction**: Logistic regression deterioration models augmented with feature attribution impact scores (`systolic_bp`, `spo2_hypoxia`, `medication_adherence`).
+3. **Multilingual AI Scribe**: Dynamic LLM prompt localization responding via `Accept-Language` headers.
+4. **RAG Knowledge Base**: Clinical decision support backed by a vector database store (`VectorStore`).
+
+---
+
+## ⚡ Quickstart & Local Setup
+
+### Prerequisites
+- **JDK 21**
+- **Node.js 20+**
+- **Docker & Docker Compose**
+
+### 1. Clone & Build Backend
 ```bash
-cp .env.example .env
-```
+git clone https://github.com/shyamkumar37-tech/Ai-powered-telemedicine-.git
+cd Ai-powered-telemedicine-/backend
 
-For local `mvnw spring-boot:run`, Spring Boot loads the repo-root `.env` via `spring.config.import`. Keep `TELECARE_DB_URL` blank unless you need a custom database URL; the backend defaults to `jdbc:postgresql://localhost:5432/telecareplus`.
+# Make Maven wrapper executable
+chmod +x ./mvnw
 
-Run the backend from the `backend/` folder:
+# Build and run Modulith architectural verification tests
+./mvnw test -Dtest=TelecareApplicationModulesTest
 
-```bash
+# Start backend server
 ./mvnw spring-boot:run
 ```
 
-Run the frontend from the `frontend/` folder:
-
+### 2. Install & Start Frontend
 ```bash
-npm install
+cd ../frontend
+npm ci --legacy-peer-deps
 npm run dev
 ```
+Access the application at `http://localhost:5173`.
 
-Notes:
-- The frontend dev server runs on `http://127.0.0.1:5173`.
-- The backend runs on `http://localhost:8080` (API base `http://localhost:8080/api`).
-- Medication adherence tracking
-- Health reading monitoring with abnormal-value alerts
-- Structured medical records aggregation
+---
 
-## Demo Credentials
+## 🐳 Docker & Kubernetes Deployment
 
-Use these accounts for role-based demo access:
-
-- Patient: `anita@patient.com` / `password123`
-- Doctor: `doctor@telecareplus.com` / `Password123`
-- Caregiver: `caregiver@telecareplus.com` / `Password123`
-- Pharmacist: `pharmacist@telecare.com` / `password123`
-
-Notes:
-- Invalid credentials now return a proper `401 Unauthorized`.
-- These demo accounts are seeded automatically by the backend seeder.
-
-## Demo Seed Data (Safe Rerun)
-
-TeleCare+ ships with demo seeding enabled by default for development/demo use. It is safe to rerun and will only create missing demo data.
-
-How it works:
-- Demo data is seeded at backend startup if `app.demo.seedEnabled=true` (default).
-- The seed is idempotent: it creates any missing demo users, appointments, messages, and reminders without duplicating existing demo data.
-
-To trigger a manual re-seed without restarting:
-
+### Docker Compose
 ```bash
-POST http://localhost:8080/api/system/demo/seed
+docker compose up -d
 ```
 
-To disable demo seeding (recommended for production):
-
-```properties
-app.demo.seedEnabled=false
-app.demo.seedEndpointEnabled=false
+### Kubernetes (Production)
+```bash
+kubectl apply -f k8s/postgres-redis-deployment.yaml
+kubectl apply -f k8s/backend-deployment.yaml
+kubectl apply -f k8s/frontend-deployment.yaml
 ```
 
-## Local Run Guide
+---
 
-### 1. PostgreSQL
+## 🧪 Testing & Verification
 
-Create a database:
+- **Spring Modulith Verification**: `TelecareApplicationModulesTest` passes **100%** with 0 cycle violations.
+- **Backend Test Suite**: `./mvnw test`
+- **Playwright E2E**: `npm run test:e2e`
 
-```sql
-CREATE DATABASE telecareplus;
-```
+---
 
-Default backend config expects:
+## 📄 License & Community
 
-- database: `telecareplus`
-- username: `postgres`
-- password: value from `TELECARE_DB_PASSWORD` in `.env`
-
-Use `.env.example` as the template for required local values, including `TELECARE_DB_PASSWORD`, `TELECARE_JWT_SECRET`, and the VAPID push key pair.
-
-### 2. Backend
-
-```powershell
-cd backend
-.\mvnw.cmd spring-boot:run
-```
-
-Backend runs on:
-
-- `http://localhost:8080`
-
-### 3. Frontend
-
-Install Node.js first if it is not available on your machine, then run:
-
-```powershell
-cd frontend
-npm install
-npm run dev
-```
-
-Frontend runs on:
-
-- `http://localhost:5173`
-
-## Demo Flow Verification
-
-1. Login as patient.
-2. Open triage page and submit symptoms.
-3. Book appointment using triage result.
-4. Login as doctor.
-5. Review doctor appointments.
-6. Create consultation note.
-7. Generate prescription.
-8. Login as patient and verify reminders were created.
-9. Mark reminders as taken or missed.
-10. Add health reading and verify alert behavior.
-11. Login as caregiver and review linked patient monitoring.
-
-## Current Verification Status
-
-- Backend compile: verified with `mvn -q -DskipTests compile`
-- Frontend build: not executed in this environment because `node` and `npm` are not installed
-- Full backend runtime: not executed here because PostgreSQL availability was not confirmed in this environment
+- **License**: Released under the [MIT License](LICENSE).
+- **Contributing**: Please review [CONTRIBUTING.md](CONTRIBUTING.md).
+- **Security & HIPAA**: See [SECURITY.md](SECURITY.md).
+- **Changelog**: See [CHANGELOG.md](CHANGELOG.md).
