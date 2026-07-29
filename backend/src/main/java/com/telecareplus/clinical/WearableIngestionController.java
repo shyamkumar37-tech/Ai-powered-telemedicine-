@@ -1,7 +1,6 @@
 package com.telecareplus.clinical;
 
 import com.telecareplus.users.Patient;
-
 import com.telecareplus.users.PatientRepository;
 import com.telecareplus.common.AlertSeverity;
 import com.telecareplus.common.ResourceNotFoundException;
@@ -14,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Tag(name = "Wearable IoT Telemetry", description = "High-frequency IoT & Wearable Vital Sign Stream Ingestion")
 @RestController
@@ -33,6 +34,7 @@ public class WearableIngestionController {
 
         int processed = 0;
         int anomalies = 0;
+        List<HealthRecord> recordsToSave = new ArrayList<>();
 
         if (request.samples() != null) {
             for (var sample : request.samples()) {
@@ -53,7 +55,7 @@ public class WearableIngestionController {
                                     (sample.systolicBp() != null && sample.systolicBp() > 160.0);
                 
                 record.setAlertSeverity(isAnomaly ? AlertSeverity.CRITICAL : AlertSeverity.INFO);
-                healthRecordRepository.save(record);
+                recordsToSave.add(record);
                 processed++;
 
                 if (isAnomaly) {
@@ -67,6 +69,9 @@ public class WearableIngestionController {
                             true
                     ));
                 }
+            }
+            if (!recordsToSave.isEmpty()) {
+                healthRecordRepository.saveAll(recordsToSave);
             }
         }
 
