@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 500" width="100%" height="100%">
+  <rect width="1000" height="500" rx="16" fill="#0f172a"/>
+  <text x="500" y="40" font-family="system-ui, sans-serif" font-weight="700" font-size="24" fill="#38bdf8" text-anchor="middle">TeleCare+ Core Entity Relationship Diagram (ERD)</text>
+  
+  <!-- User Entity -->
+  <g transform="translate(100, 100)">
+    <rect width="180" height="120" rx="8" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+    <rect width="180" height="35" rx="8" fill="#0284c7"/>
+    <text x="90" y="24" font-family="system-ui, sans-serif" font-weight="700" font-size="15" fill="#ffffff" text-anchor="middle">User</text>
+    <text x="15" y="55" font-family="system-ui, sans-serif" font-size="12" fill="#94a3b8">id: PK (Long)</text>
+    <text x="15" y="75" font-family="system-ui, sans-serif" font-size="12" fill="#94a3b8">email: String</text>
+    <text x="15" y="95" font-family="system-ui, sans-serif" font-size="12" fill="#94a3b8">role: RoleType</text>
+  </g>
+
+  <!-- Patient Entity -->
+  <g transform="translate(410, 100)">
+    <rect width="180" height="120" rx="8" fill="#1e293b" stroke="#818cf8" stroke-width="2"/>
+    <rect width="180" height="35" rx="8" fill="#6366f1"/>
+    <text x="90" y="24" font-family="system-ui, sans-serif" font-weight="700" font-size="15" fill="#ffffff" text-anchor="middle">Patient</text>
+    <text x="15" y="55" font-family="system-ui, sans-serif" font-size="12" fill="#94a3b8">id: PK (Long)</text>
+    <text x="15" y="75" font-family="system-ui, sans-serif" font-size="12" fill="#94a3b8">user_id: FK (User)</text>
+    <text x="15" y="95" font-family="system-ui, sans-serif" font-size="12" fill="#94a3b8">tenant_id: String</text>
+  </g>
+
+  <!-- Doctor Entity -->
+  <g transform="translate(720, 100)">
+    <rect width="180" height="120" rx="8" fill="#1e293b" stroke="#34d399" stroke-width="2"/>
+    <rect width="180" height="35" rx="8" fill="#059669"/>
+    <text x="90" y="24" font-family="system-ui, sans-serif" font-weight="700" font-size="15" fill="#ffffff" text-anchor="middle">Doctor</text>
+    <text x="15" y="55" font-family="system-ui, sans-serif" font-size="12" fill="#94a3b8">id: PK (Long)</text>
+    <text x="15" y="75" font-family="system-ui, sans-serif" font-size="12" fill="#94a3b8">user_id: FK (User)</text>
+    <text x="15" y="95" font-family="system-ui, sans-serif" font-size="12" fill="#94a3b8">specialization: String</text>
+  </g>
+
+  <!-- Appointment Entity -->
+  <g transform="translate(250, 300)">
+    <rect width="200" height="140" rx="8" fill="#1e293b" stroke="#f43f5e" stroke-width="2"/>
+    <rect width="200" height="35" rx="8" fill="#e11d48"/>
+    <text x="100" y="24" font-family="system-ui, sans-serif" font-weight="700" font-size="15" fill="#ffffff" text-anchor="middle">Appointment</text>
+    <text x="15" y="55" font-family="system-ui, sans-serif" font-size="12" fill="#94a3b8">id: PK (Long)</text>
+    <text x="15" y="75" font-family="system-ui, sans-serif" font-size="12" fill="#94a3b8">patient_id: FK (Patient)</text>
+    <text x="15" y="95" font-family="system-ui, sans-serif" font-size="12" fill="#94a3b8">doctor_id: FK (Doctor)</text>
+    <text x="15" y="115" font-family="system-ui, sans-serif" font-size="12" fill="#94a3b8">triage_assessment_id: Long</text>
+  </g>
+
+  <!-- HealthRecord Entity -->
+  <g transform="translate(550, 300)">
+    <rect width="200" height="140" rx="8" fill="#1e293b" stroke="#fbbf24" stroke-width="2"/>
+    <rect width="200" height="35" rx="8" fill="#d97706"/>
+    <text x="100" y="24" font-family="system-ui, sans-serif" font-weight="700" font-size="15" fill="#ffffff" text-anchor="middle">HealthRecord</text>
+    <text x="15" y="55" font-family="system-ui, sans-serif" font-size="12" fill="#94a3b8">id: PK (Long)</text>
+    <text x="15" y="75" font-family="system-ui, sans-serif" font-size="12" fill="#94a3b8">patient_id: FK (Patient)</text>
+    <text x="15" y="95" font-family="system-ui, sans-serif" font-size="12" fill="#94a3b8">spo2, sugar, pulse: Double</text>
+    <text x="15" y="115" font-family="system-ui, sans-serif" font-size="12" fill="#94a3b8">alert_severity: AlertSeverity</text>
+  </g>
+</svg>

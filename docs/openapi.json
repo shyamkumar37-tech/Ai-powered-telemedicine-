@@ -1,0 +1,59 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "TeleCare+ Enterprise AI Telemedicine API",
+    "description": "Production-grade REST and FHIR R4 APIs for TeleCare+ AI-powered telemedicine platform.",
+    "version": "2.0.0"
+  },
+  "paths": {
+    "/api/auth/login": {
+      "post": {
+        "summary": "Authenticate User",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string", "example": "patient@telecareplus.health" },
+                  "password": { "type": "string", "example": "password123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "JWT Token & User Principal" }
+        }
+      }
+    },
+    "/api/fhir/r4/Patient/{id}": {
+      "get": {
+        "summary": "Get FHIR R4 Patient Resource",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "FHIR Patient Resource JSON" }
+        }
+      }
+    },
+    "/api/clinical/wearables/ingest": {
+      "post": {
+        "summary": "Ingest Bulk IoT Vital Telemetry",
+        "responses": {
+          "200": { "description": "Telemetry Processing Summary" }
+        }
+      }
+    },
+    "/api/billing/claims": {
+      "post": {
+        "summary": "Submit Insurance Claim",
+        "responses": {
+          "200": { "description": "Insurance Claim Response" }
+        }
+      }
+    }
+  }
+}

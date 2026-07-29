@@ -1,0 +1,48 @@
+{
+  "info": {
+    "_postman_id": "a9b2c3d4-e5f6-7890-1234-56789abcdef0",
+    "name": "TeleCare+ Enterprise API Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "User Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"patient@telecareplus.health\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "FHIR Interoperability",
+      "item": [
+        {
+          "name": "Get FHIR Patient",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/fhir/r4/Patient/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "fhir", "r4", "Patient", "1"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 600" width="100%" height="100%">
+  <rect width="1000" height="600" rx="16" fill="#0f172a"/>
+  
+  <text x="500" y="40" font-family="system-ui, sans-serif" font-weight="700" font-size="24" fill="#38bdf8" text-anchor="middle">Spring Modulith Architecture &amp; Domain Boundaries</text>
+  
+  <!-- Common Base Layer -->
+  <rect x="50" y="80" width="900" height="60" rx="8" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+  <text x="500" y="115" font-family="system-ui, sans-serif" font-weight="700" font-size="16" fill="#38bdf8" text-anchor="middle">common module (BaseEntity, AlertSeverity, ConsultationMode, @AuditLog, VitalLoggedEvent)</text>
+
+  <!-- Core Slices -->
+  <g transform="translate(50, 170)">
+    <!-- Users -->
+    <rect x="0" y="0" width="260" height="160" rx="8" fill="#1e293b" stroke="#818cf8" stroke-width="2"/>
+    <text x="130" y="30" font-family="system-ui, sans-serif" font-weight="700" font-size="16" fill="#818cf8" text-anchor="middle">users module</text>
+    <text x="130" y="60" font-family="system-ui, sans-serif" font-size="13" fill="#94a3b8" text-anchor="middle">Patient, Doctor, Caregiver</text>
+    <text x="130" y="85" font-family="system-ui, sans-serif" font-size="13" fill="#94a3b8" text-anchor="middle">Pharmacist, ConsentRecord</text>
+    <text x="130" y="110" font-family="system-ui, sans-serif" font-size="13" fill="#94a3b8" text-anchor="middle">CaregiverInvitedEvent</text>
+
+    <!-- Clinical -->
+    <rect x="320" y="0" width="260" height="160" rx="8" fill="#1e293b" stroke="#34d399" stroke-width="2"/>
+    <text x="450" y="30" font-family="system-ui, sans-serif" font-weight="700" font-size="16" fill="#34d399" text-anchor="middle">clinical module</text>
+    <text x="450" y="60" font-family="system-ui, sans-serif" font-size="13" fill="#94a3b8" text-anchor="middle">HealthRecord, FHIR R4</text>
+    <text x="450" y="85" font-family="system-ui, sans-serif" font-size="13" fill="#94a3b8" text-anchor="middle">Wearables IoT, DICOM Scans</text>
+    <text x="450" y="110" font-family="system-ui, sans-serif" font-size="13" fill="#94a3b8" text-anchor="middle">Lab Reports, eMAR</text>
+
+    <!-- AI -->
+    <rect x="640" y="0" width="260" height="160" rx="8" fill="#1e293b" stroke="#f43f5e" stroke-width="2"/>
+    <text x="770" y="30" font-family="system-ui, sans-serif" font-weight="700" font-size="16" fill="#f43f5e" text-anchor="middle">ai module</text>
+    <text x="770" y="60" font-family="system-ui, sans-serif" font-size="13" fill="#94a3b8" text-anchor="middle">Generative LLM Scribe</text>
+    <text x="770" y="85" font-family="system-ui, sans-serif" font-size="13" fill="#94a3b8" text-anchor="middle">Explainable AI (XAI)</text>
+    <text x="770" y="110" font-family="system-ui, sans-serif" font-size="13" fill="#94a3b8" text-anchor="middle">RAG VectorStore, OCR</text>
+  </g>
+
+  <!-- Secondary Slices -->
+  <g transform="translate(50, 370)">
+    <!-- Pharmacy -->
+    <rect x="0" y="0" width="260" height="160" rx="8" fill="#1e293b" stroke="#fbbf24" stroke-width="2"/>
+    <text x="130" y="30" font-family="system-ui, sans-serif" font-weight="700" font-size="16" fill="#fbbf24" text-anchor="middle">pharmacy module</text>
+    <text x="130" y="60" font-family="system-ui, sans-serif" font-size="13" fill="#94a3b8" text-anchor="middle">Prescription, Inventory</text>
+    <text x="130" y="85" font-family="system-ui, sans-serif" font-size="13" fill="#94a3b8" text-anchor="middle">DispenseRecord, Reminders</text>
+
+    <!-- Communication & Notification -->
+    <rect x="320" y="0" width="260" height="160" rx="8" fill="#1e293b" stroke="#a855f7" stroke-width="2"/>
+    <text x="450" y="30" font-family="system-ui, sans-serif" font-weight="700" font-size="16" fill="#a855f7" text-anchor="middle">communication module</text>
+    <text x="450" y="60" font-family="system-ui, sans-serif" font-size="13" fill="#94a3b8" text-anchor="middle">WebRTC Signaling, STOMP Chat</text>
+    <text x="450" y="85" font-family="system-ui, sans-serif" font-size="13" fill="#94a3b8" text-anchor="middle">SMS, Email, Push Alerts</text>
+
+    <!-- Appointments & Billing -->
+    <rect x="640" y="0" width="260" height="160" rx="8" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+    <text x="770" y="30" font-family="system-ui, sans-serif" font-weight="700" font-size="16" fill="#38bdf8" text-anchor="middle">appointments &amp; billing</text>
+    <text x="770" y="60" font-family="system-ui, sans-serif" font-size="13" fill="#94a3b8" text-anchor="middle">Appointment, IVR Booking</text>
+    <text x="770" y="85" font-family="system-ui, sans-serif" font-size="13" fill="#94a3b8" text-anchor="middle">InsuranceClaim, Invoice</text>
+  </g>
+</svg>

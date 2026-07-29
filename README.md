@@ -1,24 +1,42 @@
 <div align="center">
 
+![TeleCare+ Banner](assets/banner.svg)
+
 # 🏥 TeleCare+ Enterprise AI Telemedicine Platform
 
 **Production-Grade, Modular Monolith Healthcare & Remote Care Continuity Platform**
 
-![Java 21](https://img.shields.io/badge/Java-21-orange.svg)
-![Spring Boot 3](https://img.shields.io/badge/Spring%20Boot-3.3.5-brightgreen.svg)
-![Spring Modulith](https://img.shields.io/badge/Spring%20Modulith-1.2.0-blue.svg)
-![React 18](https://img.shields.io/badge/React-18-61DAFB.svg)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)
-![FHIR R4](https://img.shields.io/badge/HL7-FHIR%20R4-firebrick.svg)
-![License](https://img.shields.io/badge/License-MIT-green.svg)
+[![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen.svg)](https://github.com/shyamkumar37-tech/Ai-powered-telemedicine-/actions)
+[![Modulith Governance](https://img.shields.io/badge/Spring%20Modulith-100%25%20Passing-blue.svg)](https://github.com/shyamkumar37-tech/Ai-powered-telemedicine-)
+[![Java 21](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.org/projects/jdk/21/)
+[![Spring Boot 3](https://img.shields.io/badge/Spring%20Boot-3.3.5-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![React 18](https://img.shields.io/badge/React-18-61DAFB.svg)](https://react.dev/)
+[![FHIR R4](https://img.shields.io/badge/HL7-FHIR%20R4-firebrick.svg)](https://hl7.org/fhir/R4/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 </div>
 
 ---
 
-## 🌟 Executive Overview
+## 🚀 Live Demo & API Documentation
 
-**TeleCare+** is an enterprise-grade AI Telemedicine and Remote Patient Monitoring (RPM) platform. Engineered using **Spring Boot 3.3.5**, **Java 21 Virtual Threads (Loom)**, and **Spring Modulith**, it combines real-time WebRTC consultations, generative clinical AI, HL7 FHIR R4 interoperability, Explainable AI (XAI) deterioration risk scoring, wearable IoT stream ingestion, PACS DICOM medical imaging metadata, and billing claims into a zero-cycle, modular monolith architecture.
+- 🌐 **Frontend SPA Portal**: `https://telecareplus.vercel.app`
+- ⚙️ **Backend API Server**: `https://telecareplus-api.onrender.com`
+- 📚 **Swagger / OpenAPI 3.0 Documentation**: `https://telecareplus-api.onrender.com/swagger-ui.html`
+- 📬 **Postman Collection**: [Download Postman Collection](docs/telecareplus.postman_collection.json)
+
+---
+
+## 📊 Portfolio Project Metrics & Scale
+
+| Metric Category | Count / Rating | Architectural Highlight |
+| :--- | :--- | :--- |
+| **Spring Modulith Slices** | `10 Domain Modules` | Zero-cycle domain isolation (`common`, `users`, `clinical`, `pharmacy`, `communication`, `notification`, `ai`, `appointments`, `billing`, `admin`) |
+| **REST & GraphQL APIs** | `45+ REST APIs / 2 GraphQL` | Full OpenAPI 3.0 specs + Spring GraphQL `@QueryMapping` resolvers |
+| **JPA Entities & Tables** | `28 Database Entities` | PostgreSQL 16 schema managed via 12 Flyway SQL migrations |
+| **User Roles (RBAC)** | `5 Enterprise Roles` | `PATIENT`, `DOCTOR`, `CAREGIVER`, `PHARMACIST`, `ADMIN` |
+| **AI Modules** | `8 Clinical AI Engines` | LLM SSE Stream, Explainable AI (XAI), RAG VectorStore, Medical OCR, Drug Interaction, Sentiment, Speech Intake, Translation |
+| **Modulith Governance** | `100% Pass (0 Errors)` | Tested via `TelecareApplicationModulesTest` |
 
 ---
 
@@ -26,44 +44,13 @@
 
 TeleCare+ enforces strict domain module boundaries verified automatically in CI via `TelecareApplicationModulesTest`.
 
-```mermaid
-graph TD
-    A[common] --> B[users]
-    A --> C[clinical]
-    A --> D[pharmacy]
-    A --> E[communication]
-    A --> F[notification]
-    A --> G[ai]
-    A --> H[appointments]
-    A --> I[billing]
-    A --> J[admin]
+![TeleCare+ Architecture](assets/telecare_architecture.svg)
 
-    users --> clinical
-    users --> pharmacy
-    appointments --> users
-    clinical --> appointments
-    ai --> clinical
-    ai --> pharmacy
-    billing --> users
-    admin --> users
-    admin --> clinical
-    admin --> pharmacy
-```
+---
 
-### Module Responsibilities Matrix
+## 🗄️ Entity Relationship Diagram (ERD)
 
-| Module | Core Responsibilities | Key Technologies |
-| :--- | :--- | :--- |
-| **`common`** | Base entities, shared enums, audit annotations, domain events | `@AuditLog`, `VitalLoggedEvent` |
-| **`users`** | Identity, RBAC, Doctor/Patient/Caregiver/Pharmacist profiles, HIPAA consent | OAuth2, Spring Security |
-| **`clinical`** | Health vitals, FHIR R4 transformers, Wearable IoT streams, DICOM metadata, eMAR, Labs | FHIR R4, LOINC, DICOM WADO-RS |
-| **`pharmacy`** | e-Prescriptions, inventory, dispense records, dose reminders | Spring Data JPA |
-| **`communication`** | WebRTC signaling, WebSocket chat, push notifications, event listeners | WebSockets, STOMP |
-| **`notification`** | Multi-channel dispatching (SMS, Email, Push) | Twilio, JavaMail |
-| **`ai`** | LLM SSE streaming, Explainable AI (XAI), RAG Vector Store, Translation | Spring AI, VectorStore |
-| **`appointments`** | Schedule management, booking, IVR phone sessions | Spring MVC |
-| **`billing`** | Insurance policy claims, copay invoicing | BigDecimal financial precision |
-| **`admin`** | System health, user administration, PHI access audit logging | Actuator, Spring Data |
+![TeleCare+ ERD](assets/telecare_erd.svg)
 
 ---
 
