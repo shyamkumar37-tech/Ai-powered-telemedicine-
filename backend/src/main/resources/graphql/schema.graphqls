@@ -1,17 +1,21 @@
-type Query {
-    patientDashboard(patientId: ID!): DashboardSummaryResponse
+type PatientType {
+    id: ID!
+    fullName: String
+    email: String
+    active: Boolean
 }
 
-type DashboardSummaryResponse {
-    totalAppointments: Int
-    pendingAppointments: Int
-    prescriptionCount: Int
-    pendingMedicationReminders: Int
-    adherencePercentage: Float
-    recentTriageCategory: String
-    followUpDueItems: Int
-    recentHealthAlerts: [String]
-    riskScore: Int
-    riskLevel: String
-    activeCarePlanCount: Int
+type HealthRecordType {
+    id: ID!
+    bloodPressure: String
+    sugar: Float
+    spo2: Float
+    pulse: Float
+    temperature: Float
+    recordedAt: String
+}
+
+type Query {
+    patientProfile(id: ID!): PatientType
+    patientHealthRecords(patientId: ID!): [HealthRecordType]
 }

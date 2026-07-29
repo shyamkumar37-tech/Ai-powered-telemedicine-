@@ -1,39 +1,38 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: telecare-backend-blue
+  name: telecareplus-backend
   labels:
-    app: telecare-backend
-    version: blue
+    app: telecareplus-backend
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: telecare-backend
-      version: blue
+      app: telecareplus-backend
   template:
     metadata:
       labels:
-        app: telecare-backend
-        version: blue
-      annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "8080"
-        prometheus.io/path: "/actuator/prometheus"
+        app: telecareplus-backend
     spec:
       containers:
-      - name: telecare-backend
-        image: telecareplus/backend:latest
+      - name: backend
+        image: telecareplus-backend:1.0.0
         ports:
         - containerPort: 8080
         env:
         - name: SPRING_PROFILES_ACTIVE
           value: "prod"
         - name: SPRING_DATASOURCE_URL
-          valueFrom:
-            secretKeyRef:
-              name: telecare-db-secrets
-              key: url
+          value: "jdbc:postgresql://postgres-service:5432/telecare"
+        - name: SPRING_REDIS_HOST
+          value: "redis-service"
+        resources:
+          limits:
+            cpu: "2"
+            memory: "2Gi"
+          requests:
+            cpu: "500m"
+            memory: "1Gi"
         livenessProbe:
           httpGet:
             path: /actuator/health/liveness
@@ -44,27 +43,17 @@ spec:
           httpGet:
             path: /actuator/health/readiness
             port: 8080
-          initialDelaySeconds: 15
+          initialDelaySeconds: 20
           periodSeconds: 5
-        resources:
-          requests:
-            memory: "1Gi"
-            cpu: "500m"
-          limits:
-            memory: "2Gi"
-            cpu: "1000m"
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: telecare-backend-service
+  name: telecareplus-backend-service
 spec:
   selector:
-    app: telecare-backend
-    # Switch this to 'green' during a Blue-Green deployment swap
-    version: blue
+    app: telecareplus-backend
   ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 8080
+  - port: 8080
+    targetPort: 8080
   type: ClusterIP

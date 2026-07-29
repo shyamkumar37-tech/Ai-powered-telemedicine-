@@ -1,41 +1,40 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: telecare-frontend
+  name: telecareplus-frontend
   labels:
-    app: telecare-frontend
+    app: telecareplus-frontend
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: telecare-frontend
+      app: telecareplus-frontend
   template:
     metadata:
       labels:
-        app: telecare-frontend
+        app: telecareplus-frontend
     spec:
       containers:
-      - name: telecare-frontend
-        image: telecareplus/frontend:latest
+      - name: frontend
+        image: telecareplus-frontend:1.0.0
         ports:
         - containerPort: 80
         resources:
-          requests:
-            memory: "128Mi"
-            cpu: "100m"
           limits:
-            memory: "256Mi"
+            cpu: "1"
+            memory: "512Mi"
+          requests:
             cpu: "250m"
+            memory: "256Mi"
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: telecare-frontend-service
+  name: telecareplus-frontend-service
 spec:
   selector:
-    app: telecare-frontend
+    app: telecareplus-frontend
   ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 80
-  type: ClusterIP
+  - port: 80
+    targetPort: 80
+  type: LoadBalancer
