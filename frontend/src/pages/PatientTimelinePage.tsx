@@ -72,9 +72,8 @@ export default function PatientTimelinePage() {
         const actionNeeded = needsAction(item, status);
         return {
           ...item,
-          // @ts-expect-error - Auto-suppressed during migration
-          displayDate: formatTimelineDate(date),
-          relativeDate: formatRelativeTimelineDate(date),
+          displayDate: (formatTimelineDate(date as any) as any),
+          relativeDate: formatRelativeTimelineDate(date as any),
           hasValidDate: isValid,
           suspiciousDate: isSuspiciousFuture,
           status,
@@ -115,23 +114,18 @@ export default function PatientTimelinePage() {
     filteredTimeline.forEach((item: DynamicStateObject) => {
       const date = normalizeTimelineDate(item?.occurredAt).date;
       if (!date) {
-        // @ts-expect-error - Auto-suppressed during migration
-        groups.older.push(item);
+        (groups.older as any).push(item);
         return;
       }
       const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
       if (dateOnly.getTime() === today.getTime()) {
-        // @ts-expect-error - Auto-suppressed during migration
-        groups.today.push(item);
+        (groups.today as any).push(item);
       } else if (dateOnly.getTime() === yesterday.getTime()) {
-        // @ts-expect-error - Auto-suppressed during migration
-        groups.yesterday.push(item);
-      } else if (dateOnly >= weekStart) {
-        // @ts-expect-error - Auto-suppressed during migration
-        groups.week.push(item);
+        (groups.yesterday as any).push(item);
+      } else if (dateOnly >= (weekStart as any)) {
+        (groups.week as any).push(item);
       } else {
-        // @ts-expect-error - Auto-suppressed during migration
-        groups.older.push(item);
+        (groups.older as any).push(item);
       }
     });
 

@@ -108,8 +108,7 @@ export default function PatientBookingPage() {
       .then((data: DynamicStateObject) => {
         if (!active) return;
         const items = Array.isArray(data) ? [...data] : [];
-        // @ts-expect-error - Auto-suppressed during migration
-        items.sort((a: DynamicStateObject, b: DynamicStateObject) => new Date(b.assessedAt || 0) - new Date(a.assessedAt || 0));
+        items.sort((a: DynamicStateObject, b: DynamicStateObject) => new Date((b.assessedAt as any) || 0).getTime() - new Date((a.assessedAt as any) || 0).getTime());
         setTriageHistory(items);
       })
       .catch((err: DynamicStateObject) => {

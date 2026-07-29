@@ -61,8 +61,7 @@ export default function PatientFutureCarePage() {
       setAutopilot(nextAutopilot);
 
       if (!nextDeterioration && !nextCopilot && !nextAdaptive && !nextAutopilot) {
-        // @ts-expect-error - Auto-suppressed during migration
-        setError(getApiErrorMessage(deteriorationRes.reason || copilotRes.reason || adaptiveRes.reason || autopilotRes.reason, "Unable to load Future Care guidance."));
+        setError(getApiErrorMessage((deteriorationRes as any).reason || (copilotRes as any).reason || (adaptiveRes as any).reason || (autopilotRes as any).reason, "Unable to load Future Care guidance."));
       } else {
         setError("");
       }

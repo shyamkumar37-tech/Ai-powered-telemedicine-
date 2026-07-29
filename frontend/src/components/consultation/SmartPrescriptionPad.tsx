@@ -106,8 +106,7 @@ export default function SmartPrescriptionPad({
 
   const handleRemoveMedication = (index: number | string) => {
     const meds = [...prescription.medications];
-    // @ts-expect-error - Auto-suppressed during migration
-    meds.splice(index, 1);
+    (meds.splice(index as number, 1) as any);
     setPrescription({ ...prescription, medications: meds });
   };
 

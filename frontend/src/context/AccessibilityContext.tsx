@@ -66,8 +66,7 @@ function detectSpeechSupport() {
       Boolean(window.speechSynthesis)
       || "speechSynthesis" in window
       || "SpeechSynthesisUtterance" in window
-      // @ts-expect-error - Auto-suppressed during migration
-      || typeof window.SpeechSynthesisUtterance === "function"
+      || typeof ((window as any).SpeechSynthesisUtterance as any) === "function"
     );
 }
 
@@ -445,7 +444,7 @@ export function AccessibilityProvider({ children }: AccessibilityProviderProps) 
     }
 
     const speechRuntime = window.speechSynthesis ?? globalThis.speechSynthesis;
-    const UtteranceCtor = window.SpeechSynthesisUtterance ?? globalThis.SpeechSynthesisUtterance;
+    const UtteranceCtor = (window as any).SpeechSynthesisUtterance ?? globalThis.SpeechSynthesisUtterance;
     try {
       speechRuntime?.resume?.();
       speechRuntime?.getVoices?.();
@@ -466,8 +465,7 @@ export function AccessibilityProvider({ children }: AccessibilityProviderProps) 
       : translateDisplayText(language, sourceText);
     const normalized = normalizeTextForSpeech(localizedText, language);
     const now = Date.now();
-    // @ts-expect-error - Auto-suppressed during migration
-    const force = options.force === true;
+    const force = ((options as any).force as any) === true;
 
     if (
       !force
@@ -512,10 +510,8 @@ export function AccessibilityProvider({ children }: AccessibilityProviderProps) 
         utterance.voice = matchedVoice;
         utterance.lang = matchedVoice.lang || utterance.lang;
       }
-      // @ts-expect-error - Auto-suppressed during migration
-      utterance.onend = () => speakSegmentAt(index + 1);
-      // @ts-expect-error - Auto-suppressed during migration
-      utterance.onerror = () => speakSegmentAt(index + 1);
+      utterance.onend = () => speakSegmentAt((index as any) + 1);
+      utterance.onerror = () => (speakSegmentAt as any)((index as any) + 1);
       try {
         speechRuntime.speak(utterance);
       } catch {

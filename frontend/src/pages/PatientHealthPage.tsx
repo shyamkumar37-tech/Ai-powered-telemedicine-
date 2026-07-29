@@ -114,15 +114,13 @@ export default function PatientHealthPage() {
             <button 
               className="inline-flex items-center gap-2 px-4 py-2 bg-transparent text-ink border border-white/20 rounded-element text-sm font-medium hover:bg-white/5 transition-colors disabled:opacity-50"
               onClick={async () => {
-                // @ts-expect-error - Auto-suppressed during migration
-                if (!navigator.bluetooth) {
+                if (!((navigator as any).bluetooth as any)) {
                   alert("Web Bluetooth API is not available in this browser.");
                   return;
                 }
                 setIsPairing(true);
                 try {
-                  // @ts-expect-error - Auto-suppressed during migration
-                  const device = await navigator.bluetooth.requestDevice({
+                  const device = await ((navigator as any).bluetooth as any).requestDevice({
                     acceptAllDevices: true,
                     optionalServices: ['heart_rate']
                   });

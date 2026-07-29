@@ -36,8 +36,7 @@ export default function PatientObservationsPage() {
 
   const normalizeDateTimeInput = (value: string | number) => {
     if (!value) return value;
-    // @ts-expect-error - Auto-suppressed during migration
-    return value.length === 16 ? `${value}:00` : value;
+    return (value as any).length === 16 ? `${value}:00` : value;
   };
 
   const sourceOptions = [
@@ -268,7 +267,7 @@ export default function PatientObservationsPage() {
                 <div className="flex flex-col gap-4">
                   {[1,2,3,4].map((i: DynamicStateObject) => <div key={i} className="card-premium h-32 animate-pulse bg-white/5"></div>)}
                 </div>
-              ) : observations.length === 0 ? (
+              ) : (observations as any).length === 0 ? (
                 <div className="flex flex-col items-center justify-center p-16 text-center border border-white/5 rounded-xl border-dashed h-[300px]">
                   <Database size={48} className="text-ink-muted/30 mb-4" />
                   <h3 className="font-display text-lg mb-2">{t("noObservations") || "No Observations"}</h3>

@@ -89,7 +89,7 @@ export default function PharmacistDashboardPage() {
     >
       
       {/* Hero Row: Action Hierarchy */}
-      <motion.div variants={fadeInUp} className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-6">
+      <motion.div variants={fadeInUp as any} className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-6">
         {/* Priority Actions (New Unified Hub) */}
         <div className="h-full">
           <PriorityActionsCard 
@@ -129,8 +129,7 @@ export default function PharmacistDashboardPage() {
         className="ph-grid-5 mt-8"
         variants={staggerContainer}
       >
-        {/* @ts-expect-error - Auto-suppressed during migration */}
-        <motion.div variants={fadeInUp} whileHover={hoverLift} className="ph-card ph-card-interactive p-5 flex items-center gap-4">
+        <motion.div variants={fadeInUp as any} whileHover={hoverLift as any} className="ph-card ph-card-interactive p-5 flex items-center gap-4">
           <div className="bg-emerald-500/20 p-3 rounded-xl text-emerald-400 border border-emerald-500/20">
             <ClipboardCheck className="h-6 w-6" />
           </div>
@@ -141,9 +140,7 @@ export default function PharmacistDashboardPage() {
             </p>
           </div>
         </motion.div>
-
-        {/* @ts-expect-error - Auto-suppressed during migration */}
-        <motion.div variants={fadeInUp} whileHover={hoverLift} className="ph-card ph-card-interactive p-5 flex items-center gap-4">
+        <motion.div variants={fadeInUp as any} whileHover={hoverLift as any} className="ph-card ph-card-interactive p-5 flex items-center gap-4">
           <div className="bg-sky-500/20 p-3 rounded-xl text-sky-400 border border-sky-500/20">
             <ShoppingBag className="h-6 w-6" />
           </div>
@@ -154,9 +151,7 @@ export default function PharmacistDashboardPage() {
             </p>
           </div>
         </motion.div>
-
-        {/* @ts-expect-error - Auto-suppressed during migration */}
-        <motion.div variants={fadeInUp} whileHover={hoverLift} className="ph-card ph-card-interactive p-5 flex items-center gap-4">
+        <motion.div variants={fadeInUp as any} whileHover={hoverLift as any} className="ph-card ph-card-interactive p-5 flex items-center gap-4">
           <div className="bg-amber-500/20 p-3 rounded-xl text-amber-400 border border-amber-500/20">
             <AlertTriangle className="h-6 w-6" />
           </div>
@@ -167,9 +162,7 @@ export default function PharmacistDashboardPage() {
             </p>
           </div>
         </motion.div>
-
-        {/* @ts-expect-error - Auto-suppressed during migration */}
-        <motion.div variants={fadeInUp} whileHover={hoverLift} className="ph-card ph-card-interactive p-5 flex items-center gap-4">
+        <motion.div variants={fadeInUp as any} whileHover={hoverLift as any} className="ph-card ph-card-interactive p-5 flex items-center gap-4">
           <div className="bg-purple-500/20 p-3 rounded-xl text-purple-400 border border-purple-500/20">
             <DollarSign className="h-6 w-6" />
           </div>
@@ -180,9 +173,7 @@ export default function PharmacistDashboardPage() {
             </p>
           </div>
         </motion.div>
-
-        {/* @ts-expect-error - Auto-suppressed during migration */}
-        <motion.div variants={fadeInUp} whileHover={hoverLift} className="ph-card ph-card-interactive p-5 flex items-center gap-4">
+        <motion.div variants={fadeInUp as any} whileHover={hoverLift as any} className="ph-card ph-card-interactive p-5 flex items-center gap-4">
           <div className="bg-rose-500/20 p-3 rounded-xl text-rose-400 border border-rose-500/20">
             <CalendarOff className="h-6 w-6" />
           </div>

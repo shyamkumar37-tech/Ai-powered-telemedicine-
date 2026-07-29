@@ -59,8 +59,7 @@ export default function PharmacistDeliveryTracker({ recordId, patientName }: Pha
           
           <div className="text-right">
             <div className="text-xs font-semibold text-slate-400 uppercase tracking-widest">{t("orderID") || "Order ID"}</div>
-            {/* @ts-expect-error - Auto-suppressed during migration */}
-            <div className="text-sm font-mono text-white">#{recordId.toString().padStart(6, '0')}</div>
+            <div className="text-sm font-mono text-white">#{(recordId as any)?.toString().padStart(6, '0')}</div>
           </div>
         </div>
 

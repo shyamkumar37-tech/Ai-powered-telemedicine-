@@ -5,7 +5,6 @@ import { DynamicStateObject, DynamicState } from "./../types/DynamicState";
 
 export function useWebSocket(subscribeUrl: DynamicStateObject, onMessageReceived: DynamicStateObject) {
     const { auth } = useAuth();
-    // @ts-expect-error - Auto-suppressed during migration
     const [connected, setConnected] = useState<DynamicState>(wsService.connected);
 
     const callbackRef = useRef<DynamicState>(onMessageReceived);
@@ -16,7 +15,6 @@ export function useWebSocket(subscribeUrl: DynamicStateObject, onMessageReceived
     useEffect(() => {
         // Sync connection state
         const checkConnection = () => {
-            // @ts-expect-error - Auto-suppressed during migration
             setConnected(wsService.connected);
         };
         const interval = setInterval(checkConnection, 1000);
@@ -26,7 +24,6 @@ export function useWebSocket(subscribeUrl: DynamicStateObject, onMessageReceived
     }, []);
 
     useEffect(() => {
-        // @ts-expect-error - Auto-suppressed during migration
         if (!auth?.token || !wsService.connected || !subscribeUrl) return;
 
         const handleMessage = (msg: DynamicStateObject) => {

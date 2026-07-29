@@ -53,8 +53,7 @@ export default function Button({
       type={type} 
       className={classes} 
       disabled={loading || props.disabled}
-      // @ts-expect-error - Auto-suppressed during migration
-      whileHover={{ scale: (loading || props.disabled) ? 1 : 1.02, transition: spring.snappy }}
+      whileHover={{ scale: (loading || props.disabled) ? 1 : 1.02, transition: spring.snappy as any }}
       whileTap={(loading || props.disabled) ? {} : accessibleTapScale}
       {...props}
     >

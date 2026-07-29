@@ -9,8 +9,7 @@ export default function TeleExamPanel() {
   const [device, setDevice] = useState<DynamicStateObject | null>(null);
 
   const startPairing = async () => {
-    // @ts-expect-error - Auto-suppressed during migration
-    if (!navigator.bluetooth) {
+    if (!((navigator as any).bluetooth as any)) {
       alert("Web Bluetooth is not supported in this browser. Please use Chrome/Edge.");
       return;
     }
@@ -19,8 +18,7 @@ export default function TeleExamPanel() {
     try {
       // Request any bluetooth device (acceptAllDevices: true) 
       // since we don't know the specific UUIDs of the user's earbuds
-      // @ts-expect-error - Auto-suppressed during migration
-      const btDevice = await navigator.bluetooth.requestDevice({
+      const btDevice = await ((navigator as any).bluetooth as any).requestDevice({
         acceptAllDevices: true
       });
       

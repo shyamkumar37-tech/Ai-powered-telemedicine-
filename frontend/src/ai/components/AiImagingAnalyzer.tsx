@@ -237,8 +237,7 @@ export default function AiImagingAnalyzer({ patientId }: AiImagingAnalyzerProps)
                 <div key={record.id} className="bg-black/40 border border-white/10 rounded-lg p-3 flex items-center justify-between hover:bg-white/5 transition-colors cursor-pointer" onClick={() => loadFromHistory(record)}>
                   <div>
                     <p className="text-sm font-medium text-white">{record.fileName}</p>
-                    {/* @ts-expect-error - Auto-suppressed during migration */}
-                    <p className="text-xs text-slate-400">{formatDisplayValue(record.uploadedAt, "datetime")} &bull; {record.status}</p>
+                    <p className="text-xs text-slate-400">{(formatDisplayValue as any)(record.uploadedAt, "datetime")} &bull; {record.status}</p>
                   </div>
                   {record.severity === "HIGH" && <span className="bg-rose-500/20 text-rose-400 text-xs px-2 py-1 rounded-full border border-rose-500/30">{t("highSeverity") || "High Severity"}</span>}
                   {record.status === "COMPLETED" && !record.severity && <span className="bg-emerald-500/20 text-emerald-400 text-xs px-2 py-1 rounded-full border border-emerald-500/30">{t("analyzed") || "Analyzed"}</span>}

@@ -113,16 +113,14 @@ function extractElementLabel(element: DynamicStateObject) {
   if (ariaLabel) return cleanSpokenLabel(ariaLabel);
   const labelledBy = element.getAttribute("aria-labelledby");
   if (labelledBy) {
-    // @ts-expect-error - Auto-suppressed during migration
-    const labelText = labelledBy.split(/\s+/).map((id: number | string) => document.getElementById(id)?.textContent?.trim() || "").filter(Boolean).join(" ");
+    const labelText = labelledBy.split(/\s+/).map((id: number | string) => (document.getElementById((id as any)) as any)?.textContent?.trim() || "").filter(Boolean).join(" ");
     if (labelText) return cleanSpokenLabel(labelText);
   }
   const describedBy = element.getAttribute("aria-describedby");
   if (describedBy) {
     const descriptionText = describedBy
       .split(/\s+/)
-      // @ts-expect-error - Auto-suppressed during migration
-      .map((id: number | string) => document.getElementById(id)?.textContent?.trim() || "")
+      .map((id: number | string) => (document.getElementById as any)(id)?.textContent?.trim() || "")
       .filter(Boolean)
       .join(" ");
     if (descriptionText) return cleanSpokenLabel(descriptionText);
@@ -132,8 +130,7 @@ function extractElementLabel(element: DynamicStateObject) {
       const labelText = Array.from(element.labels).map((label: DynamicStateObject) => label.textContent?.trim() || "").filter(Boolean).join(" ");
       if (labelText) return cleanSpokenLabel(labelText);
     }
-    // @ts-expect-error - Auto-suppressed during migration
-    if (element.placeholder) return cleanSpokenLabel(element.placeholder);
+    if ((element as any).placeholder) return (cleanSpokenLabel((element as any).placeholder) as any);
   }
   if (element instanceof HTMLElement && element.title) return cleanSpokenLabel(element.title);
   const dataTestId = element.getAttribute("data-testid");
@@ -414,8 +411,7 @@ function AccessibilityFrameContent({ children }: AccessibilityFrameContentProps)
       recognitionRef.current = null;
       return undefined;
     }
-    // @ts-expect-error - Auto-suppressed during migration
-    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const Recognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     let recognition: DynamicStateObject;
     try {
       recognition = new Recognition();

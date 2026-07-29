@@ -126,13 +126,11 @@ export default function ProtectedRoute({ roles, children, variant = "page" }: Pr
   }
 
   if (guardState.kind === "redirect-login" || guardState.kind === "invalid-auth") {
-    {/* @ts-expect-error - Auto-suppressed during migration */}
-    return <Navigate to={guardState.redirectTo} replace state={{ from: `${location.pathname}${location.search}` }} />;
+    return <Navigate to={(guardState as any).redirectTo as string} replace state={{ from: `${location.pathname}${location.search}` }} />;
   }
 
   if (guardState.kind === "redirect-home" || guardState.kind === "redirect-setup") {
-    {/* @ts-expect-error - Auto-suppressed during migration */}
-    return <Navigate to={guardState.redirectTo} replace />;
+    return <Navigate to={(guardState as any).redirectTo as string} replace />;
   }
 
   if (guardState.kind === "denied") {

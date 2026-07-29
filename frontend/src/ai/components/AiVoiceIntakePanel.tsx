@@ -6,8 +6,7 @@ import { getApiErrorMessage } from "../../utils/apiError";
 import { DynamicState, DynamicStateObject } from "../../types/DynamicState";
 
 const SpeechRecognitionImpl = typeof window !== "undefined"
-  // @ts-expect-error - Auto-suppressed during migration
-  ? (window.SpeechRecognition || window.webkitSpeechRecognition)
+  ? (((window as any).SpeechRecognition as any) || window.webkitSpeechRecognition)
   : null;
 
 export interface AiVoiceIntakePanelProps {

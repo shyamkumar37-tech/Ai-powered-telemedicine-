@@ -22,7 +22,7 @@ export default function Badge({ value }: BadgeProps) {
   return (
     <span
       className={`tc-badge ${tone}`}
-      aria-label={localizedValue}
+      aria-label={localizedValue as string}
       data-voice-label={localizedValue}
     >
       {localizedValue}

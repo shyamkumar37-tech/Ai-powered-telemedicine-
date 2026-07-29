@@ -12,7 +12,7 @@ import { installTelemetryInterceptors } from "./services/telemetry";
 import { ToastProvider } from "./components/ui/ToastProvider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-// @ts-expect-error - Auto-suppressed during migration
+// @ts-ignore
 import { registerSW } from 'virtual:pwa-register';
 import * as Sentry from "@sentry/react";
 import { BrowserTracing } from "@sentry/tracing";
@@ -20,8 +20,7 @@ import { DynamicStateObject } from "./types/DynamicState";
 
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN || "",
-  // @ts-expect-error - Auto-suppressed during migration
-  integrations: [new BrowserTracing()],
+  integrations: [new BrowserTracing() as any],
   tracesSampleRate: 1.0,
 });
 
@@ -47,8 +46,7 @@ function safelyGetLocalStorageItem(key: DynamicStateObject) {
 
 function safelySetLocalStorageItem(key: DynamicStateObject, value: string | number) {
   try {
-    // @ts-expect-error - Auto-suppressed during migration
-    localStorage.setItem(key, value);
+    (localStorage.setItem(key, (value as any)) as any);
   } catch {
     // Ignore storage failures during startup cleanup.
   }
@@ -152,15 +150,13 @@ async function refreshClientCaches() {
     try {
       const reloadKey = "telecareplus-cache-reload-once";
       const hasReloaded = Boolean(
-        // @ts-expect-error - Auto-suppressed during migration
-        window.__telecare_reload_done
+        ((window as any).__telecare_reload_done as any)
         || sessionStorage.getItem(reloadKey)
         || localStorage.getItem(reloadKey)
       );
 
       if (!hasReloaded) {
-        // @ts-expect-error - Auto-suppressed during migration
-        window.__telecare_reload_done = true;
+        (window as any).__telecare_reload_done = true;
         try {
           sessionStorage.setItem(reloadKey, "true");
         } catch {
@@ -364,11 +360,9 @@ installTelemetryInterceptors();
 
 const _rootEl = document.getElementById("root");
 if (_rootEl) {
-  // @ts-expect-error - Auto-suppressed during migration
-  if (!window.__TELECARE_REACT_ROOT__) {
+  if (!(window as any).__TELECARE_REACT_ROOT__) {
     try {
-      // @ts-expect-error - Auto-suppressed during migration
-      window.__TELECARE_REACT_ROOT__ = ReactDOM.createRoot(_rootEl);
+      (window as any).__TELECARE_REACT_ROOT__ = ReactDOM.createRoot(_rootEl);
     } catch (e: DynamicStateObject) {
       console.warn("[TeleCare+] createRoot failed, attempting legacy render fallback", e);
        
@@ -378,8 +372,7 @@ if (_rootEl) {
   }
 
   try {
-    // @ts-expect-error - Auto-suppressed during migration
-    window.__TELECARE_REACT_ROOT__?.render(
+    (window as any).__TELECARE_REACT_ROOT__?.render(
       <QueryClientProvider client={queryClient}>
         <AppErrorBoundary>
           <BrowserRouter basename={ROUTER_BASE}>
@@ -401,8 +394,7 @@ if (_rootEl) {
 }
 
 if (typeof window !== "undefined") {
-  // @ts-expect-error - Auto-suppressed during migration
-  window.__TELECARE_APP_MOUNTED__ = true;
+  (window as any).__TELECARE_APP_MOUNTED__ = true;
 }
 
 if (typeof window !== "undefined") {

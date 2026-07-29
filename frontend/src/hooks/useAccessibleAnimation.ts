@@ -11,8 +11,7 @@ export function useAccessibleAnimation(variants: DynamicStateObject) {
     // Graceful degradation for reduced motion
     // Strip translations (x, y) and scales, keep opacity fades, but snap instantly
     const reducedVariants = {};
-    // @ts-expect-error - Auto-suppressed during migration
-    for (const key: DynamicStateObject in variants) {
+    for (const key in variants) {
       const variant = (variants as DynamicStateObject)[key];
       (reducedVariants as DynamicStateObject)[key] = { ...variant };
       

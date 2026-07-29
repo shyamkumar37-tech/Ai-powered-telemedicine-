@@ -1,0 +1,32 @@
+package com.telecareplus.clinical;
+
+import com.telecareplus.clinical.ConsultationOutcome;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import java.time.LocalDate;
+
+public class ConsultationDtos {
+
+    public record ConsultationNoteRequest(
+            @NotNull Long appointmentId,
+            @NotBlank String notes,
+            @NotNull ConsultationOutcome outcome,
+            LocalDate followUpDate,
+            Boolean aiGenerated,
+            java.time.LocalDateTime reviewedAt,
+            String reviewedBy
+    ) {}
+
+    public record ConsultationNoteResponse(
+            Long id,
+            Long appointmentId,
+            String doctorName,
+            String patientName,
+            String notes,
+            ConsultationOutcome outcome,
+            LocalDate followUpDate,
+            Boolean aiGenerated,
+            java.time.LocalDateTime reviewedAt,
+            String reviewedBy
+    ) {}
+}

@@ -26,8 +26,7 @@ export default function PatientAlertsPage() {
   const [pushState, setPushState] = useState<DynamicState>({ loading: true, supported: true, subscribed: false, configured: true, message: "" });
   const [filter, setFilter] = useState<DynamicState>("All"); // All or Unread
   const [readAlertIds, setReadAlertIds] = useState<DynamicState>(() => {
-    // @ts-expect-error - Auto-suppressed during migration
-    try { return JSON.parse(localStorage.getItem(`telecareplus-read-alerts-${patientId}`)) || []; } 
+    try { return JSON.parse((localStorage.getItem as any)(`telecareplus-read-alerts-${patientId}`)) || []; } 
     catch { return []; }
   });
 

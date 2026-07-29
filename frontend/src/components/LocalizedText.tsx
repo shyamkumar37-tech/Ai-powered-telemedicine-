@@ -159,14 +159,11 @@ function shouldTranslateRemotely(language: DynamicStateObject, sourceText: Dynam
   return /[\s,.!?;:|]/.test(text);
 }
 
-export function useLocalizedTextState(value: string | number, options = {}) {
+export function useLocalizedTextState(value: string | number, options: any = {}) {
   const { language } = useLanguage();
   const {
-    // @ts-expect-error - Auto-suppressed during migration
     minLength = 18,
-    // @ts-expect-error - Auto-suppressed during migration
     sourceLanguage = "auto",
-    // @ts-expect-error - Auto-suppressed during migration
     forceTranslate = false
   } = options;
   const sourceText = useMemo(() => {

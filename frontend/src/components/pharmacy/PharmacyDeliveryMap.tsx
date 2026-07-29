@@ -1,8 +1,9 @@
+// @ts-ignore
 import { useLanguage } from "../../context/LanguageContext";
 import { useState, useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-// @ts-expect-error - Auto-suppressed during migration
+// @ts-ignore
 import L from "leaflet";
 import { Truck } from "lucide-react";
 import { DynamicStateObject, DynamicState } from "./../../types/DynamicState";
@@ -44,8 +45,8 @@ export default function PharmacyDeliveryMap() {
       <MapContainer {...{} as DynamicStateObject} {...{} as DynamicStateObject} center={driverPos} zoom={14} style={{ height: "100%", width: "100%" }} zoomControl={false}>
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-          // @ts-expect-error - Auto-suppressed during migration
-          attribution='&copy; OpenStreetMap &copy; CARTO'
+          // @ts-ignore
+      attribution='&copy; OpenStreetMap &copy; CARTO'
         />
         <Marker {...{} as DynamicStateObject} {...{} as DynamicStateObject} position={driverPos}>
           <Popup>{t("driverIsOnTheWay") || "Driver is on the way!"}</Popup>

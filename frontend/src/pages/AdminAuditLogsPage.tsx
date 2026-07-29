@@ -22,17 +22,13 @@ export default function AdminAuditLogsPage() {
     setLoading(true);
     try {
       let endpoint = activeTab === "access" ? "/admin/audit-logs/access" : "/admin/audit-logs/ai";
-      const params = { page, size: 20 };
+      const params: any = { page, size: 20 };
       
       if (activeTab === "access") {
-        // @ts-expect-error - Auto-suppressed during migration
-        if (filterAction) params.action = filterAction;
-        // @ts-expect-error - Auto-suppressed during migration
+        if (filterAction) (params.action as any) = filterAction;
         if (filterUserId) params.actorUserId = filterUserId;
       } else {
-        // @ts-expect-error - Auto-suppressed during migration
         if (filterAction) params.featureKey = filterAction;
-        // @ts-expect-error - Auto-suppressed during migration
         if (filterUserId) params.userId = filterUserId;
       }
       
@@ -86,7 +82,7 @@ export default function AdminAuditLogsPage() {
 
   const layoutActions = (
     <button className="flex items-center gap-2 text-sm font-medium text-slate-300 hover:text-white transition" onClick={handleExportCSV}>
-      <Download size={16} /> {t("exportCSV") || "Export CSV"}</button>
+      <Download size={16 as any} /> {t("exportCSV") || "Export CSV"}</button>
   );
 
   return (
@@ -201,8 +197,7 @@ export default function AdminAuditLogsPage() {
                   ))}
                   {logs.length === 0 && (
                     <tr>
-                      {/* @ts-expect-error - Auto-suppressed during migration */}
-                      <td colSpan="6" className="px-4 py-12 text-center text-slate-300">
+                      <td colSpan={6} className="px-4 py-12 text-center text-slate-300">
                         {t("noAuditLogsFound") || "No audit logs found."}</td>
                     </tr>
                   )}

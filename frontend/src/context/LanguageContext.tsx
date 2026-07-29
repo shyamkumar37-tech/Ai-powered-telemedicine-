@@ -4,7 +4,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { translateText as requestTextTranslation } from "../services/telecareService";
 import { labels, supportedLanguages, t as translate, translateDisplayText } from "../utils/i18n";
 import { safeJsonParse } from "../utils/safeJson";
-import { DynamicStateObject, DynamicState } from "./../types/DynamicState";
 
 const LANGUAGE_STORAGE_KEY = "telecareplus-language";
 export const LANGUAGE_CHANGED_EVENT = "telecareplus-language-changed";
@@ -12,11 +11,13 @@ const LANGUAGE_RUNTIME_KEY = "__telecareplusLanguage";
 const RUNTIME_TRANSLATION_STORAGE_KEY = "telecareplus-runtime-ui-translations-v1";
 const missingKeyWarnings = new Set();
 
+type TranslationCache = Record<string, Record<string, string>>;
+
 interface LanguageContextType {
   language: string;
   setLanguage: (lang: string) => void;
-  translateUiText: (value: string) => string;
-  t: (keyOrLanguage: string, maybeKey?: string) => string;
+  translateUiText: (value: string | number) => any;
+  t: (keyOrLanguage: string, maybeKey?: string) => any;
 }
 
 function normalizeUiText(value: any) {
@@ -27,46 +28,37 @@ function looksLikeMojibake(value: string | number) {
   if (!value) {
     return false;
   }
-  // @ts-expect-error - Auto-suppressed during migration
-  return value.includes("Ãƒ")
-    // @ts-expect-error - Auto-suppressed during migration
-    || value.includes("Ã‚")
-    // @ts-expect-error - Auto-suppressed during migration
-    || value.includes("Ã¢")
-    // @ts-expect-error - Auto-suppressed during migration
-    || value.includes("ï¿½")
-    // @ts-expect-error - Auto-suppressed during migration
-    || value.includes("Ã Â")
-    // @ts-expect-error - Auto-suppressed during migration
-    || value.includes("à¤")
-    // @ts-expect-error - Auto-suppressed during migration
-    || value.includes("à®")
-    // @ts-expect-error - Auto-suppressed during migration
-    || value.includes("à´")
-    // @ts-expect-error - Auto-suppressed during migration
-    || value.includes("à°")
-    // @ts-expect-error - Auto-suppressed during migration
-    || value.includes("à¨");
+  const str = String(value);
+  return str.includes("Ãƒ")
+    || str.includes("Ã‚")
+    || str.includes("Ã¢")
+    || str.includes("ï¿½")
+    || str.includes("Ã Â")
+    || str.includes("à¤")
+    || str.includes("à®")
+    || str.includes("à´")
+    || str.includes("à°")
+    || str.includes("à¨");
 }
 
-function normalizeMojibake(value: string | number) {
+function normalizeMojibake(value: string | number): string {
   if (!looksLikeMojibake(value)) {
-    return value;
+    return String(value);
   }
 
   try {
-    const bytes = Uint8Array.from(String(value), (char: DynamicStateObject) => char.charCodeAt(0));
+    const bytes = Uint8Array.from(String(value), (char: string) => char.charCodeAt(0));
     return new TextDecoder("utf-8").decode(bytes).trim();
   } catch {
-    return value;
+    return String(value);
   }
 }
 
-function normalizeLanguage(value: string | number) {
-  return supportedLanguages.some((item: DynamicStateObject) => item.code === value) ? value : "en";
+function normalizeLanguage(value: string | number | null) {
+  return supportedLanguages.some((item) => item.code === value) ? (value as string) : "en";
 }
 
-function readLanguageFromSearch(search: DynamicStateObject) {
+function readLanguageFromSearch(search: string | null): string | null {
   try {
     const params = new URLSearchParams(search || "");
     const nextLanguage = params.get("lang");
@@ -76,7 +68,7 @@ function readLanguageFromSearch(search: DynamicStateObject) {
   }
 }
 
-function readRuntimeTranslations() {
+function readRuntimeTranslations(): TranslationCache {
   if (typeof window === "undefined") {
     return {};
   }
@@ -93,17 +85,17 @@ function readRuntimeTranslations() {
       return {};
     }
 
-    const normalized = {};
-    Object.entries(parsed).forEach(([language, entries]: DynamicStateObject) => {
+    const normalized: TranslationCache = {};
+    Object.entries(parsed).forEach(([language, entries]) => {
       if (!entries || typeof entries !== "object") {
         return;
       }
 
-      const nextEntries = {};
-      Object.entries(entries).forEach(([key, value]: DynamicStateObject) => {
-        (nextEntries as DynamicStateObject)[key] = normalizeMojibake(value);
+      const nextEntries: Record<string, string> = {};
+      Object.entries(entries as Record<string, string>).forEach(([key, value]) => {
+        nextEntries[key] = normalizeMojibake(value);
       });
-      (normalized as DynamicStateObject)[language] = nextEntries;
+      normalized[language] = nextEntries;
     });
 
     return normalized;
@@ -117,7 +109,7 @@ function readRuntimeTranslations() {
   }
 }
 
-function persistRuntimeTranslations(cache: DynamicStateObject) {
+function persistRuntimeTranslations(cache: TranslationCache) {
   if (typeof window === "undefined") {
     return;
   }
@@ -129,16 +121,16 @@ function persistRuntimeTranslations(cache: DynamicStateObject) {
   }
 }
 
-function getRuntimeTranslation(cache: DynamicStateObject, language: DynamicStateObject, sourceText: DynamicStateObject) {
+function getRuntimeTranslation(cache: TranslationCache, language: string, sourceText: string) {
   const normalizedText = normalizeUiText(sourceText);
   if (!normalizedText) {
     return "";
   }
 
-  return ((cache as DynamicStateObject)?.[language] as DynamicStateObject)?.[normalizedText] || "";
+  return cache?.[language]?.[normalizedText] || "";
 }
 
-function shouldQueueRuntimeTranslation(language: DynamicStateObject, sourceText: DynamicStateObject, translatedText: DynamicStateObject) {
+function shouldQueueRuntimeTranslation(language: string, sourceText: string, translatedText: string) {
   if (language === "en") {
     return false;
   }
@@ -168,42 +160,36 @@ function shouldQueueRuntimeTranslation(language: DynamicStateObject, sourceText:
   return true;
 }
 
-function persistLanguage(language: DynamicStateObject) {
+function persistLanguage(language: string) {
   const normalizedLanguage = normalizeLanguage(language);
 
   if (typeof document !== "undefined") {
-    // @ts-expect-error - Auto-suppressed during migration
     document.documentElement.lang = normalizedLanguage;
-    // @ts-expect-error - Auto-suppressed during migration
     document.documentElement.dataset.language = normalizedLanguage;
     if (document.body) {
-      // @ts-expect-error - Auto-suppressed during migration
       document.body.dataset.language = normalizedLanguage;
     }
     const root = document.getElementById("root");
     if (root) {
-      // @ts-expect-error - Auto-suppressed during migration
       root.dataset.language = normalizedLanguage;
     }
   }
 
   if (typeof window !== "undefined") {
     try {
-      (window as DynamicStateObject)[LANGUAGE_RUNTIME_KEY] = normalizedLanguage;
+      (window as any)[LANGUAGE_RUNTIME_KEY] = normalizedLanguage;
     } catch {
       // Ignore runtime persistence failures.
     }
   }
 
   try {
-    // @ts-expect-error - Auto-suppressed during migration
     localStorage.setItem(LANGUAGE_STORAGE_KEY, normalizedLanguage);
   } catch {
     // Ignore storage failures; language still works for the current session.
   }
 
   try {
-    // @ts-expect-error - Auto-suppressed during migration
     sessionStorage.setItem(LANGUAGE_STORAGE_KEY, normalizedLanguage);
   } catch {
     // Ignore session storage failures; language still works for the current session.
@@ -218,7 +204,7 @@ function persistLanguage(language: DynamicStateObject) {
   return normalizedLanguage;
 }
 
-function syncLanguageQueryParam(language: DynamicStateObject) {
+function syncLanguageQueryParam(language: string) {
   if (typeof window === "undefined") {
     return;
   }
@@ -244,7 +230,7 @@ function syncLanguageQueryParam(language: DynamicStateObject) {
   }
 }
 
-export function applyGlobalLanguage(nextLanguage: DynamicStateObject) {
+export function applyGlobalLanguage(nextLanguage: string) {
   const normalizedLanguage = persistLanguage(nextLanguage);
   syncLanguageQueryParam(normalizedLanguage);
   return normalizedLanguage;
@@ -253,14 +239,13 @@ export function applyGlobalLanguage(nextLanguage: DynamicStateObject) {
 function buildStaticLanguageApi(language: string, setLanguage: (lang: string) => void = () => {}): LanguageContextType {
   const normalizedLanguage = normalizeLanguage(language);
   return {
-    // @ts-expect-error - Auto-suppressed during migration
     language: normalizedLanguage,
     setLanguage,
-    translateUiText: (value: string | number) => {
+    translateUiText: (value: string | number): string | number | null => {
       if (normalizedLanguage === "en") {
         return value;
       }
-      return translateDisplayText(normalizedLanguage, value);
+      return translateDisplayText(normalizedLanguage, value) as string | number | null;
     },
     t: (keyOrLanguage: string, maybeKey?: string) => {
       const key = typeof maybeKey === "string" ? maybeKey : keyOrLanguage;
@@ -270,19 +255,16 @@ function buildStaticLanguageApi(language: string, setLanguage: (lang: string) =>
 }
 
 export const LANGUAGE_CONTEXT_FALLBACK: LanguageContextType = {
-  // @ts-expect-error - Auto-suppressed during migration
   get language() {
     return resolveActiveLanguage();
   },
   setLanguage: () => {},
-  // @ts-expect-error - Auto-suppressed during migration
-  translateUiText: (value: string) => buildStaticLanguageApi(resolveActiveLanguage()).translateUiText(value),
-  // @ts-expect-error - Auto-suppressed during migration
+  translateUiText: (value: string | number) => buildStaticLanguageApi(resolveActiveLanguage()).translateUiText(value as string),
   t: (keyOrLanguage: string, maybeKey?: string) => buildStaticLanguageApi(resolveActiveLanguage()).t(keyOrLanguage, maybeKey)
 };
 const LanguageContext = createContext<LanguageContextType>(LANGUAGE_CONTEXT_FALLBACK);
 
-function readStoredLanguage() {
+function readStoredLanguage(): string {
   if (typeof window !== "undefined") {
     const queryLanguage = readLanguageFromSearch(window.location?.search);
     if (queryLanguage) {
@@ -290,7 +272,7 @@ function readStoredLanguage() {
     }
 
     try {
-      const runtimeLanguage = (window as DynamicStateObject)[LANGUAGE_RUNTIME_KEY];
+      const runtimeLanguage = (window as any)[LANGUAGE_RUNTIME_KEY];
       if (runtimeLanguage) {
         return normalizeLanguage(runtimeLanguage);
       }
@@ -301,13 +283,11 @@ function readStoredLanguage() {
 
   try {
     return normalizeLanguage(
-      // @ts-expect-error - Auto-suppressed during migration
       localStorage.getItem(LANGUAGE_STORAGE_KEY)
       || sessionStorage.getItem(LANGUAGE_STORAGE_KEY)
     );
   } catch {
     try {
-      // @ts-expect-error - Auto-suppressed during migration
       return normalizeLanguage(sessionStorage.getItem(LANGUAGE_STORAGE_KEY));
     } catch {
       if (typeof document !== "undefined" && document.documentElement?.lang) {
@@ -324,21 +304,20 @@ export function resolveActiveLanguage() {
 
 export interface LanguageProviderProps {
   children?: ReactNode;
-    [key: string]: ReturnType<typeof JSON.parse>;
 }
 
 export function LanguageProvider({ children }: LanguageProviderProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const [language, setLanguageState] = useState<DynamicState>(readStoredLanguage);
-  const [runtimeTranslations, setRuntimeTranslations] = useState<DynamicState>(readRuntimeTranslations);
-  const [translationQueueVersion, setTranslationQueueVersion] = useState<DynamicState>(0);
-  const pendingTranslationsRef = useRef<DynamicState>(new Set());
-  const inFlightTranslationsRef = useRef<DynamicState>(new Set());
+  const [language, setLanguageState] = useState<string>(readStoredLanguage);
+  const [runtimeTranslations, setRuntimeTranslations] = useState<TranslationCache>(readRuntimeTranslations);
+  const [translationQueueVersion, setTranslationQueueVersion] = useState<number>(0);
+  const pendingTranslationsRef = useRef<Set<string>>(new Set());
+  const inFlightTranslationsRef = useRef<Set<string>>(new Set());
   const searchLanguage = useMemo(() => readLanguageFromSearch(location.search), [location.search]);
   const activeLanguage = language;
 
-  const setLanguage = (nextLanguage: DynamicStateObject) => {
+  const setLanguage = (nextLanguage: string) => {
     const normalizedLanguage = applyGlobalLanguage(nextLanguage);
     setLanguageState(normalizedLanguage);
 
@@ -346,7 +325,6 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     if (normalizedLanguage === "en") {
       params.delete("lang");
     } else {
-      // @ts-expect-error - Auto-suppressed during migration
       params.set("lang", normalizedLanguage);
     }
 
@@ -383,11 +361,11 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
       return () => {};
     }
 
-    const syncLanguage = (event: DynamicStateObject) => {
+    const syncLanguage = (event: Event) => {
       const nextLanguage = normalizeLanguage(
-        event?.detail ?? readStoredLanguage()
+        (event as CustomEvent)?.detail ?? readStoredLanguage()
       );
-      setLanguageState((current: DynamicStateObject) => (current === nextLanguage ? current : nextLanguage));
+      setLanguageState((current: string) => (current === nextLanguage ? current : nextLanguage));
     };
 
     window.addEventListener("storage", syncLanguage);
@@ -409,7 +387,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     persistRuntimeTranslations(runtimeTranslations);
   }, [runtimeTranslations]);
 
-  const enqueueRuntimeTranslation = useCallback((sourceText: DynamicStateObject) => {
+  const enqueueRuntimeTranslation = useCallback((sourceText: string) => {
     const normalizedText = normalizeUiText(sourceText);
     if (!normalizedText) {
       return;
@@ -420,7 +398,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     }
 
     pendingTranslationsRef.current.add(normalizedText);
-    setTranslationQueueVersion((current: DynamicStateObject) => current + 1);
+    setTranslationQueueVersion((current: number) => current + 1);
   }, []);
 
   const translateUiText = useCallback((value: string | number) => {
@@ -435,7 +413,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     }
 
     const staticTranslation = translateDisplayText(activeLanguage, normalizedValue);
-    if (shouldQueueRuntimeTranslation(activeLanguage, normalizedValue, staticTranslation)) {
+    if ((shouldQueueRuntimeTranslation(activeLanguage, normalizedValue as string, (staticTranslation as any)) as any)) {
       enqueueRuntimeTranslation(normalizedValue);
     }
 
@@ -452,19 +430,19 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     const flushPendingTranslations = async () => {
       while (!cancelled) {
         const batch = Array.from(pendingTranslationsRef.current)
-          .filter((sourceText: DynamicStateObject) => !inFlightTranslationsRef.current.has(sourceText) && !getRuntimeTranslation(runtimeTranslations, activeLanguage, sourceText))
+          .filter((sourceText: string) => !inFlightTranslationsRef.current.has(sourceText) && !getRuntimeTranslation(runtimeTranslations, activeLanguage, sourceText))
           .slice(0, 6);
 
         if (!batch.length) {
           break;
         }
 
-        batch.forEach((sourceText: DynamicStateObject) => {
+        batch.forEach((sourceText: string) => {
           pendingTranslationsRef.current.delete(sourceText);
           inFlightTranslationsRef.current.add(sourceText);
         });
 
-        const resolved = await Promise.all(batch.map(async (sourceText: DynamicStateObject) => {
+        const resolved = await Promise.all(batch.map(async (sourceText: string) => {
           try {
             const response = await requestTextTranslation({
               text: sourceText,
@@ -487,12 +465,12 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
           return;
         }
 
-        const successful = resolved.filter(Boolean);
+        const successful = resolved.filter((r): r is [string, string] => Boolean(r));
         if (successful.length) {
-          setRuntimeTranslations((current: DynamicStateObject) => {
-            const nextLanguageTranslations = { ...((current as DynamicStateObject)?.[activeLanguage] || {}) };
-            successful.forEach(([sourceText, translatedText]: DynamicStateObject) => {
-              (nextLanguageTranslations as DynamicStateObject)[sourceText] = translatedText;
+          setRuntimeTranslations((current: TranslationCache) => {
+            const nextLanguageTranslations = { ...(current[activeLanguage] || {}) };
+            successful.forEach(([sourceText, translatedText]: [string, string]) => {
+              (nextLanguageTranslations)[sourceText] = translatedText;
             });
             return {
               ...current,
@@ -516,12 +494,12 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     translateUiText,
     t: (keyOrLanguage: string, maybeKey?: string) => {
       const key = typeof maybeKey === "string" ? maybeKey : keyOrLanguage;
-      if (import.meta.env.DEV && !(labels.en as DynamicStateObject)?.[key] && !missingKeyWarnings.has(key)) {
+      if (import.meta.env.DEV && !(labels.en as Record<string, string>)?.[key] && !missingKeyWarnings.has(key)) {
         missingKeyWarnings.add(key);
         console.warn(`[TeleCare+] Missing i18n key: ${key}`);
       }
-      const englishText = (labels.en as DynamicStateObject)?.[key] ?? key;
-      const localizedText = ((labels as DynamicStateObject)[activeLanguage] as DynamicStateObject)?.[key] ?? englishText;
+      const englishText = (labels.en as Record<string, string>)?.[key] ?? key;
+      const localizedText = ((labels as Record<string, Record<string, string>>)[activeLanguage])?.[key] ?? englishText;
       const runtimeTranslation = getRuntimeTranslation(runtimeTranslations, activeLanguage, englishText);
       if (runtimeTranslation) {
         return runtimeTranslation;
@@ -531,7 +509,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
         ? localizedText
         : translateDisplayText(activeLanguage, localizedText);
 
-      if (shouldQueueRuntimeTranslation(activeLanguage, englishText, staticTranslation)) {
+      if ((shouldQueueRuntimeTranslation(activeLanguage, (englishText as string as any), staticTranslation as any) as any)) {
         enqueueRuntimeTranslation(englishText);
       }
 
@@ -547,7 +525,6 @@ export function useLanguage() {
   const resolvedLanguage = resolveActiveLanguage();
 
   if (!context || context === LANGUAGE_CONTEXT_FALLBACK) {
-    // @ts-expect-error - Auto-suppressed during migration
     return buildStaticLanguageApi(resolvedLanguage);
   }
 

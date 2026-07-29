@@ -77,7 +77,7 @@ export default function DoctorDashboardPage() {
     priorityActions.push({
       id: "alerts",
       title: t("triageAlertsToReview") || "Triage alerts to review",
-      description: (t("alertsNeedReview") || "{count} patient alerts need review").replace("{count}", alertsCount),
+      description: (t("alertsNeedReview") || "{count} patient alerts need review").replace("{count}", alertsCount as any),
       meta: t("openPriorityQueue") || "Open the priority queue to respond.",
       priority: "urgent",
       status: t("urgent") || "Urgent",
@@ -90,8 +90,7 @@ export default function DoctorDashboardPage() {
     priorityActions.push({
       id: "pending-appointments",
       title: t("appointmentsPendingConfirmation") || "Appointments pending confirmation",
-      // @ts-expect-error - Auto-suppressed during migration
-      description: (t("appointmentsNeedReview") || "{count} appointments need review").replace("{count}", pendingAppointments),
+      description: ((t("appointmentsNeedReview") || "{count} appointments need review").replace("{count}", pendingAppointments as any) as any),
       meta: t("confirmOrReschedule") || "Confirm or reschedule as needed.",
       priority: "review",
       status: (t("needsReview") || "Needs review"),
@@ -104,8 +103,7 @@ export default function DoctorDashboardPage() {
     priorityActions.push({
       id: "upcoming-appointments",
       title: (t("upcomingAppointments") || "Upcoming appointments"),
-      // @ts-expect-error - Auto-suppressed during migration
-      description: (t("CountAppointmentsOnYourSchedule") || "{count} appointments on your schedule").replace("{count}", totalAppointments),
+      description: (t("CountAppointmentsOnYourSchedule") || "{count} appointments on your schedule").replace("{count}", totalAppointments as any),
       meta: (t("reviewTheDaySAgenda") || "Review the day's agenda."),
       priority: "upcoming",
       status: (t("upcoming") || "Upcoming"),
@@ -118,8 +116,7 @@ export default function DoctorDashboardPage() {
     priorityActions.push({
       id: "completed-consults",
       title: (t("consultationsCompleted") || "Consultations completed"),
-      // @ts-expect-error - Auto-suppressed during migration
-      description: (t("CountConsultsClosedRecently") || "{count} consults closed recently").replace("{count}", prescriptionsCompleted),
+      description: (t("CountConsultsClosedRecently") || "{count} consults closed recently").replace("{count}", prescriptionsCompleted as any),
       meta: (t("documentAnyFollowUpTasks") || "Document any follow-up tasks."),
       priority: "recent",
       status: (t("completed") || "Completed"),

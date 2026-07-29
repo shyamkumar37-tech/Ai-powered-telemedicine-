@@ -20,14 +20,11 @@ export default function LongitudinalTimelineCard({ patientId }: LongitudinalTime
   const [viewMode, setViewMode] = useState<DynamicState>("vitals"); // vitals, events
 
   const { data = [], isLoading: loading } = useQuery({
-    // @ts-expect-error - Auto-suppressed during migration
-    queryKey: queryKeys.patient.vitals(patientId),
+    queryKey: (queryKeys.patient.vitals(patientId as string) as any),
     queryFn: async () => {
-      // @ts-expect-error - Auto-suppressed during migration
-      const records = await fetchHealthRecords(patientId);
+      const records = await (fetchHealthRecords(patientId as string) as any);
       const sorted = [...records]
-        // @ts-expect-error - Auto-suppressed during migration
-        .sort((a: DynamicStateObject, b: DynamicStateObject) => new Date(a.recordedAt) - new Date(b.recordedAt))
+        .sort((a: DynamicStateObject, b: DynamicStateObject) => new Date(a.recordedAt).getTime() - new Date(b.recordedAt).getTime())
         .slice(-30);
 
       return sorted.map((r: DynamicStateObject, i: DynamicStateObject) => {
@@ -48,10 +45,8 @@ export default function LongitudinalTimelineCard({ patientId }: LongitudinalTime
   });
 
   const { data: timelineEvents = [], isLoading: loadingEvents } = useQuery({
-    // @ts-expect-error - Auto-suppressed during migration
-    queryKey: [...queryKeys.patient.vitals(patientId), "timeline-events"],
-    // @ts-expect-error - Auto-suppressed during migration
-    queryFn: () => fetchPatientTimeline(patientId),
+    queryKey: [...(queryKeys.patient as any).vitals(patientId), "timeline-events"],
+    queryFn: () => fetchPatientTimeline(patientId as string),
     enabled: !!patientId && viewMode === "events"
   });
 

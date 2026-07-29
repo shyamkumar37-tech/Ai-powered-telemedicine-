@@ -88,8 +88,7 @@ export default function VideoConsultation({
 
   const mixAudioStreams = (localStream: DynamicStateObject, remoteStream: DynamicStateObject) => {
     try {
-      // @ts-expect-error - Auto-suppressed during migration
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const audioContext = new (window.AudioContext || ((window as any).webkitAudioContext as any))();
       const dest = audioContext.createMediaStreamDestination();
       
       if (localStream.getAudioTracks().length > 0) {
@@ -129,15 +128,13 @@ export default function VideoConsultation({
 
       pc.onicecandidate = (event: DynamicStateObject) => {
         if (event.candidate) {
-          // @ts-expect-error - Auto-suppressed during migration
-          sendCandidate('/app/peer/ice-candidate', { type: 'candidate', targetId: recipientId, candidate: event.candidate });
+          (window as any).sendCandidate('/app/peer/ice-candidate', { type: 'candidate', targetId: recipientId, candidate: event.candidate });
         }
       };
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
-      // @ts-expect-error - Auto-suppressed during migration
-      sendOffer('/app/peer/offer', { type: 'offer', targetId: recipientId, sdp: offer });
+      (window as any).sendOffer('/app/peer/offer', { type: 'offer', targetId: recipientId, sdp: offer });
     } catch (err: DynamicStateObject) {
       console.error("Could not start WebRTC", err);
     }
@@ -158,8 +155,7 @@ export default function VideoConsultation({
     }
 
     try {
-      // @ts-expect-error - Auto-suppressed during migration
-      await sendCareMessage({
+      await (window as any).sendCareMessage({
         patientId: recipientId, // Assuming recipient is patient for simplicity here
         senderUserId: currentUserId,
         recipientUserId: recipientId,
@@ -272,8 +268,7 @@ export default function VideoConsultation({
             </button>
             <label className={`inline-flex h-12 w-12 items-center justify-center rounded-full transition cursor-pointer ${isTranscribing ? "bg-amber-500 text-white" : "bg-blue-600 text-white hover:bg-blue-700"}`} title="AI Voice Scribe">
               <Mic className="h-5 w-5" />
-              {/* @ts-expect-error - Auto-suppressed during migration */}
-              <input type="file" accept="audio/*" capture="microphone" className="hidden" onChange={async (e: DynamicStateObject) => {
+              <input type="file" accept="audio/*" capture="user" className="hidden" onChange={async (e: DynamicStateObject) => {
                 const file = (e.target.files as DynamicStateObject)[0];
                 if (!file) return;
                 setIsTranscribing(true);

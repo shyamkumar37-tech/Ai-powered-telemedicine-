@@ -1,6 +1,5 @@
 import jsPDF from "jspdf";
 import "jspdf-autotable";
-// @ts-expect-error - Auto-suppressed during migration
 import Papa from "papaparse";
 import { DynamicStateObject } from "./../types/DynamicState";
 
@@ -53,8 +52,7 @@ export const exportToPDF = (data: DynamicStateObject, filename: DynamicStateObje
   doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
 
   // Add table
-  // @ts-expect-error - Auto-suppressed during migration
-  doc.autoTable({
+  (doc as any).autoTable({
     startY: 36,
     head: [columns.map((col: DynamicStateObject) => col.header)],
     body: data.map((item: DynamicStateObject) => columns.map((col: DynamicStateObject) => (item as DynamicStateObject)[col.dataKey])),

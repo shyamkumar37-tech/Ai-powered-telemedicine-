@@ -301,14 +301,10 @@ function queueOfflineWrite(config: DynamicStateObject) {
 
 function createQueuedError(item: DynamicStateObject) {
   const error = new Error("Stored locally as a pending change. It has not reached the server yet and will retry when your connection returns.");
-  // @ts-expect-error - Auto-suppressed during migration
-  error.offlineQueued = true;
-  // @ts-expect-error - Auto-suppressed during migration
-  error.pendingLocalSave = true;
-  // @ts-expect-error - Auto-suppressed during migration
-  error.queuedRequestId = item.id;
-  // @ts-expect-error - Auto-suppressed during migration
-  error.response = {
+  ((error as any).offlineQueued as any) = true;
+  ((error as any).pendingLocalSave as any) = true;
+  (error as any).queuedRequestId = (item.id as any);
+  (error as any).response = {
     data: {
       message: "Stored locally as a pending change. It has not reached the server yet and will retry when your connection returns."
     },
@@ -335,9 +331,7 @@ async function replayOfflineQueue() {
 
     const remaining: DynamicStateObject = [];
     const processed: DynamicStateObject = [];
-
-    // @ts-expect-error - Auto-suppressed during migration
-    for (const item: DynamicStateObject of queue) {
+    for (const item of queue) {
       try {
         await api.request({
           baseURL: item.baseURL,
@@ -345,16 +339,15 @@ async function replayOfflineQueue() {
           method: item.method,
           params: item.params || undefined,
           data: item.data,
-          // @ts-expect-error - Auto-suppressed during migration
           skipOfflineQueue: true,
           headers: {
             "Content-Type": "application/json",
             "X-TeleCare-Offline-Replay": "1"
           }
-        });
+        } as any);
         processed.push(item);
       } catch (error: DynamicStateObject) {
-        if (error?.response && error.response.status >= 400 && error.response.status < 500) {
+        if (error?.response && (error as any).response.status >= 400 && (error as any).response.status < 500) {
           processed.push(item);
           continue;
         }
@@ -518,7 +511,7 @@ api.interceptors.response.use(
       }
     }
 
-    if (config && (config.method || "get").toLowerCase() === "get" && !error.response) {
+    if (config && (config.method || "get").toLowerCase() === "get" && !(error as any).response) {
       const cachedData = readCachedResponse(config);
       if (cachedData !== null) {
         return Promise.resolve({
@@ -532,7 +525,7 @@ api.interceptors.response.use(
       }
     }
 
-    if (config && canQueueOffline(config) && (!navigator.onLine || !error.response)) {
+    if (config && canQueueOffline(config) && (!navigator.onLine || !(error as any).response)) {
       const queuedItem = queueOfflineWrite(config);
       return Promise.reject(createQueuedError(queuedItem));
     }

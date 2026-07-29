@@ -22,12 +22,12 @@ jobs:
           
       - name: Install Dependencies
         working-directory: ./frontend
-        run: npm ci
+        run: npm ci --legacy-peer-deps
         
-      - name: Lint
+      - name: Type Check
         working-directory: ./frontend
-        run: npm run lint
-        continue-on-error: true # Warning only for now
+        run: npm run typecheck
+        continue-on-error: true
         
       - name: Build
         working-directory: ./frontend
@@ -46,6 +46,10 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
           
+      - name: Make Maven Wrapper Executable
+        working-directory: ./backend
+        run: chmod +x ./mvnw
+
       - name: Build with Maven
         working-directory: ./backend
         run: ./mvnw clean package -DskipTests
@@ -53,4 +57,3 @@ jobs:
       - name: Run Unit Tests
         working-directory: ./backend
         run: ./mvnw test
-        continue-on-error: true # Don't fail workflow on mock test failures

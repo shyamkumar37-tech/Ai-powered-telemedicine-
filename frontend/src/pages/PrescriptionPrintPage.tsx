@@ -20,8 +20,7 @@ export default function PrescriptionPrintPage() {
 
   useEffect(() => {
     setLoading(true);
-    // @ts-expect-error - Auto-suppressed during migration
-    fetchPrescription(prescriptionId)
+    (fetchPrescription(prescriptionId as string) as any)
       .then((data: DynamicStateObject) => {
         setPrescription(data);
         setError("");

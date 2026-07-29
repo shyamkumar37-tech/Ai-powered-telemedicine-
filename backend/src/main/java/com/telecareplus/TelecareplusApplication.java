@@ -1,6 +1,6 @@
 package com.telecareplus;
 
-import com.telecareplus.config.AppProperties;
+import com.telecareplus.common.AppProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

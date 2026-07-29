@@ -1,0 +1,43 @@
+package com.telecareplus.users;
+
+import com.telecareplus.common.BaseEntity;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+@Entity
+public class Patient extends BaseEntity {
+
+    @OneToOne(optional = false)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    private User user;
+
+    @Column
+    private String dateOfBirth;
+
+    private String gender;
+
+    private String bloodGroup;
+    private String allergies;
+    private String diseases;
+    private String emergencyContactName;
+    private String emergencyContactPhone;
+
+    @Column(length = 2000)
+    private String medicalHistorySummary;
+
+    private String height;
+    private String weight;
+    private String currentMedications;
+    private String preferredLanguage;
+    private String insuranceInfo;
+
+    @Column(nullable = false)
+    private boolean isProfileComplete = false;
+}

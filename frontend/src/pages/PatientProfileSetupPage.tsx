@@ -144,6 +144,7 @@ export interface TagInputProps {
 }
 
 const TagInput = ({ label, icon: Icon, tags, setTags, placeholder, helperText, translateUiText }: TagInputProps) => {
+  const { t } = useLanguage();
   const [input, setInput] = useState<DynamicState>("");
   const [focused, setFocused] = useState<DynamicState>(false);
   
@@ -186,13 +187,11 @@ const TagInput = ({ label, icon: Icon, tags, setTags, placeholder, helperText, t
           onKeyDown={addTag} 
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          // @ts-expect-error - Auto-suppressed during migration
           placeholder={tags.length === 0 ? placeholder : (t("typeAndPressEnter") || "Type and press enter...")} 
           className="flex-1 w-[200px] outline-none bg-transparent text-[15px] px-2 py-1.5 text-slate-900 placeholder-slate-500 font-semibold"
         />
       </div>
       <p className="text-[13px] text-slate-700 font-medium pl-4 flex items-center gap-1.5">
-        {/* @ts-expect-error - Auto-suppressed during migration */}
         <Info size={14} /> {helperText || (t("pressEnterToAddMultipleItemsToTheList") || "Press Enter to add multiple items to the list")}
       </p>
     </div>

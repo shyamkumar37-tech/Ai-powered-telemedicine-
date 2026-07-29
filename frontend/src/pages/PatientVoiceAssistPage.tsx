@@ -54,8 +54,7 @@ function detectSpeechPlaybackSupport() {
       Boolean(window.speechSynthesis)
       || "speechSynthesis" in window
       || "SpeechSynthesisUtterance" in window
-      // @ts-expect-error - Auto-suppressed during migration
-      || typeof window.SpeechSynthesisUtterance === "function"
+      || typeof ((window as any).SpeechSynthesisUtterance as any) === "function"
     );
 }
 
@@ -208,8 +207,7 @@ export default function PatientVoiceAssistPage() {
       recognitionRef.current = null;
       return undefined;
     }
-    // @ts-expect-error - Auto-suppressed during migration
-    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const Recognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     const recognition = new Recognition();
     recognition.lang = (RECOGNITION_LOCALE as DynamicStateObject)[language] ?? RECOGNITION_LOCALE.en;
     recognition.interimResults = false;

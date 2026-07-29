@@ -41,11 +41,9 @@ export default function QRCheckIn({ isOpen, onClose, onScanSuccess }: QRCheckInP
       scannerRef.current.clear();
     }
     setTimeout(() => {
-      // @ts-expect-error - Auto-suppressed during migration
-      onScanSuccess(decodedText);
+      (onScanSuccess as any)(decodedText);
       setSuccess(false);
-      // @ts-expect-error - Auto-suppressed during migration
-      onClose();
+      if (onClose) (onClose as any)();
     }, 1500);
   };
 

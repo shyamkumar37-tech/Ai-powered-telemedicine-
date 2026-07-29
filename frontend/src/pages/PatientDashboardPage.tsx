@@ -13,6 +13,7 @@ import ProgressRing from "../components/charts/ProgressRing";
 import HealthAnalyticsChart from "../components/charts/HealthAnalyticsChart";
 import PriorityActionsCard from "../components/ui/PriorityActionsCard";
 import AnimatedCounter from "../components/ui/AnimatedCounter";
+import { motion } from "framer-motion";
 import { staggerContainer, fadeInUp, hoverLift } from "../utils/motionVariants";
 import {
   CalendarDays,
@@ -106,7 +107,6 @@ export default function PatientDashboardPage() {
         </div>
 
         {/* Hero Row: Action Hierarchy */}
-        {/* @ts-expect-error - Auto-suppressed during migration */}
         <motion.div variants={staggerContainer} initial="initial" animate="animate" className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-6 mb-8">
           
           {/* Priority Actions (New Unified Hub) */}
@@ -159,16 +159,13 @@ export default function PatientDashboardPage() {
               </>
             )}
           </div>
-        {/* @ts-expect-error - Auto-suppressed during migration */}
         </motion.div>
 
         {/* Metrics Row */}
-        {/* @ts-expect-error - Auto-suppressed during migration */}
         <motion.div variants={staggerContainer} initial="initial" animate="animate" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           
           {/* Health Score Card */}
-          {/* @ts-expect-error - Auto-suppressed during migration */}
-          <motion.div variants={fadeInUp} whileHover={hoverLift} className="glass-card flex flex-col justify-between group">
+          <motion.div variants={fadeInUp as any} whileHover={hoverLift as any} className="glass-card flex flex-col justify-between group">
             <div className="flex justify-between items-start mb-4">
               <div>
                 <span className="text-[13px] text-[var(--tc-text-secondary)] font-bold tracking-wide uppercase">{t("healthScore") || "Health score"}</span>
@@ -183,12 +180,10 @@ export default function PatientDashboardPage() {
               </div>
             </div>
             <div className="text-xs text-[var(--tc-text-muted)] font-medium">{t("optimalRangeKeepItUp") || "Optimal range. Keep it up!"}</div>
-          {/* @ts-expect-error - Auto-suppressed during migration */}
           </motion.div>
 
           {/* Adherence Card */}
-          {/* @ts-expect-error - Auto-suppressed during migration */}
-          <motion.div variants={fadeInUp} whileHover={hoverLift} className="glass-card flex flex-col justify-between group">
+          <motion.div variants={fadeInUp as any} whileHover={hoverLift as any} className="glass-card flex flex-col justify-between group">
             <div className="flex justify-between items-start mb-4">
               <div>
                 <span className="text-[13px] text-[var(--tc-text-secondary)] font-bold tracking-wide uppercase">{t("adherence") || "Adherence"}</span>
@@ -212,12 +207,10 @@ export default function PatientDashboardPage() {
               <div className="h-full bg-[var(--primary)] rounded-full shadow-[0_0_8px_var(--primary)]" style={{ width: `${dashboardData?.adherencePercentage ?? 92}%` }}></div>
             </div>
             <div className="text-[11px] text-[var(--tc-text-muted)] font-medium">Goal: &gt;90%</div>
-          {/* @ts-expect-error - Auto-suppressed during migration */}
           </motion.div>
 
           {/* Active Alerts Card */}
-          {/* @ts-expect-error - Auto-suppressed during migration */}
-          <motion.div variants={fadeInUp} whileHover={hoverLift} className="glass-card flex flex-col justify-between group">
+          <motion.div variants={fadeInUp as any} whileHover={hoverLift as any} className="glass-card flex flex-col justify-between group">
             <div className="flex justify-between items-start mb-2">
               <span className="text-[13px] text-[var(--tc-text-secondary)] font-bold tracking-wide uppercase">{t("activeAlerts") || "Active alerts"}</span>
               <span className="w-8 h-8 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center border border-rose-500/20">
@@ -233,12 +226,10 @@ export default function PatientDashboardPage() {
               {/* Mini Sparkline for Alerts over time */}
               <TrendSparkline data={[{val: 3}, {val: 2}, {val: 4}, {val: 1}, {val: 1}]} dataKey="val" color="#f43f5e" height={30} />
             </div>
-          {/* @ts-expect-error - Auto-suppressed during migration */}
           </motion.div>
 
           {/* Upcoming Visits Card */}
-          {/* @ts-expect-error - Auto-suppressed during migration */}
-          <motion.div variants={fadeInUp} whileHover={hoverLift} className="glass-card flex flex-col justify-between group">
+          <motion.div variants={fadeInUp as any} whileHover={hoverLift as any} className="glass-card flex flex-col justify-between group">
             <div className="flex justify-between items-start mb-4">
               <span className="text-[13px] text-[var(--tc-text-secondary)] font-bold tracking-wide uppercase">{t("upcoming") || "Upcoming"}</span>
               <span className="w-8 h-8 rounded-full bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20">
@@ -254,9 +245,7 @@ export default function PatientDashboardPage() {
                <div className="w-1.5 h-1.5 rounded-full bg-blue-400"></div>
                Tomorrow, 10:00 AM
             </div>
-          {/* @ts-expect-error - Auto-suppressed during migration */}
           </motion.div>
-        {/* @ts-expect-error - Auto-suppressed during migration */}
         </motion.div>
 
         {/* Live Tracking (WebSocket features) */}

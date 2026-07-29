@@ -19,15 +19,13 @@ export default function AiPharmacistInsightsPanel({ pharmacistId }: AiPharmacist
   const [substitution, setSubstitution] = useState<DynamicStateObject | null>(null);
   const [substitutionError, setSubstitutionError] = useState<DynamicState>("");
   const { data: refill, error: refillError, isLoading: loadingRefill } = useQuery({
-    // @ts-expect-error - Auto-suppressed during migration
-    queryKey: queryKeys.pharmacist.refillPrediction(pharmacistId),
+    queryKey: (queryKeys.pharmacist.refillPrediction((pharmacistId as any)) as any),
     queryFn: () => fetchRefillPrediction(pharmacistId),
     enabled: !!pharmacistId
   });
 
   const { data: inventory, error: inventoryError, isLoading: loadingInventory } = useQuery({
-    // @ts-expect-error - Auto-suppressed during migration
-    queryKey: queryKeys.pharmacist.inventoryRisk(pharmacistId),
+    queryKey: (queryKeys.pharmacist.inventoryRisk as any)(pharmacistId),
     queryFn: () => fetchInventoryRisk(pharmacistId),
     enabled: !!pharmacistId
   });

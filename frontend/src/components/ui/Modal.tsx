@@ -49,7 +49,7 @@ export default function Modal({
       const focusables = Array.from(dialog.querySelectorAll(focusableSelector));
       const firstFocusable = focusables.find((element: DynamicStateObject) => !element.hasAttribute("aria-hidden"));
       if (firstFocusable instanceof HTMLElement) {
-        firstFocusable.focus();
+        (firstFocusable as any).focus();
       } else {
         dialog.focus();
       }
@@ -86,12 +86,10 @@ export default function Modal({
 
       if (event.shiftKey && activeElement === firstFocusable) {
         event.preventDefault();
-        // @ts-expect-error - Auto-suppressed during migration
-        lastFocusable.focus();
+        (lastFocusable as any).focus();
       } else if (!event.shiftKey && activeElement === lastFocusable) {
         event.preventDefault();
-        // @ts-expect-error - Auto-suppressed during migration
-        firstFocusable.focus();
+        (firstFocusable as any).focus();
       }
     };
 

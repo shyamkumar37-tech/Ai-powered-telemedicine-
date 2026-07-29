@@ -44,8 +44,7 @@ export default function IotTelemetryDashboard({ patientId }: IotTelemetryDashboa
       const step = canvas.width / 200;
       ecgData.forEach((value: string | number, i: DynamicStateObject) => {
         const x = i * step;
-        // @ts-expect-error - Auto-suppressed during migration
-        const y = canvas.height / 2 - (value * 20); // Scale the ECG value
+        const y = canvas.height / 2 - (Number(value) * 20); // Scale the ECG value
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       });

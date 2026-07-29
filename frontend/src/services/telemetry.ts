@@ -16,7 +16,7 @@ function isProductionRuntime() {
   return typeof import.meta !== "undefined" && !import.meta.env.DEV;
 }
 
-function normalizePath(value: string | number) {
+function normalizePath(value: any) {
   if (!value) {
     return "/";
   }
@@ -27,7 +27,7 @@ function normalizePath(value: string | number) {
     .replace(/\/\d+(?=\/|$)/g, "/:id");
 }
 
-function redactString(value: string | number, key = "") {
+function redactString(value: any, key: string = "") {
   if (!value) {
     return value;
   }
@@ -61,19 +61,18 @@ function redactString(value: string | number, key = "") {
   return value;
 }
 
-function sanitizePayload(value: string | number, key = "") {
+function sanitizePayload(value: any, key: string = ""): any {
   if (value === null || value === undefined) {
     return value;
   }
 
   if (Array.isArray(value)) {
-    // @ts-expect-error - Auto-suppressed during migration
-    return value.slice(0, 10).map((item: DynamicStateObject) => sanitizePayload(item, key));
+    return value.slice(0, 10).map((item: any) => sanitizePayload(item, key));
   }
 
   if (typeof value === "object") {
-    return Object.entries(value).reduce((accumulator: DynamicStateObject, [entryKey, entryValue]: DynamicStateObject) => {
-      (accumulator as DynamicStateObject)[entryKey] = sanitizePayload(entryValue, entryKey);
+    return Object.entries(value).reduce((accumulator: any, [entryKey, entryValue]) => {
+      accumulator[entryKey] = sanitizePayload(entryValue, entryKey);
       return accumulator;
     }, {});
   }
@@ -85,7 +84,7 @@ function sanitizePayload(value: string | number, key = "") {
   return value;
 }
 
-function shouldDropFingerprint(fingerprint: DynamicStateObject) {
+function shouldDropFingerprint(fingerprint: string) {
   const now = Date.now();
   const lastSeen = dedupeCache.get(fingerprint);
   dedupeCache.set(fingerprint, now);
@@ -95,18 +94,18 @@ function shouldDropFingerprint(fingerprint: DynamicStateObject) {
   return false;
 }
 
-function pushEvent(event: DynamicStateObject) {
+function pushEvent(event: any) {
   if (!isClient()) {
     return;
   }
 
-  const queue = Array.isArray((window as DynamicStateObject)[TELEMETRY_BUFFER_KEY]) ? (window as DynamicStateObject)[TELEMETRY_BUFFER_KEY] : [];
+  const queue = Array.isArray((window as any)[TELEMETRY_BUFFER_KEY]) ? (window as any)[TELEMETRY_BUFFER_KEY] : [];
   queue.push(event);
-  (window as DynamicStateObject)[TELEMETRY_BUFFER_KEY] = queue.slice(-MAX_BUFFER_SIZE);
+  (window as any)[TELEMETRY_BUFFER_KEY] = queue.slice(-MAX_BUFFER_SIZE);
   window.dispatchEvent(new CustomEvent(TELEMETRY_EVENT_NAME, { detail: event }));
 }
 
-function maybeSendBeacon(event: DynamicStateObject) {
+function maybeSendBeacon(event: any) {
   if (!isClient()) {
     return;
   }
@@ -123,21 +122,17 @@ function maybeSendBeacon(event: DynamicStateObject) {
   }
 }
 
-export function trackTelemetry(type: DynamicStateObject, payload = {}, options = {}) {
-  // @ts-expect-error - Auto-suppressed during migration
+export function trackTelemetry(type: string, payload: Record<string, any> = {}, options: Record<string, any> = {}) {
   const fingerprint = options.fingerprint || `${type}:${JSON.stringify(sanitizePayload(payload))}`;
-  // @ts-expect-error - Auto-suppressed during migration
   if (options.dedupe !== false && shouldDropFingerprint(fingerprint)) {
     return null;
   }
 
   const event = {
     type,
-    // @ts-expect-error - Auto-suppressed during migration
     level: options.level || "info",
     timestamp: new Date().toISOString(),
     route: isClient() ? normalizePath(window.location.pathname) : "/",
-    // @ts-expect-error - Auto-suppressed during migration
     payload: sanitizePayload(payload)
   };
 
@@ -150,58 +145,51 @@ export function trackTelemetry(type: DynamicStateObject, payload = {}, options =
   return event;
 }
 
-export function trackAuthEvent(action: DynamicStateObject, payload = {}, options = {}) {
-  // @ts-expect-error - Auto-suppressed during migration
+export function trackAuthEvent(action: string, payload: Record<string, any> = {}, options: Record<string, any> = {}) {
   return trackTelemetry(`auth:${action}`, payload, { level: options.level || "warn", ...options });
 }
 
-export function trackUnauthorizedRoute(payload = {}) {
+export function trackUnauthorizedRoute(payload: Record<string, any> = {}) {
   return trackTelemetry("auth:unauthorized-route", payload, {
     level: "warn",
-    // @ts-expect-error - Auto-suppressed during migration
     fingerprint: `unauthorized:${payload.route || ""}:${payload.role || "unknown"}:${(payload.requiredRoles || []).join(",")}`
   });
 }
 
-export function trackApiFailure(payload = {}) {
+export function trackApiFailure(payload: Record<string, any> = {}) {
   return trackTelemetry("api:failure", payload, {
-    // @ts-expect-error - Auto-suppressed during migration
     level: payload.status && payload.status >= 500 ? "error" : "warn",
-    // @ts-expect-error - Auto-suppressed during migration
     fingerprint: `api:${payload.method || "get"}:${payload.endpoint || ""}:${payload.status || "network"}`
   });
 }
 
-export function trackRouteTransition(payload = {}) {
+export function trackRouteTransition(payload: Record<string, any> = {}) {
   return trackTelemetry("route:transition", payload, {
     level: "info",
-    // @ts-expect-error - Auto-suppressed during migration
     fingerprint: `route:${payload.to || ""}:${payload.durationMs || 0}`
   });
 }
 
-export function trackRuntimeException(payload = {}) {
+export function trackRuntimeException(payload: Record<string, any> = {}) {
   return trackTelemetry("runtime:exception", payload, {
     level: "error",
-    // @ts-expect-error - Auto-suppressed during migration
     fingerprint: `runtime:${payload.kind || "error"}:${payload.message || ""}`
   });
 }
 
-export function trackChunkFailure(payload = {}) {
+export function trackChunkFailure(payload: Record<string, any> = {}) {
   return trackTelemetry("runtime:chunk-failure", payload, {
     level: "error",
-    // @ts-expect-error - Auto-suppressed during migration
     fingerprint: `chunk:${payload.message || payload.path || "unknown"}`
   });
 }
 
-export function isChunkLoadError(error: DynamicStateObject) {
+export function isChunkLoadError(error: any) {
   const message = String(error?.message || error || "");
   return /ChunkLoadError|Failed to fetch dynamically imported module|Importing a module script failed/i.test(message);
 }
 
-export function tryRecoverChunkLoad(error: DynamicStateObject) {
+export function tryRecoverChunkLoad(error: any) {
   if (!isClient() || !isChunkLoadError(error)) {
     return false;
   }
@@ -231,7 +219,7 @@ export function installTelemetryInterceptors() {
 
   interceptorsInstalled = true;
 
-  window.addEventListener("error", (event: DynamicStateObject) => {
+  window.addEventListener("error", (event: any) => {
     const target = event?.target;
     if (target && target !== window) {
       const tagName = target.tagName?.toLowerCase?.() || "asset";
@@ -252,7 +240,7 @@ export function installTelemetryInterceptors() {
     });
   }, true);
 
-  window.addEventListener("unhandledrejection", (event: DynamicStateObject) => {
+  window.addEventListener("unhandledrejection", (event: any) => {
     const reason = event?.reason;
     const message = String(reason?.message || reason || "Unhandled rejection");
     trackRuntimeException({
@@ -267,12 +255,12 @@ export function installTelemetryInterceptors() {
   }
 
   const originalConsoleError = console.error.bind(console);
-  console.error = (...args: DynamicStateObject) => {
+  console.error = (...args: any[]) => {
     trackTelemetry("console:error", {
-      message: args.map((item: DynamicStateObject) => String(item)).join(" ").slice(0, 400)
+      message: args.map((item: any) => String(item)).join(" ").slice(0, 400)
     }, {
       level: "error",
-      fingerprint: `console:error:${args.map((item: DynamicStateObject) => String(item)).join(" ").slice(0, 160)}`
+      fingerprint: `console:error:${args.map((item: any) => String(item)).join(" ").slice(0, 160)}`
     });
     originalConsoleError(...args);
   };
@@ -282,15 +270,15 @@ export function getTelemetryEvents() {
   if (!isClient()) {
     return [];
   }
-  return Array.isArray((window as DynamicStateObject)[TELEMETRY_BUFFER_KEY]) ? (window as DynamicStateObject)[TELEMETRY_BUFFER_KEY] : [];
+  return Array.isArray((window as any)[TELEMETRY_BUFFER_KEY]) ? (window as any)[TELEMETRY_BUFFER_KEY] : [];
 }
 
-export function subscribeToTelemetry(listener: DynamicStateObject) {
+export function subscribeToTelemetry(listener: any) {
   if (!isClient()) {
     return () => {};
   }
 
-  const handler = (event: DynamicStateObject) => {
+  const handler = (event: any) => {
     listener(event.detail);
   };
   window.addEventListener(TELEMETRY_EVENT_NAME, handler);

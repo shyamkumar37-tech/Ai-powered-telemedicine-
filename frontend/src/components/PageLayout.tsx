@@ -18,8 +18,7 @@ export default function PageLayout({ variant = "page", children }: PageLayoutPro
     if (typeof window === "undefined") {
       return false;
     }
-    // @ts-expect-error - Auto-suppressed during migration
-    return Boolean(window.__TELECARE_LAYOUT_READY__);
+    return Boolean(((window as any).__TELECARE_LAYOUT_READY__ as any));
   });
 
   useEffect(() => {
@@ -40,8 +39,7 @@ export default function PageLayout({ variant = "page", children }: PageLayoutPro
       if (hasRenderableContent) {
         setHasContent(true);
         if (typeof window !== "undefined") {
-          // @ts-expect-error - Auto-suppressed during migration
-          window.__TELECARE_LAYOUT_READY__ = true;
+          ((window as any).__TELECARE_LAYOUT_READY__ as any) = true;
         }
       }
     };

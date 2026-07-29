@@ -58,9 +58,7 @@ export default function TriagePage() {
   useEffect(() => {
     setForm((current: DynamicStateObject) => ({ ...current, patientId }));
   }, [patientId]);
-
-  // @ts-expect-error - Auto-suppressed during migration
-  const loadHistory = async ({ suppressError = false, signal } = {}) => {
+  const loadHistory = async ({ suppressError = false, signal }: { suppressError?: boolean, signal?: AbortSignal } = {}) => {
     if (!patientId) {
       setLoading(false);
       return;
@@ -82,7 +80,6 @@ export default function TriagePage() {
 
   useEffect(() => {
     const controller = new AbortController();
-    // @ts-expect-error - Auto-suppressed during migration
     loadHistory({ signal: controller.signal });
     return () => controller.abort();
   }, [patientId]);
@@ -131,8 +128,7 @@ export default function TriagePage() {
   };
 
   const sortedHistory = useMemo(() => {
-    // @ts-expect-error - Auto-suppressed during migration
-    return [...history].sort((a: DynamicStateObject, b: DynamicStateObject) => new Date(b.assessedAt) - new Date(a.assessedAt));
+    return [...history].sort((a: DynamicStateObject, b: DynamicStateObject) => new Date(b.assessedAt).getTime() - new Date(a.assessedAt).getTime());
   }, [history]);
 
   const filteredHistory = useMemo(() => {
@@ -167,8 +163,7 @@ export default function TriagePage() {
   }, [filteredHistory]);
 
   const formatTime = (isoString: boolean) => {
-    // @ts-expect-error - Auto-suppressed during migration
-    return new Date(isoString).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }).toLowerCase();
+    return new Date((isoString as any)).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }).toLowerCase();
   };
 
   return (
@@ -222,8 +217,7 @@ export default function TriagePage() {
               <textarea 
                 id="symptoms"
                 className="w-full bg-white/5 border border-white/10 rounded-element p-3 text-ink focus:outline-none focus:ring-2 focus:ring-primary/50 placeholder-ink-muted/50"
-                // @ts-expect-error - Auto-suppressed during migration
-                rows="3" 
+                rows={3} 
                 placeholder="e.g., I've had a severe headache and nausea since yesterday morning."
                 value={form.symptoms}
                 onChange={(e: DynamicStateObject) => {

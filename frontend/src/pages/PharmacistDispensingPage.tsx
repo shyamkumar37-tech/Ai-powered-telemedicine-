@@ -51,8 +51,7 @@ export default function PharmacistDispensingPage() {
     if (!createdAt) return "Unknown";
     const created = new Date(createdAt);
     const now = new Date();
-    // @ts-expect-error - Auto-suppressed during migration
-    const diffMs = now - created;
+    const diffMs = now.getTime() - created.getTime();
     const diffMins = Math.floor(diffMs / 60000);
     const diffHrs = Math.floor(diffMins / 60);
     if (diffHrs > 24) return `${Math.floor(diffHrs / 24)} days`;

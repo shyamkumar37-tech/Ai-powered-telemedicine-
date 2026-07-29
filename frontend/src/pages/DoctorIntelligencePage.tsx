@@ -154,19 +154,19 @@ export default function DoctorIntelligencePage() {
                   if (!val) return;
                   e.target.disabled = true;
                   const resSpan = document.getElementById("copilot-response");
-                  // @ts-expect-error - Auto-suppressed during migration
-                  resSpan.innerText = "Thinking...";
-                  try {
-                    const { askCopilot } = await import("../ai/services/aiService");
-                    const res = await askCopilot({ query: val, patientId: null });
-                    // @ts-expect-error - Auto-suppressed during migration
-                    resSpan.innerText = res.answer;
-                  } catch (err: DynamicStateObject) {
-                    // @ts-expect-error - Auto-suppressed during migration
-                    resSpan.innerText = "Error asking copilot.";
-                  } finally {
-                    e.target.disabled = false;
-                  }
+                  if (resSpan) resSpan.innerText = "Thinking...";
+                  const { askCopilot } = await import("../ai/services/aiService");
+                  askCopilot({ query: val, patientId: null })
+                    .then((res: DynamicStateObject) => {
+                      
+                      if (resSpan) resSpan.innerText = res.answer;
+                    })
+                    .catch(() => {
+                      if (resSpan) resSpan.innerText = "Error asking copilot.";
+                    })
+                    .finally(() => {
+                      e.target.disabled = false;
+                    });
                 }
               }}
             />

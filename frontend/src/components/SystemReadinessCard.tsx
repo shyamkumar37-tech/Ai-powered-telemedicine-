@@ -190,8 +190,7 @@ const WARNING_TRANSLATIONS = {};
 */
 
 function summarizeAvailability(value: string | number, text: DynamicStateObject) {
-  // @ts-expect-error - Auto-suppressed during migration
-  const available = value === true || value === "AVAILABLE";
+  const available = (value as any) === true || value === "AVAILABLE";
   return available
     ? { label: text.available, tone: "emerald" }
     : { label: text.unavailableLabel, tone: "rose" };

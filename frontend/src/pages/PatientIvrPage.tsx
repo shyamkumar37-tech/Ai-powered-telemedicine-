@@ -38,9 +38,7 @@ export default function PatientIvrPage() {
 
   const lastAutoPhoneRef = useRef<DynamicState>(auth?.phone || "");
   const lastAutoLanguageRef = useRef<DynamicState>(language);
-
-  // @ts-expect-error - Auto-suppressed during migration
-  const normalizeDateTimeInput = (value: string | number) => (value && value.length === 16 ? `${value}:00` : value);
+  const normalizeDateTimeInput = (value: string | number) => (value && (value as any).length === 16 ? `${value}:00` : value);
 
   const load = async () => {
     if (!patientId) {

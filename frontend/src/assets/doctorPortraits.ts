@@ -59,8 +59,7 @@ const portraitSvgs = {
 };
 
 export function getDoctorPortrait(doctor = {}) {
-  // @ts-expect-error - Auto-suppressed during migration
-  const key = String(doctor?.fullName || doctor?.name || "").toLowerCase();
+  const key = String(((doctor as any)?.fullName as any) || ((doctor as any)?.name as any) || "").toLowerCase();
 
   if (key.includes("arjun")) return portraitSvgs.arjun;
   if (key.includes("neha")) return portraitSvgs.neha;

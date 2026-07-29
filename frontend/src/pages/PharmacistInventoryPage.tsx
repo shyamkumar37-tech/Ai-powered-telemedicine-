@@ -45,8 +45,7 @@ export default function PharmacistInventoryPage() {
   const mutation = useMutation({
     mutationFn: (newItem: DynamicStateObject) => createPharmacistInventoryItem(pharmacistId, newItem),
     onSuccess: () => {
-      // @ts-expect-error - Auto-suppressed during migration
-      queryClient.invalidateQueries(['pharmacist', pharmacistId, 'inventory']);
+      queryClient.invalidateQueries({ queryKey: ['pharmacist', pharmacistId, 'inventory'] });
       pushToast({ title: "Success", message: t("inventoryItemAdded"), type: "success" });
       setForm({ medicineName: "", formulation: "", quantityAvailable: "", reorderLevel: "", unitLabel: "", expiryDate: "", batchNumber: "" });
     },
@@ -56,14 +55,10 @@ export default function PharmacistInventoryPage() {
   });
 
   const validateForm = () => {
-    const errs = {};
-    // @ts-expect-error - Auto-suppressed during migration
+    const errs: any = {};
     if (!form.medicineName.trim()) errs.medicineName = "Medicine name is required";
-    // @ts-expect-error - Auto-suppressed during migration
     if (form.quantityAvailable === "" || isNaN(Number(form.quantityAvailable))) errs.quantityAvailable = "Valid quantity required";
-    // @ts-expect-error - Auto-suppressed during migration
     if (form.reorderLevel === "" || isNaN(Number(form.reorderLevel))) errs.reorderLevel = "Valid reorder level required";
-    // @ts-expect-error - Auto-suppressed during migration
     if (!form.unitLabel.trim()) errs.unitLabel = "Unit label is required (e.g., tablets)";
     setFormErrors(errs);
     return Object.keys(errs).length === 0;
@@ -79,10 +74,10 @@ export default function PharmacistInventoryPage() {
   };
 
   const getUrgencyBadge = (item: DynamicStateObject) => {
-    if (item.quantityAvailable === 0) {
+    if ((item as any).quantityAvailable === 0) {
       return <span className="rounded-full px-2.5 py-0.5 text-xs font-semibold badge-critical">{t("critical") || "Critical"}</span>;
     }
-    if (item.quantityAvailable <= item.reorderLevel) {
+    if ((item as any).quantityAvailable <= (item as any).reorderLevel) {
       return <span className="rounded-full px-2.5 py-0.5 text-xs font-semibold badge-low">{t("lowStock") || "Low Stock"}</span>;
     }
     return <span className="rounded-full px-2.5 py-0.5 text-xs font-semibold badge-normal">{t("normal") || "Normal"}</span>;
@@ -242,8 +237,7 @@ export default function PharmacistInventoryPage() {
             title={t("unableLoadInventory")}
             body={error}
             actionLabel={t("retry")}
-            // @ts-expect-error - Auto-suppressed during migration
-            onAction={() => queryClient.invalidateQueries(['pharmacist', pharmacistId, 'inventory'])}
+            onAction={() => queryClient.invalidateQueries({ queryKey: ['pharmacist', pharmacistId, 'inventory'] })}
           />
         ) : null}
         {!loading && !error && !items.length ? (

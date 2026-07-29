@@ -57,35 +57,35 @@ function localizeMessage(language: DynamicStateObject, fieldKey: DynamicStateObj
 
   const fieldLabel = getFieldLabel(language, fieldKey);
 
-  if (/must not be blank|must not be null|must not be empty|Please fill out this field\./i.test(normalizedMessage)) {
+  if (/(must not be blank|must not be null|must not be empty|Please fill out this field\.)/i.test(String(normalizedMessage))) {
     return fieldLabel ? `${fieldLabel} भरना आवश्यक है।` : "यह फ़ील्ड भरना आवश्यक है।";
   }
 
-  if (/Enter a valid mobile number/i.test(normalizedMessage)) {
+  if (/Enter a valid mobile number/i.test(String(normalizedMessage))) {
     return "कृपया मान्य मोबाइल नंबर दर्ज करें।";
   }
 
-  if (/OTP must be 6 digits/i.test(normalizedMessage)) {
+  if (/OTP must be 6 digits/i.test(String(normalizedMessage))) {
     return "OTP 6 अंकों का होना चाहिए।";
   }
 
-  if (/Password must be at least 6 characters/i.test(normalizedMessage)) {
+  if (/Password must be at least 6 characters/i.test(String(normalizedMessage))) {
     return "पासवर्ड कम से कम 6 अक्षरों का होना चाहिए।";
   }
 
-  if (/must be a well-formed email address|valid email/i.test(normalizedMessage)) {
+  if (/(must be a well-formed email address|valid email)/i.test(String(normalizedMessage))) {
     return "कृपया मान्य ईमेल पता दर्ज करें।";
   }
 
-  if (/Caregiver notes are required/i.test(normalizedMessage)) {
+  if (/Caregiver notes are required/i.test(String(normalizedMessage))) {
     return "देखभालकर्ता नोट्स भरना आवश्यक है।";
   }
 
-  if (/Requested appointment time is required/i.test(normalizedMessage)) {
+  if (/Requested appointment time is required/i.test(String(normalizedMessage))) {
     return "अनुरोधित अपॉइंटमेंट समय भरना आवश्यक है।";
   }
 
-  if (/Concern summary is required/i.test(normalizedMessage)) {
+  if (/Concern summary is required/i.test(String(normalizedMessage))) {
     return "चिंता सारांश भरना आवश्यक है।";
   }
 

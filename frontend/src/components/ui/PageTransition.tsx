@@ -40,8 +40,7 @@ export default function PageTransition({ children, className = "" }: PageTransit
       animate="in"
       exit="out"
       variants={accessibleVariants}
-      // @ts-expect-error - Auto-suppressed during migration
-      transition={pageTransition}
+      transition={pageTransition as any}
       className={className}
     >
       {children}

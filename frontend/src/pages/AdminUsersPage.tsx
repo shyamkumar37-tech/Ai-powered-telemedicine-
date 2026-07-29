@@ -168,8 +168,7 @@ export default function AdminUsersPage() {
                   ))}
                   {users.length === 0 && (
                     <tr>
-                      {/* @ts-expect-error - Auto-suppressed during migration */}
-                      <td colSpan="4" className="px-6 py-12 text-center text-slate-400">
+                      <td colSpan={4} className="px-6 py-12 text-center text-slate-400">
                         {t("noUsersFoundMatchingTheSelectedFilters") || "No users found matching the selected filters."}</td>
                     </tr>
                   )}

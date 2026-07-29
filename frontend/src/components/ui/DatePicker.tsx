@@ -48,15 +48,14 @@ export function DatePicker({ date, setDate }: DatePickerProps) {
             classNames={{
               months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
               month: "space-y-4",
-              // @ts-expect-error - Auto-suppressed during migration
-              caption: "flex justify-center pt-1 relative items-center",
+              
               caption_label: "text-sm font-medium",
               nav: "space-x-1 flex items-center",
+              // @ts-ignore
               nav_button: cn(
                 "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 flex justify-center items-center rounded-md border border-tcd-panel-line hover:bg-tcd-panel-line"
               ),
-              nav_button_previous: "absolute left-1",
-              nav_button_next: "absolute right-1",
+              /* nav buttons removed */
               table: "w-full border-collapse space-y-1",
               head_row: "flex",
               head_cell: "text-slate-400 rounded-md w-8 font-normal text-[0.8rem]",

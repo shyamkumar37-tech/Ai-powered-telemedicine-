@@ -38,8 +38,7 @@ export default function AiMoodInsightsPanel({ patientId }: AiMoodInsightsPanelPr
       if (stressData.status === "fulfilled") setStress(stressData.value);
       
       const failed = [entryData, trendData, stressData].find((item: DynamicStateObject) => item.status === "rejected");
-      // @ts-expect-error - Auto-suppressed during migration
-      setError(failed ? getApiErrorMessage(failed.reason, "Unable to load mood insights.") : "");
+      setError(failed ? getApiErrorMessage(((failed as any).reason as any), "Unable to load mood insights.") : "");
     } finally {
       setLoading(false);
     }

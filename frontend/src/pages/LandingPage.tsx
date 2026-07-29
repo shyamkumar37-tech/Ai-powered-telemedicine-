@@ -15,8 +15,7 @@ export interface AnimatedCounterProps {
 }
 
 function AnimatedCounter({ from, to, suffix = "", duration = 1.4 }: AnimatedCounterProps) {
-  // @ts-expect-error - Auto-suppressed during migration
-  const nodeRef = useRef<DynamicState>();
+  const nodeRef = useRef<any>(null);
   const inView = useInView(nodeRef, { once: true, margin: "-10%" });
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -27,8 +26,7 @@ function AnimatedCounter({ from, to, suffix = "", duration = 1.4 }: AnimatedCoun
         ease: "easeOut",
         onUpdate(value: string | number) {
           if (nodeRef.current) {
-            // @ts-expect-error - Auto-suppressed during migration
-            nodeRef.current.textContent = Math.round(value).toLocaleString() + suffix;
+            nodeRef.current.textContent = Math.round(value as any).toLocaleString() + suffix;
           }
         }
       });

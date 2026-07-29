@@ -2593,8 +2593,8 @@ Object.assign(pa, {
 
 export const labels = { en, hi, ml, te, pa, ta };
 
-export const t = (language: DynamicStateObject, key: DynamicStateObject) => {
-  const translated = ((labels as DynamicStateObject)[language] as DynamicStateObject)?.[key] ?? (labels.en as DynamicStateObject)[key] ?? key;
+export const t = (language: DynamicStateObject, key: string) => {
+  const translated = ((labels as Record<string, Record<string, string>>)[language] as any)?.[key] ?? (labels.en as Record<string, string>)[key] ?? key;
   return language === "en" ? translated : translateDisplayText(language, translated);
 };
 
@@ -4565,7 +4565,7 @@ const DISPLAY_VALUE_INDEX = buildReverseIndex(displayValueLabels);
 const DISPLAY_MESSAGE_INDEX = buildReverseIndex(displayMessageLabels);
 const VOICE_ACCESSIBILITY_INDEX = buildReverseIndex(voiceAccessibilityDisplayLabels);
 
-function resolveKnownLabelTranslation(language: DynamicStateObject, text: DynamicStateObject) {
+function resolveKnownLabelTranslation(language: string, text: string) {
   if (!text) {
     return null;
   }
@@ -4577,7 +4577,7 @@ function resolveKnownLabelTranslation(language: DynamicStateObject, text: Dynami
 
   const labelKey = LABEL_VALUE_INDEX.get(normalized);
   if (labelKey) {
-    return ((labels as DynamicStateObject)[language] as DynamicStateObject)?.[labelKey] ?? (labels.en as DynamicStateObject)?.[labelKey] ?? null;
+    return ((labels as Record<string, Record<string, string>>)[language] as any)?.[labelKey] ?? (labels.en as Record<string, string>)?.[labelKey] ?? null;
   }
 
   const displayKey = DISPLAY_VALUE_INDEX.get(normalized)
@@ -4589,15 +4589,12 @@ function resolveKnownLabelTranslation(language: DynamicStateObject, text: Dynami
   }
 
   return (
-    ((displayValueLabels as DynamicStateObject)[language] as DynamicStateObject)?.[displayKey]
-    ?? ((displayMessageLabels as DynamicStateObject)[language] as DynamicStateObject)?.[displayKey]
-    ?? ((voiceAccessibilityDisplayLabels as DynamicStateObject)[language] as DynamicStateObject)?.[displayKey]
-    // @ts-expect-error - Auto-suppressed during migration
-    ?? (displayValueLabels.en as DynamicStateObject)?.[displayKey]
-    // @ts-expect-error - Auto-suppressed during migration
-    ?? (displayMessageLabels.en as DynamicStateObject)?.[displayKey]
-    // @ts-expect-error - Auto-suppressed during migration
-    ?? (voiceAccessibilityDisplayLabels.en as DynamicStateObject)?.[displayKey]
+    ((displayValueLabels as Record<string, Record<string, string>>)[language] as any)?.[displayKey]
+    ?? ((displayMessageLabels as Record<string, Record<string, string>>)[language] as any)?.[displayKey]
+    ?? ((voiceAccessibilityDisplayLabels as Record<string, Record<string, string>>)[language] as any)?.[displayKey]
+    ?? ((displayValueLabels as any).en as Record<string, string>)?.[displayKey]
+    ?? ((displayMessageLabels as any).en as Record<string, string>)?.[displayKey]
+    ?? ((voiceAccessibilityDisplayLabels as any).en as Record<string, string>)?.[displayKey]
     ?? null
   );
 }
@@ -4606,7 +4603,7 @@ function escapeDisplayPattern(value: string | number) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function shouldUsePartialReplacement(source: DynamicStateObject, target: DynamicStateObject) {
+function shouldUsePartialReplacement(source: string, target: string) {
   if (!source || !target || source === target) {
     return false;
   }
@@ -4620,151 +4617,145 @@ function shouldUsePartialReplacement(source: DynamicStateObject, target: Dynamic
   return true;
 }
 
-function getPartialReplacementEntries(language: DynamicStateObject) {
+function getPartialReplacementEntries(language: string) {
   const translationPool = {
-    ...((displayValueLabels as DynamicStateObject)[language] || {}),
-    ...((displayMessageLabels as DynamicStateObject)[language] || {})
+    ...((displayValueLabels as Record<string, Record<string, string>>)[language] || {}),
+    ...((displayMessageLabels as Record<string, Record<string, string>>)[language] || {})
   };
 
   return Object.entries(translationPool)
-    .filter(([source, target]: DynamicStateObject) => shouldUsePartialReplacement(source, target))
-    .sort((left: DynamicStateObject, right: DynamicStateObject) => (right as DynamicStateObject)[0].length - (left as DynamicStateObject)[0].length);
+    .filter(([source, target]) => shouldUsePartialReplacement(source, target))
+    .sort((left: [string, string], right: [string, string]) => (right as any)[0].length - (left as any)[0].length);
 }
 
-function replaceKnownDisplayFragments(language: DynamicStateObject, text: DynamicStateObject) {
+function replaceKnownDisplayFragments(language: string, text: string) {
   const entries = getPartialReplacementEntries(language);
-  return entries.reduce((current: DynamicStateObject, [source, target]: DynamicStateObject) => {
+  return entries.reduce((current: DynamicStateObject, [source, target]) => {
     const pattern = new RegExp(escapeDisplayPattern(source), "gi");
     return current.replace(pattern, target);
   }, text);
 }
-
-// @ts-expect-error - Auto-suppressed during migration
-function translateTemplatedPhrase(language: DynamicStateObject, text: DynamicStateObject) {
-  // @ts-expect-error - Auto-suppressed during migration
-  const templateRules = {
+function translateTemplatedPhrase(language: string, text: string) {
+  const templateRules: Record<string, [RegExp, (match: RegExpMatchArray) => string][]> = {
     hi: [
-      // @ts-expect-error - Auto-suppressed during migration
-      [/^Loading (.+)\.\.\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} लोड हो रहा है...`],
-      [/^Unable to load (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} लोड नहीं हो सका।`],
-      [/^Unable to create (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} बनाया नहीं जा सका।`],
-      [/^Unable to save (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} सहेजा नहीं जा सका।`],
-      [/^Unable to send (.+)\.?$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} भेजा नहीं जा सका।`],
-      [/^Unable to start (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} शुरू नहीं किया जा सका।`],
-      [/^Unable to update (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} अपडेट नहीं किया जा सका।`],
-      [/^Unable to link (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} लिंक नहीं किया जा सका।`],
-      [/^Unable to log (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} दर्ज नहीं किया जा सका।`],
-      [/^Unable to cancel (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} रद्द नहीं किया जा सका।`],
-      [/^Unable to confirm (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} पुष्टि नहीं की जा सकी।`],
-      [/^No (.+) yet\.$/i, ([, item]: DynamicStateObject) => `अभी तक कोई ${translateDisplayText(language, item)} नहीं है।`],
-      [/^No (.+) found yet\.$/i, ([, item]: DynamicStateObject) => `अभी तक कोई ${translateDisplayText(language, item)} नहीं मिला।`],
-      [/^No (.+) available yet\.$/i, ([, item]: DynamicStateObject) => `अभी तक ${translateDisplayText(language, item)} उपलब्ध नहीं है।`],
-      [/^No (.+) right now\.$/i, ([, item]: DynamicStateObject) => `अभी ${translateDisplayText(language, item)} नहीं है।`],
-      [/^Create (.+)$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} बनाएँ`],
-      [/^Save (.+)$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} सहेजें`],
-      [/^Select (.+)$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} चुनें`],
-      [/^Send (.+)$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} भेजें`],
-      [/^Start (.+)$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} शुरू करें`],
-      [/^Log (.+)$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} दर्ज करें`],
-      [/^Use (.+)$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} उपयोग करें`],
-      [/^Conversation with (.+)$/i, ([, name]: DynamicStateObject) => `${name} के साथ बातचीत`],
-      [/^Consultation saved for (.+)$/i, ([, name]: DynamicStateObject) => `${name} के लिए परामर्श सहेजा गया`],
-      [/^Care plan created for (.+)\.$/i, ([, name]: DynamicStateObject) => `${name} के लिए केयर प्लान बनाया गया।`],
-      [/^Intervention logged for (.+)\.$/i, ([, name]: DynamicStateObject) => `${name} के लिए हस्तक्षेप दर्ज किया गया।`]
+      [/^Loading (.+)\.\.\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} लोड हो रहा है...`],
+      [/^Unable to load (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} लोड नहीं हो सका।`],
+      [/^Unable to create (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} बनाया नहीं जा सका।`],
+      [/^Unable to save (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} सहेजा नहीं जा सका।`],
+      [/^Unable to send (.+)\.?$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} भेजा नहीं जा सका।`],
+      [/^Unable to start (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} शुरू नहीं किया जा सका।`],
+      [/^Unable to update (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} अपडेट नहीं किया जा सका।`],
+      [/^Unable to link (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} लिंक नहीं किया जा सका।`],
+      [/^Unable to log (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} दर्ज नहीं किया जा सका।`],
+      [/^Unable to cancel (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} रद्द नहीं किया जा सका।`],
+      [/^Unable to confirm (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} पुष्टि नहीं की जा सकी।`],
+      [/^No (.+) yet\.$/i, ([, item]: RegExpMatchArray) => `अभी तक कोई ${translateDisplayText(language, item)} नहीं है।`],
+      [/^No (.+) found yet\.$/i, ([, item]: RegExpMatchArray) => `अभी तक कोई ${translateDisplayText(language, item)} नहीं मिला।`],
+      [/^No (.+) available yet\.$/i, ([, item]: RegExpMatchArray) => `अभी तक ${translateDisplayText(language, item)} उपलब्ध नहीं है।`],
+      [/^No (.+) right now\.$/i, ([, item]: RegExpMatchArray) => `अभी ${translateDisplayText(language, item)} नहीं है।`],
+      [/^Create (.+)$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} बनाएँ`],
+      [/^Save (.+)$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} सहेजें`],
+      [/^Select (.+)$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} चुनें`],
+      [/^Send (.+)$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} भेजें`],
+      [/^Start (.+)$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} शुरू करें`],
+      [/^Log (.+)$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} दर्ज करें`],
+      [/^Use (.+)$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} उपयोग करें`],
+      [/^Conversation with (.+)$/i, ([, name]: RegExpMatchArray) => `${name} के साथ बातचीत`],
+      [/^Consultation saved for (.+)$/i, ([, name]: RegExpMatchArray) => `${name} के लिए परामर्श सहेजा गया`],
+      [/^Care plan created for (.+)\.$/i, ([, name]: RegExpMatchArray) => `${name} के लिए केयर प्लान बनाया गया।`],
+      [/^Intervention logged for (.+)\.$/i, ([, name]: RegExpMatchArray) => `${name} के लिए हस्तक्षेप दर्ज किया गया।`]
     ],
     ml: [
-      [/^Loading (.+)\.\.\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} ലോഡ് ചെയ്യുന്നു...`],
-      [/^Unable to load (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} ലോഡ് ചെയ്യാനായില്ല.`],
-      [/^Unable to create (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} സൃഷ്ടിക്കാനായില്ല.`],
-      [/^Unable to save (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} സൂക്ഷിക്കാനായില്ല.`],
-      [/^Unable to send (.+)\.?$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} അയയ്ക്കാനായില്ല.`],
-      [/^Unable to start (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} ആരംഭിക്കാനായില്ല.`],
-      [/^Unable to update (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} പുതുക്കാനായില്ല.`],
-      [/^Unable to link (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} ഇണയ്ക്കാനായില്ല.`],
-      [/^Unable to log (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} രേഖപ്പെടുത്താനായില്ല.`],
-      [/^Unable to cancel (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} റദ്ദാക്കാനായില്ല.`],
-      [/^Unable to confirm (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} സ്ഥിരീകരിക്കാനായില്ല.`],
-      [/^No (.+) yet\.$/i, ([, item]: DynamicStateObject) => `ഇനിയും ${translateDisplayText(language, item)} ഇല്ല.`],
-      [/^No (.+) found yet\.$/i, ([, item]: DynamicStateObject) => `ഇനിയും ${translateDisplayText(language, item)} കണ്ടെത്തിയിട്ടില്ല.`],
-      [/^No (.+) available yet\.$/i, ([, item]: DynamicStateObject) => `ഇനിയും ${translateDisplayText(language, item)} ലഭ്യമല്ല.`],
-      [/^No (.+) right now\.$/i, ([, item]: DynamicStateObject) => `ഇപ്പോൾ ${translateDisplayText(language, item)} ഇല്ല.`],
-      [/^Create (.+)$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} സൃഷ്ടിക്കുക`],
-      [/^Save (.+)$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} സൂക്ഷിക്കുക`],
-      [/^Select (.+)$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} തിരഞ്ഞെടുക്കുക`],
-      [/^Send (.+)$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} അയയ്ക്കുക`],
-      [/^Start (.+)$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} ആരംഭിക്കുക`],
-      [/^Log (.+)$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} രേഖപ്പെടുത്തുക`],
-      [/^Use (.+)$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} ഉപയോഗിക്കുക`],
-      [/^Conversation with (.+)$/i, ([, name]: DynamicStateObject) => `${name} നോടുള്ള സംഭാഷണം`],
-      [/^Consultation saved for (.+)$/i, ([, name]: DynamicStateObject) => `${name} ന് വേണ്ടിയുള്ള ആലോചന സൂക്ഷിച്ചു`],
-      [/^Care plan created for (.+)\.$/i, ([, name]: DynamicStateObject) => `${name} ന് വേണ്ടിയുള്ള പരിചരണ പദ്ധതി സൃഷ്ടിച്ചു.`],
-      [/^Intervention logged for (.+)\.$/i, ([, name]: DynamicStateObject) => `${name} ന് വേണ്ടിയുള്ള ഇടപെടൽ രേഖപ്പെടുത്തി.`]
+      [/^Loading (.+)\.\.\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} ലോഡ് ചെയ്യുന്നു...`],
+      [/^Unable to load (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} ലോഡ് ചെയ്യാനായില്ല.`],
+      [/^Unable to create (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} സൃഷ്ടിക്കാനായില്ല.`],
+      [/^Unable to save (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} സൂക്ഷിക്കാനായില്ല.`],
+      [/^Unable to send (.+)\.?$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} അയയ്ക്കാനായില്ല.`],
+      [/^Unable to start (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} ആരംഭിക്കാനായില്ല.`],
+      [/^Unable to update (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} പുതുക്കാനായില്ല.`],
+      [/^Unable to link (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} ഇണയ്ക്കാനായില്ല.`],
+      [/^Unable to log (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} രേഖപ്പെടുത്താനായില്ല.`],
+      [/^Unable to cancel (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} റദ്ദാക്കാനായില്ല.`],
+      [/^Unable to confirm (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} സ്ഥിരീകരിക്കാനായില്ല.`],
+      [/^No (.+) yet\.$/i, ([, item]: RegExpMatchArray) => `ഇനിയും ${translateDisplayText(language, item)} ഇല്ല.`],
+      [/^No (.+) found yet\.$/i, ([, item]: RegExpMatchArray) => `ഇനിയും ${translateDisplayText(language, item)} കണ്ടെത്തിയിട്ടില്ല.`],
+      [/^No (.+) available yet\.$/i, ([, item]: RegExpMatchArray) => `ഇനിയും ${translateDisplayText(language, item)} ലഭ്യമല്ല.`],
+      [/^No (.+) right now\.$/i, ([, item]: RegExpMatchArray) => `ഇപ്പോൾ ${translateDisplayText(language, item)} ഇല്ല.`],
+      [/^Create (.+)$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} സൃഷ്ടിക്കുക`],
+      [/^Save (.+)$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} സൂക്ഷിക്കുക`],
+      [/^Select (.+)$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} തിരഞ്ഞെടുക്കുക`],
+      [/^Send (.+)$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} അയയ്ക്കുക`],
+      [/^Start (.+)$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} ആരംഭിക്കുക`],
+      [/^Log (.+)$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} രേഖപ്പെടുത്തുക`],
+      [/^Use (.+)$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} ഉപയോഗിക്കുക`],
+      [/^Conversation with (.+)$/i, ([, name]: RegExpMatchArray) => `${name} നോടുള്ള സംഭാഷണം`],
+      [/^Consultation saved for (.+)$/i, ([, name]: RegExpMatchArray) => `${name} ന് വേണ്ടിയുള്ള ആലോചന സൂക്ഷിച്ചു`],
+      [/^Care plan created for (.+)\.$/i, ([, name]: RegExpMatchArray) => `${name} ന് വേണ്ടിയുള്ള പരിചരണ പദ്ധതി സൃഷ്ടിച്ചു.`],
+      [/^Intervention logged for (.+)\.$/i, ([, name]: RegExpMatchArray) => `${name} ന് വേണ്ടിയുള്ള ഇടപെടൽ രേഖപ്പെടുത്തി.`]
     ],
     te: [
-      [/^Loading (.+)\.\.\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} లోడ్ అవుతోంది...`],
-      [/^Unable to load (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} లోడ్ చేయలేకపోయాము.`],
-      [/^Unable to create (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} సృష్టించలేకపోయాము.`],
-      [/^Unable to save (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} సేవ్ చేయలేకపోయాము.`],
-      [/^Unable to send (.+)\.?$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} పంపలేకపోయాము.`],
-      [/^Unable to start (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} ప్రారంభించలేకపోయాము.`],
-      [/^Unable to update (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} నవీకరించలేకపోయాము.`],
-      [/^Unable to link (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} లింక్ చేయలేకపోయాము.`],
-      [/^Unable to log (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} నమోదు చేయలేకపోయాము.`],
-      [/^Unable to cancel (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} రద్దు చేయలేకపోయాము.`],
-      [/^Unable to confirm (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} నిర్ధారించలేకపోయాము.`],
-      [/^No (.+) yet\.$/i, ([, item]: DynamicStateObject) => `ఇంకా ${translateDisplayText(language, item)} లేదు.`],
-      [/^No (.+) found yet\.$/i, ([, item]: DynamicStateObject) => `ఇంకా ${translateDisplayText(language, item)} కనుగొనబడలేదు.`],
-      [/^No (.+) available yet\.$/i, ([, item]: DynamicStateObject) => `ఇంకా ${translateDisplayText(language, item)} అందుబాటులో లేదు.`],
-      [/^No (.+) right now\.$/i, ([, item]: DynamicStateObject) => `ప్రస్తుతం ${translateDisplayText(language, item)} లేదు.`],
-      [/^Create (.+)$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} సృష్టించండి`],
-      [/^Save (.+)$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} సేవ్ చేయండి`],
-      [/^Select (.+)$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} ఎంచుకోండి`],
-      [/^Send (.+)$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} పంపండి`],
-      [/^Start (.+)$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} ప్రారంభించండి`],
-      [/^Log (.+)$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} నమోదు చేయండి`],
-      [/^Use (.+)$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} ఉపయోగించండి`],
-      [/^Conversation with (.+)$/i, ([, name]: DynamicStateObject) => `${name} తో సంభాషణ`],
-      [/^Consultation saved for (.+)$/i, ([, name]: DynamicStateObject) => `${name} కోసం సంప్రదింపు సేవ్ చేయబడింది`],
-      [/^Care plan created for (.+)\.$/i, ([, name]: DynamicStateObject) => `${name} కోసం సంరక్షణ ప్రణాళిక సృష్టించబడింది.`],
-      [/^Intervention logged for (.+)\.$/i, ([, name]: DynamicStateObject) => `${name} కోసం జోక్యం నమోదు చేయబడింది.`]
+      [/^Loading (.+)\.\.\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} లోడ్ అవుతోంది...`],
+      [/^Unable to load (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} లోడ్ చేయలేకపోయాము.`],
+      [/^Unable to create (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} సృష్టించలేకపోయాము.`],
+      [/^Unable to save (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} సేవ్ చేయలేకపోయాము.`],
+      [/^Unable to send (.+)\.?$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} పంపలేకపోయాము.`],
+      [/^Unable to start (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} ప్రారంభించలేకపోయాము.`],
+      [/^Unable to update (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} నవీకరించలేకపోయాము.`],
+      [/^Unable to link (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} లింక్ చేయలేకపోయాము.`],
+      [/^Unable to log (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} నమోదు చేయలేకపోయాము.`],
+      [/^Unable to cancel (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} రద్దు చేయలేకపోయాము.`],
+      [/^Unable to confirm (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} నిర్ధారించలేకపోయాము.`],
+      [/^No (.+) yet\.$/i, ([, item]: RegExpMatchArray) => `ఇంకా ${translateDisplayText(language, item)} లేదు.`],
+      [/^No (.+) found yet\.$/i, ([, item]: RegExpMatchArray) => `ఇంకా ${translateDisplayText(language, item)} కనుగొనబడలేదు.`],
+      [/^No (.+) available yet\.$/i, ([, item]: RegExpMatchArray) => `ఇంకా ${translateDisplayText(language, item)} అందుబాటులో లేదు.`],
+      [/^No (.+) right now\.$/i, ([, item]: RegExpMatchArray) => `ప్రస్తుతం ${translateDisplayText(language, item)} లేదు.`],
+      [/^Create (.+)$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} సృష్టించండి`],
+      [/^Save (.+)$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} సేవ్ చేయండి`],
+      [/^Select (.+)$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} ఎంచుకోండి`],
+      [/^Send (.+)$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} పంపండి`],
+      [/^Start (.+)$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} ప్రారంభించండి`],
+      [/^Log (.+)$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} నమోదు చేయండి`],
+      [/^Use (.+)$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} ఉపయోగించండి`],
+      [/^Conversation with (.+)$/i, ([, name]: RegExpMatchArray) => `${name} తో సంభాషణ`],
+      [/^Consultation saved for (.+)$/i, ([, name]: RegExpMatchArray) => `${name} కోసం సంప్రదింపు సేవ్ చేయబడింది`],
+      [/^Care plan created for (.+)\.$/i, ([, name]: RegExpMatchArray) => `${name} కోసం సంరక్షణ ప్రణాళిక సృష్టించబడింది.`],
+      [/^Intervention logged for (.+)\.$/i, ([, name]: RegExpMatchArray) => `${name} కోసం జోక్యం నమోదు చేయబడింది.`]
     ],
     pa: [
-      [/^Loading (.+)\.\.\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...`],
-      [/^Unable to load (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} ਲੋਡ ਨਹੀਂ ਹੋ ਸਕਿਆ।`],
-      [/^Unable to create (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} ਬਣਾਇਆ ਨਹੀਂ ਜਾ ਸਕਿਆ।`],
-      [/^Unable to save (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} ਸੰਭਾਲਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ।`],
-      [/^Unable to send (.+)\.?$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} ਭੇਜਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ।`],
-      [/^Unable to start (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} ਸ਼ੁਰੂ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ।`],
-      [/^Unable to update (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} ਅਪਡੇਟ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ।`],
-      [/^Unable to link (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} ਜੋੜਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ।`],
-      [/^Unable to log (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} ਦਰਜ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ।`],
-      [/^Unable to cancel (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} ਰੱਦ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ।`],
-      [/^Unable to confirm (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} ਪੁਸ਼ਟੀ ਨਹੀਂ ਕੀਤੀ ਜਾ ਸਕੀ।`],
-      [/^No (.+) yet\.$/i, ([, item]: DynamicStateObject) => `ਹਾਲੇ ਕੋਈ ${translateDisplayText(language, item)} ਨਹੀਂ ਹੈ।`],
-      [/^No (.+) found yet\.$/i, ([, item]: DynamicStateObject) => `ਹਾਲੇ ਕੋਈ ${translateDisplayText(language, item)} ਨਹੀਂ ਮਿਲਿਆ।`],
-      [/^No (.+) available yet\.$/i, ([, item]: DynamicStateObject) => `ਹਾਲੇ ${translateDisplayText(language, item)} ਉਪਲਬਧ ਨਹੀਂ ਹੈ।`],
-      [/^No (.+) right now\.$/i, ([, item]: DynamicStateObject) => `ਇਸ ਵੇਲੇ ${translateDisplayText(language, item)} ਨਹੀਂ ਹੈ।`],
-      [/^Create (.+)$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} ਬਣਾਓ`],
-      [/^Save (.+)$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} ਸੰਭਾਲੋ`],
-      [/^Select (.+)$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} ਚੁਣੋ`],
-      [/^Send (.+)$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} ਭੇਜੋ`],
-      [/^Start (.+)$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} ਸ਼ੁਰੂ ਕਰੋ`],
-      [/^Log (.+)$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} ਦਰਜ ਕਰੋ`],
-      [/^Use (.+)$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} ਵਰਤੋਂ`],
-      [/^Conversation with (.+)$/i, ([, name]: DynamicStateObject) => `${name} ਨਾਲ ਗੱਲਬਾਤ`],
-      [/^Consultation saved for (.+)$/i, ([, name]: DynamicStateObject) => `${name} ਲਈ ਸਲਾਹ ਸੰਭਾਲੀ ਗਈ`],
-      [/^Care plan created for (.+)\.$/i, ([, name]: DynamicStateObject) => `${name} ਲਈ ਦੇਖਭਾਲ ਯੋਜਨਾ ਬਣਾਈ ਗਈ।`],
-      [/^Intervention logged for (.+)\.$/i, ([, name]: DynamicStateObject) => `${name} ਲਈ ਦਖਲ ਦਰਜ ਕੀਤਾ ਗਿਆ।`]
+      [/^Loading (.+)\.\.\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...`],
+      [/^Unable to load (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} ਲੋਡ ਨਹੀਂ ਹੋ ਸਕਿਆ।`],
+      [/^Unable to create (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} ਬਣਾਇਆ ਨਹੀਂ ਜਾ ਸਕਿਆ।`],
+      [/^Unable to save (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} ਸੰਭਾਲਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ।`],
+      [/^Unable to send (.+)\.?$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} ਭੇਜਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ।`],
+      [/^Unable to start (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} ਸ਼ੁਰੂ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ।`],
+      [/^Unable to update (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} ਅਪਡੇਟ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ।`],
+      [/^Unable to link (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} ਜੋੜਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ।`],
+      [/^Unable to log (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} ਦਰਜ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ।`],
+      [/^Unable to cancel (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} ਰੱਦ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ।`],
+      [/^Unable to confirm (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} ਪੁਸ਼ਟੀ ਨਹੀਂ ਕੀਤੀ ਜਾ ਸਕੀ।`],
+      [/^No (.+) yet\.$/i, ([, item]: RegExpMatchArray) => `ਹਾਲੇ ਕੋਈ ${translateDisplayText(language, item)} ਨਹੀਂ ਹੈ।`],
+      [/^No (.+) found yet\.$/i, ([, item]: RegExpMatchArray) => `ਹਾਲੇ ਕੋਈ ${translateDisplayText(language, item)} ਨਹੀਂ ਮਿਲਿਆ।`],
+      [/^No (.+) available yet\.$/i, ([, item]: RegExpMatchArray) => `ਹਾਲੇ ${translateDisplayText(language, item)} ਉਪਲਬਧ ਨਹੀਂ ਹੈ।`],
+      [/^No (.+) right now\.$/i, ([, item]: RegExpMatchArray) => `ਇਸ ਵੇਲੇ ${translateDisplayText(language, item)} ਨਹੀਂ ਹੈ।`],
+      [/^Create (.+)$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} ਬਣਾਓ`],
+      [/^Save (.+)$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} ਸੰਭਾਲੋ`],
+      [/^Select (.+)$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} ਚੁਣੋ`],
+      [/^Send (.+)$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} ਭੇਜੋ`],
+      [/^Start (.+)$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} ਸ਼ੁਰੂ ਕਰੋ`],
+      [/^Log (.+)$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} ਦਰਜ ਕਰੋ`],
+      [/^Use (.+)$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} ਵਰਤੋਂ`],
+      [/^Conversation with (.+)$/i, ([, name]: RegExpMatchArray) => `${name} ਨਾਲ ਗੱਲਬਾਤ`],
+      [/^Consultation saved for (.+)$/i, ([, name]: RegExpMatchArray) => `${name} ਲਈ ਸਲਾਹ ਸੰਭਾਲੀ ਗਈ`],
+      [/^Care plan created for (.+)\.$/i, ([, name]: RegExpMatchArray) => `${name} ਲਈ ਦੇਖਭਾਲ ਯੋਜਨਾ ਬਣਾਈ ਗਈ।`],
+      [/^Intervention logged for (.+)\.$/i, ([, name]: RegExpMatchArray) => `${name} ਲਈ ਦਖਲ ਦਰਜ ਕੀਤਾ ਗਿਆ।`]
     ],
     ta: [
-      [/^Loading (.+)\.\.\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} ஏற்றப்படுகிறது...`],
-      [/^Unable to load (.+)\.$/i, ([, item]: DynamicStateObject) => `${translateDisplayText(language, item)} ஏற்ற முடியவில்லை.`],
-      [/^No (.+) yet\.$/i, ([, item]: DynamicStateObject) => `இன்னும் ${translateDisplayText(language, item)} இல்லை.`]
+      [/^Loading (.+)\.\.\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} ஏற்றப்படுகிறது...`],
+      [/^Unable to load (.+)\.$/i, ([, item]: RegExpMatchArray) => `${translateDisplayText(language, item)} ஏற்ற முடியவில்லை.`],
+      [/^No (.+) yet\.$/i, ([, item]: RegExpMatchArray) => `இன்னும் ${translateDisplayText(language, item)} இல்லை.`]
     ]
   };
-
-  // @ts-expect-error - Auto-suppressed during migration
-  for (const [pattern, formatter]: DynamicStateObject of (templateRules as DynamicStateObject)[language] || []) {
+  for (const [pattern, formatter] of (templateRules as Record<string, [RegExp, (match: RegExpMatchArray) => string][]>)[language] || []) {
     const match = text.match(pattern);
     if (match) {
       return formatter(match);
@@ -4775,29 +4766,9 @@ function translateTemplatedPhrase(language: DynamicStateObject, text: DynamicSta
 }
 
 function looksLikeMojibake(value: string | number) {
-  if (!value) {
-    return false;
-  }
-  // @ts-expect-error - Auto-suppressed during migration
-  return value.includes("Ãƒ")
-    // @ts-expect-error - Auto-suppressed during migration
-    || value.includes("Ã‚")
-    // @ts-expect-error - Auto-suppressed during migration
-    || value.includes("Ã¢")
-    // @ts-expect-error - Auto-suppressed during migration
-    || value.includes("ï¿½")
-    // @ts-expect-error - Auto-suppressed during migration
-    || value.includes("Ã Â")
-    // @ts-expect-error - Auto-suppressed during migration
-    || value.includes("à¤")
-    // @ts-expect-error - Auto-suppressed during migration
-    || value.includes("à®")
-    // @ts-expect-error - Auto-suppressed during migration
-    || value.includes("à´")
-    // @ts-expect-error - Auto-suppressed during migration
-    || value.includes("à°")
-    // @ts-expect-error - Auto-suppressed during migration
-    || value.includes("à¨");
+  if (!value) return false;
+  const str = String(value);
+  return str.includes("Ãƒ") || str.includes("Ã‚") || str.includes("Ã¢") || str.includes("ï¿½") || str.includes("Ã Â") || str.includes("à¤") || str.includes("à®") || str.includes("à´") || str.includes("à°") || str.includes("à¨");
 }
 
 function normalizeMojibake(value: string | number) {
@@ -4806,29 +4777,26 @@ function normalizeMojibake(value: string | number) {
   }
 
   try {
-    const bytes = Uint8Array.from(String(value), (char: DynamicStateObject) => char.charCodeAt(0));
+    const bytes = Uint8Array.from(String(value), (char: string) => char.charCodeAt(0));
     const decoded = new TextDecoder("utf-8").decode(bytes).trim();
     return decoded.includes("�") ? value : decoded;
   } catch {
     return value;
   }
 }
-
-// @ts-expect-error - Auto-suppressed during migration
-export const translateDisplayText = (language: DynamicStateObject, value: string | number) => {
+export const translateDisplayText = (language: string, value: string | number | null | undefined): string | number | null | undefined => {
   if (value === null || value === undefined || value === "") {
     return value;
   }
 
   const rawText = normalizeMojibake(String(value));
-  // @ts-expect-error - Auto-suppressed during migration
-  const text = rawText.trim();
+  const text = String(rawText).trim();
   const match = text.match(/^(CRITICAL|WARNING|INFO):\s*(.*)$/i);
   if (match) {
     const [, severity, message] = match;
     const normalizedSeverity = severity.toUpperCase();
-    const translatedSeverity = ((displayValueLabels as DynamicStateObject)[language] as DynamicStateObject)?.[normalizedSeverity] ?? normalizedSeverity;
-    const translatedMessage = ((displayMessageLabels as DynamicStateObject)[language] as DynamicStateObject)?.[message] ?? ((displayValueLabels as DynamicStateObject)[language] as DynamicStateObject)?.[message] ?? message;
+    const translatedSeverity = ((displayValueLabels as Record<string, Record<string, string>>)[language] as any)?.[normalizedSeverity] ?? normalizedSeverity;
+    const translatedMessage = ((displayMessageLabels as Record<string, Record<string, string>>)[language] as any)?.[message] ?? ((displayValueLabels as Record<string, Record<string, string>>)[language] as any)?.[message] ?? message;
     return `${translatedSeverity}: ${translatedMessage}`;
   }
 
@@ -4836,33 +4804,33 @@ export const translateDisplayText = (language: DynamicStateObject, value: string
   if (appointmentMatch) {
     const [, status] = appointmentMatch;
     const normalizedStatus = status.toUpperCase();
-    const translatedStatus = ((displayValueLabels as DynamicStateObject)[language] as DynamicStateObject)?.[normalizedStatus] ?? normalizedStatus;
-    const translatedAppointment = (displayValueLabels as DynamicStateObject)[language]?.APPOINTMENT ?? "Appointment";
+    const translatedStatus = ((displayValueLabels as Record<string, Record<string, string>>)[language] as any)?.[normalizedStatus] ?? normalizedStatus;
+    const translatedAppointment = (displayValueLabels as Record<string, Record<string, string>>)[language]?.APPOINTMENT ?? "Appointment";
     return `${translatedAppointment} ${translatedStatus}`;
   }
 
   const consultationMatch = text.match(/^Consultation outcome:\s*(.+)$/);
   if (consultationMatch) {
     const [, outcome] = consultationMatch;
-    return `${(displayValueLabels as DynamicStateObject)[language]?.CONSULTATION ?? "Consultation"} ${(displayValueLabels as DynamicStateObject)[language]?.OUTCOME ?? "outcome"}: ${translateDisplayText(language, outcome)}`;
+    return `${(displayValueLabels as Record<string, Record<string, string>>)[language]?.CONSULTATION ?? "Consultation"} ${(displayValueLabels as Record<string, Record<string, string>>)[language]?.OUTCOME ?? "outcome"}: ${translateDisplayText(language, outcome)}`;
   }
 
   const linkedPatientsMatch = text.match(/^Linked patients:\s*(\d+)$/i);
   if (linkedPatientsMatch) {
     const [, count] = linkedPatientsMatch;
-    return `${(displayValueLabels as DynamicStateObject)[language]?.LINKED_PATIENTS ?? "Linked patients"}: ${count}`;
+    return `${(displayValueLabels as Record<string, Record<string, string>>)[language]?.LINKED_PATIENTS ?? "Linked patients"}: ${count}`;
   }
 
   const patientsWithTriageMatch = text.match(/^Patients with triage:\s*(\d+)$/i);
   if (patientsWithTriageMatch) {
     const [, count] = patientsWithTriageMatch;
-    return `${(displayValueLabels as DynamicStateObject)[language]?.PATIENTS_WITH_TRIAGE ?? "Patients with triage"}: ${count}`;
+    return `${(displayValueLabels as Record<string, Record<string, string>>)[language]?.PATIENTS_WITH_TRIAGE ?? "Patients with triage"}: ${count}`;
   }
 
   const triageMatch = text.match(/^Triage assessed as\s+(.+)$/);
   if (triageMatch) {
     const [, level] = triageMatch;
-    return `${(displayValueLabels as DynamicStateObject)[language]?.TRIAGE ?? "Triage"} ${(displayValueLabels as DynamicStateObject)[language]?.ASSESSED_AS ?? "assessed as"} ${translateDisplayText(language, level.replace(/\s+/g, "_").toUpperCase())}`;
+    return `${(displayValueLabels as Record<string, Record<string, string>>)[language]?.TRIAGE ?? "Triage"} ${(displayValueLabels as Record<string, Record<string, string>>)[language]?.ASSESSED_AS ?? "assessed as"} ${translateDisplayText(language, level.replace(/\s+/g, "_").toUpperCase())}`;
   }
 
   const patientSeverityMatch = text.match(/^(.+?)\s*-\s*(ROUTINE_CONSULTATION|PRIORITY_CONSULTATION|IN_PERSON_VISIT_RECOMMENDED|EMERGENCY_GO_TO_HOSPITAL)$/i);
@@ -4874,7 +4842,7 @@ export const translateDisplayText = (language: DynamicStateObject, value: string
   const prescriptionMatch = text.match(/^Prescription issued by\s+(.+)$/);
   if (prescriptionMatch) {
     const [, doctorName] = prescriptionMatch;
-    return `${(displayValueLabels as DynamicStateObject)[language]?.PRESCRIPTION ?? "Prescription"} ${(displayValueLabels as DynamicStateObject)[language]?.ISSUED_BY ?? "issued by"} ${doctorName}`;
+    return `${(displayValueLabels as Record<string, Record<string, string>>)[language]?.PRESCRIPTION ?? "Prescription"} ${(displayValueLabels as Record<string, Record<string, string>>)[language]?.ISSUED_BY ?? "issued by"} ${doctorName}`;
   }
 
   const doctorNoteMatch = text.match(/^(Dr\.\s.+?)\s\|\s(.+)$/);
@@ -4886,19 +4854,19 @@ export const translateDisplayText = (language: DynamicStateObject, value: string
   const alertLabelMatch = text.match(/^(CRITICAL|WARNING|INFO)\s+alert$/);
   if (alertLabelMatch) {
     const [, severity] = alertLabelMatch;
-    return `${((displayValueLabels as DynamicStateObject)[language] as DynamicStateObject)?.[severity] ?? severity} ${(displayValueLabels as DynamicStateObject)[language]?.ALERT_LABEL ?? "alert"}`;
+    return `${((displayValueLabels as Record<string, Record<string, string>>)[language] as any)?.[severity] ?? severity} ${(displayValueLabels as Record<string, Record<string, string>>)[language]?.ALERT_LABEL ?? "alert"}`;
   }
 
-  const exactTranslated = ((displayValueLabels as DynamicStateObject)[language] as DynamicStateObject)?.[text]
-      ?? ((displayMessageLabels as DynamicStateObject)[language] as DynamicStateObject)?.[text]
-      ?? ((voiceAccessibilityDisplayLabels as DynamicStateObject)[language] as DynamicStateObject)?.[text];
+  const exactTranslated = ((displayValueLabels as Record<string, Record<string, string>>)[language] as any)?.[text]
+      ?? ((displayMessageLabels as Record<string, Record<string, string>>)[language] as any)?.[text]
+      ?? ((voiceAccessibilityDisplayLabels as Record<string, Record<string, string>>)[language] as any)?.[text];
   if (exactTranslated !== undefined) {
     return exactTranslated;
   }
 
-  const exactLabelKey = Object.keys(labels.en).find((key: DynamicStateObject) => (labels.en as DynamicStateObject)[key] === text);
+  const exactLabelKey = Object.keys(labels.en).find((key: string) => (labels.en as Record<string, string>)[key] === text);
   if (exactLabelKey) {
-    const translatedLabel = ((labels as DynamicStateObject)[language] as DynamicStateObject)?.[exactLabelKey];
+    const translatedLabel = ((labels as Record<string, Record<string, string>>)[language] as any)?.[exactLabelKey];
     if (translatedLabel !== undefined && translatedLabel !== text) {
       return translatedLabel;
     }
@@ -4910,19 +4878,16 @@ export const translateDisplayText = (language: DynamicStateObject, value: string
   }
 
   const delimitedSeparators = [", ", " | ", " / "];
-  // @ts-expect-error - Auto-suppressed during migration
-  for (const separator: DynamicStateObject of delimitedSeparators) {
+  for (const separator of delimitedSeparators) {
     if (text.includes(separator)) {
       const translatedParts = text
         .split(separator)
-        .map((part: DynamicStateObject) => translateDisplayText(language, part.trim()));
-      if (translatedParts.some((part: DynamicStateObject, index: number | string) => part !== (text.split(separator) as DynamicStateObject)[index].trim())) {
+        .map((part: string) => translateDisplayText(language, part.trim()));
+      if (translatedParts.some((part: any, index: number) => part !== (text.split(separator) as any)[index].trim())) {
         return translatedParts.join(separator);
       }
     }
   }
-
-  // @ts-expect-error - Auto-suppressed during migration
   const templatedTranslation = translateTemplatedPhrase(language, text);
   if (templatedTranslation && templatedTranslation !== text) {
     return templatedTranslation;
@@ -5047,7 +5012,7 @@ export const translateDisplayText = (language: DynamicStateObject, value: string
     ]
   };
 
-  const transformed = ((replacementRules as DynamicStateObject)[language] || []).reduce(
+  const transformed = ((replacementRules as any)[language] || []).reduce(
     (current: DynamicStateObject, [pattern, replacement]: DynamicStateObject) => current.replace(pattern, replacement),
     text
   );
@@ -5056,7 +5021,7 @@ export const translateDisplayText = (language: DynamicStateObject, value: string
     return freeTextTranslated;
   }
 
-  return ((displayValueLabels as DynamicStateObject)[language] as DynamicStateObject)?.[text]
-    ?? ((displayMessageLabels as DynamicStateObject)[language] as DynamicStateObject)?.[text]
+  return ((displayValueLabels as Record<string, Record<string, string>>)[language] as any)?.[text]
+    ?? ((displayMessageLabels as Record<string, Record<string, string>>)[language] as any)?.[text]
     ?? rawText;
 };

@@ -148,22 +148,17 @@ export default function PatientRemindersPage() {
     filteredReminders.forEach((item: DynamicStateObject) => {
       const scheduled = parseScheduledDate(item.scheduledDate);
       if (!scheduled) {
-        // @ts-expect-error - Auto-suppressed during migration
-        groups.older.push(item);
+        (groups.older as any).push(item);
         return;
       }
       if (scheduled >= today && scheduled < new Date(today.getTime() + 24 * 60 * 60 * 1000)) {
-        // @ts-expect-error - Auto-suppressed during migration
-        groups.today.push(item);
+        (groups.today as any).push(item);
       } else if (scheduled >= yesterday && scheduled < today) {
-        // @ts-expect-error - Auto-suppressed during migration
-        groups.yesterday.push(item);
+        (groups.yesterday as any).push(item);
       } else if (scheduled >= weekStart) {
-        // @ts-expect-error - Auto-suppressed during migration
-        groups.week.push(item);
+        (groups.week as any).push(item);
       } else {
-        // @ts-expect-error - Auto-suppressed during migration
-        groups.older.push(item);
+        (groups.older as any).push(item);
       }
     });
     return groups;
