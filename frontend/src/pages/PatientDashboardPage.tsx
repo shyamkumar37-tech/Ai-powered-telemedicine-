@@ -63,7 +63,7 @@ export default function PatientDashboardPage() {
   };
 
   return (
-    <div className="flex h-screen w-full bg-[var(--tc-bg)] text-[var(--tc-text)] font-sans overflow-hidden">
+    <div className="flex h-full flex-1 w-full min-h-0 min-w-0 flex-col lg:flex-row bg-[var(--tc-bg)] text-[var(--tc-text)] font-sans overflow-hidden">
       {/* 280px Fixed Width Desktop Sidebar */}
       <PatientSidebar />
 
