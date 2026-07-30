@@ -1,36 +1,35 @@
 :root {
-  /* Core Brand Colors */
-  --primary: #10B981;
-  --primary-dark: #047857;
-  --primary-light: #34D399;
-  --primary-dim: rgba(16, 185, 129, 0.12);
+  /* Exact Demo Color Palette Design Tokens */
+  --canvas: #0B1121;
+  --surface: #151E32;
+  --surface-2: #1B2740;
+  --primary: #14B8A6;
+  --primary-dark: #0F766E;
+  --primary-light: #2DD4BF;
+  --primary-dim: rgba(20, 184, 166, 0.14);
   
-  --secondary: #14B8A6;
-  --secondary-dim: rgba(20, 184, 166, 0.12);
-  
-  --success: #10B981;
-  --warning: #F59E0B;
-  --warning-dim: rgba(245, 158, 11, 0.12);
-  --danger: #EF4444;
-  --danger-dim: rgba(239, 68, 68, 0.12);
+  --live: #38BDF8;
+  --live-dim: rgba(56, 189, 248, 0.14);
+  --alert: #E11D48;
+  --alert-dim: rgba(225, 29, 72, 0.14);
+  --amber: #F59E0B;
+  --amber-dim: rgba(245, 158, 11, 0.14);
+  --ink: #F8FAFC;
+  --ink-muted: #94A3B8;
+  --border: rgba(148, 163, 184, 0.14);
+  --card-radius: 16px;
+  --el-radius: 8px;
 
-  /* Backgrounds & Surfaces (Premium Deep Dark) */
-  --bg: #040914; /* Deeper background */
-  --tc-bg: #040914;
-  --tc-page-bg: #040914;
-  --tc-surface: #0B1121; /* Slightly lighter surface */
-  --tc-surface-elevated: #111A2E;
-  --tc-surface-muted: rgba(255, 255, 255, 0.03);
-  --tc-sidebar-bg: rgba(4, 9, 20, 0.95);
-
-  /* Borders & Dividers */
-  --tc-border: rgba(16, 185, 129, 0.15); /* Emerald tinted border */
-  --tc-border-subtle: rgba(255, 255, 255, 0.04);
-  --tc-border-strong: rgba(16, 185, 129, 0.3);
-
-  /* Typography */
-  --text-primary: #F8FAFC;
-  --text-secondary: #94A3B8;
+  /* Global Body & Container Backgrounds */
+  --bg: #0B1121;
+  --tc-bg: #0B1121;
+  --tc-page-bg: #0B1121;
+  --tc-surface: #151E32;
+  --tc-surface-elevated: #151E32;
+  --tc-surface-muted: #1B2740;
+  --tc-sidebar-bg: #151E32;
+  --tc-border: rgba(148, 163, 184, 0.14);
+  --tc-border-subtle: rgba(148, 163, 184, 0.14);
   --tc-text: #F8FAFC;
   --tc-text-muted: #94A3B8;
   --tc-text-soft: #64748B;
