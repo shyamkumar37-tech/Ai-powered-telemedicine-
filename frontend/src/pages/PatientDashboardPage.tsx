@@ -39,13 +39,15 @@ export default function PatientDashboardPage() {
     navigate(buildLoginRedirect(""), { replace: true });
   };
 
+  const formattedDate = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
   return (
     <div className="shell">
-      {/* 236px Responsive Sidebar */}
+      {/* 236px Patient Sidebar */}
       <PatientSidebar isMobileOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
 
       <main className="w-full flex-1 min-w-0">
-        {/* Topbar */}
+        {/* Topbar matching exact screenshot */}
         <div className="topbar">
           <div>
             <div className="flex items-center gap-3 mb-1">
@@ -56,10 +58,10 @@ export default function PatientDashboardPage() {
               >
                 <Menu size={18} />
               </button>
-              <div className="greeting-eyebrow">{t("patientWorkspace") || "Patient workspace"}</div>
+              <div className="greeting-eyebrow">PATIENT WORKSPACE</div>
             </div>
             <h1>Good afternoon, {auth?.fullName?.split(" ")[0] || "Anita"}</h1>
-            <p className="subtext">Here's what needs your attention today, {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}.</p>
+            <p className="subtext">Here's what needs your attention today, {formattedDate}.</p>
           </div>
           <div className="status-pills">
             <LanguageSwitcher hideLabel />
@@ -121,9 +123,12 @@ export default function PatientDashboardPage() {
           </div>
         </section>
 
-        {/* Vitals */}
+        {/* Vitals snapshot */}
         <section>
-          <div className="section-head"><div className="section-title">Vitals snapshot</div><button onClick={() => navigate('/patient/health')} className="section-link bg-transparent border-none cursor-pointer">View observations →</button></div>
+          <div className="section-head">
+            <div className="section-title">Vitals snapshot</div>
+            <button onClick={() => navigate('/patient/health')} className="section-link bg-transparent border-none cursor-pointer">View observations →</button>
+          </div>
           <div className="card">
             <div className="vitals-grid">
               <div className="vital">
@@ -146,10 +151,13 @@ export default function PatientDashboardPage() {
           </div>
         </section>
 
-        {/* Two column layout */}
+        {/* Two column layout: Health Analytics & Clinical Intelligence */}
         <section className="two-col">
           <div className="card chart-card">
-            <div className="section-head"><div className="section-title">Health analytics</div><button onClick={() => navigate('/patient/health')} className="section-link bg-transparent border-none cursor-pointer">Full report →</button></div>
+            <div className="section-head">
+              <div className="section-title">Health analytics</div>
+              <button onClick={() => navigate('/patient/health')} className="section-link bg-transparent border-none cursor-pointer">Full report →</button>
+            </div>
             <p className="chart-sub">30-day vitals trend · heart rate &amp; glucose telemetry</p>
             <svg className="spark" viewBox="0 0 400 130" preserveAspectRatio="none">
               <polyline fill="none" stroke="#38BDF8" strokeWidth="2" points="0,70 40,60 80,66 120,50 160,58 200,40 240,48 280,35 320,44 360,30 400,38"/>
@@ -171,10 +179,13 @@ export default function PatientDashboardPage() {
           </div>
         </section>
 
-        {/* Appointments and Prescriptions */}
+        {/* Two column layout: Appointments & Prescriptions */}
         <section className="two-col">
           <div className="card">
-            <div className="section-head"><div className="section-title">Upcoming appointments</div><button onClick={() => navigate('/patient/book')} className="section-link bg-transparent border-none cursor-pointer">Book new →</button></div>
+            <div className="section-head">
+              <div className="section-title">Upcoming appointments</div>
+              <button onClick={() => navigate('/patient/book')} className="section-link bg-transparent border-none cursor-pointer">Book new →</button>
+            </div>
             <div className="list-row">
               <div className="row-icon"><i className="ti ti-video"></i></div>
               <div className="row-main"><div className="row-title">Dr. Smith — Endocrinology</div><div className="row-sub">Jul 30 · 4:30 pm · Video consult</div></div>
@@ -193,7 +204,10 @@ export default function PatientDashboardPage() {
           </div>
 
           <div className="card">
-            <div className="section-head"><div className="section-title">Prescriptions</div><button onClick={() => navigate('/patient/prescriptions')} className="section-link bg-transparent border-none cursor-pointer">See all →</button></div>
+            <div className="section-head">
+              <div className="section-title">Prescriptions</div>
+              <button onClick={() => navigate('/patient/prescriptions')} className="section-link bg-transparent border-none cursor-pointer">See all →</button>
+            </div>
             <div className="list-row">
               <div className="row-icon"><i className="ti ti-pill"></i></div>
               <div className="row-main"><div className="row-title">Lisinopril 10mg</div><div className="row-sub">Refill in 6 days</div></div>
@@ -210,7 +224,7 @@ export default function PatientDashboardPage() {
           </div>
         </section>
 
-        {/* Bottom grid */}
+        {/* Bottom grid: Care & wellbeing */}
         <section>
           <div className="section-head"><div className="section-title">Care &amp; wellbeing</div></div>
           <div className="bottom-grid">
