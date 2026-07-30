@@ -128,20 +128,11 @@ kubectl apply -f k8s/frontend-deployment.yaml
 
 ---
 
-## 11. Testing
+## 11. Testing & Coverage
 
-```bash
-# Run Spring Modulith boundary tests
-cd backend
-./mvnw test -Dtest=TelecareApplicationModulesTest
-
-# Run full backend test suite
-./mvnw test
-
-# Run frontend build verification
-cd ../frontend
-npm run build
-```
+- **Spring Modulith Verification**: `TelecareApplicationModulesTest` passes **100%** with 0 cycle violations.
+- **Backend Test Suite & JaCoCo Coverage**: See [`docs/testing/coverage_guide.md`](docs/testing/coverage_guide.md) for generating JaCoCo coverage reports (`./mvnw test jacoco:report`).
+- **Frontend Build Verification**: `npm run build`
 
 ---
 
@@ -154,39 +145,22 @@ npm run build
 
 ---
 
-## 13. Project Structure
+## 13. Project Structure & Architecture Decision Records (ADRs)
 
-```text
-├── backend/                  # Spring Boot 3 Java 21 Application
-│   ├── src/main/java/com/telecareplus/
-│   │   ├── admin/            # System & User Administration
-│   │   ├── ai/               # LLM Scribe, RAG, XAI Risk Scoring
-│   │   ├── appointments/     # Appointment Booking & Schedule Management
-│   │   ├── billing/          # Invoices & Insurance Claims
-│   │   ├── clinical/         # Vitals, FHIR R4, IoT Stream Ingestion, DICOM
-│   │   ├── common/           # Shared Base Entities & Events
-│   │   ├── communication/    # WebRTC Signaling & WebSocket Chat
-│   │   ├── notification/     # SMS, Email & Push Alert Dispatchers
-│   │   ├── pharmacy/         # e-Prescriptions & Inventory
-│   │   └── users/            # Patient, Doctor, Caregiver Profiles & Consent
-│   └── src/main/resources/db/migration/ # Flyway SQL Migration Scripts
-├── frontend/                 # React 18 TypeScript SPA
-│   ├── src/components/       # Reusable UI Components & Layouts
-│   ├── src/context/          # Auth & Language Context Providers
-│   ├── src/pages/            # Role Dashboards & Clinical Views
-│   └── src/services/         # Axios API Services
-├── docs/                     # Documentation Hierarchy
-│   ├── audits/               # Engineering & Risk Audits
-│   └── portfolio/            # Resume Highlights & Engineering Trade-offs
-├── k8s/                      # Kubernetes Deployment Manifests
-└── assets/                   # SVG Architecture & System Diagrams
-```
+See [`docs/adr/`](docs/adr/) for detailed Architecture Decision Records:
+- [ADR 0001: Spring Modulith Modular Monolith Architecture](docs/adr/0001-spring-modulith-modular-monolith.md)
+- [ADR 0002: Stateless JWT & Cookie Authentication Strategy](docs/adr/0002-jwt-cookie-stateless-auth.md)
+- [ADR 0003: Versioned Flyway SQL Database Schema Migrations](docs/adr/0003-flyway-schema-migrations.md)
+- [ADR 0004: Standardized HL7 FHIR R4 Interoperability Layer](docs/adr/0004-fhir-r4-interoperability.md)
+- [ADR 0005: Production Kubernetes Multi-Pod Container Orchestration](docs/adr/0005-kubernetes-container-orchestration.md)
+- [Known Limitations & Architecture Roadmap](docs/architecture/known_limitations.md)
 
 ---
 
-## 14. Roadmap
+## 14. Roadmap & Release Notes
 
-See [`ROADMAP.md`](ROADMAP.md) for release milestones.
+- **Release History**: See [`docs/releases/`](docs/releases/) ([v1.0.0](docs/releases/v1.0.0.md), [v1.1.0](docs/releases/v1.1.0.md), [v2.0.0](docs/releases/v2.0.0.md))
+- **Product Roadmap**: See [`ROADMAP.md`](ROADMAP.md)
 
 ---
 
