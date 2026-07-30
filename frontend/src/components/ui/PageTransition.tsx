@@ -41,7 +41,7 @@ export default function PageTransition({ children, className = "" }: PageTransit
       exit="out"
       variants={accessibleVariants}
       transition={pageTransition as any}
-      className={className}
+      className={`h-full w-full flex flex-col flex-1 min-h-0 min-w-0 ${className}`.trim()}
     >
       {children}
     </motion.div>
