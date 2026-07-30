@@ -11,10 +11,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
-    @EntityGraph(attributePaths = { "patient.user", "doctor.user", "triageAssessment" })
+    @EntityGraph(attributePaths = { "patient.user", "doctor.user" })
     List<Appointment> findByPatientIdOrderByAppointmentDateTimeDesc(Long patientId);
 
-    @EntityGraph(attributePaths = { "patient.user", "doctor.user", "triageAssessment" })
+    @EntityGraph(attributePaths = { "patient.user", "doctor.user" })
     List<Appointment> findByDoctorIdOrderByAppointmentDateTimeDesc(Long doctorId);
 
     long countByPatientId(Long patientId);
@@ -30,7 +30,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     """)
     boolean existsByPatientIdAndDoctorUserId(@Param("patientId") Long patientId, @Param("userId") Long userId);
 
-    @EntityGraph(attributePaths = { "patient.user", "doctor.user", "triageAssessment" })
+    @EntityGraph(attributePaths = { "patient.user", "doctor.user" })
     @Query("select appointment from Appointment appointment where appointment.id = :appointmentId")
     Optional<Appointment> findWithDetailsById(@Param("appointmentId") Long appointmentId);
 

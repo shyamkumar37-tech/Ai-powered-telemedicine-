@@ -67,7 +67,7 @@ export default function PageLayout({ variant = "page", children }: PageLayoutPro
   const showDashboard = variant === "dashboard" || variant === "shell";
 
   return (
-    <div className="page-shell relative h-full w-full flex flex-col overflow-hidden">
+    <div className="page-shell relative h-full w-full flex flex-col flex-1 min-h-0 min-w-0 overflow-hidden">
       <AnimatePresence>
         {!hasContent && (
           <motion.div 
@@ -90,7 +90,7 @@ export default function PageLayout({ variant = "page", children }: PageLayoutPro
         animate={{ opacity: hasContent ? 1 : 0, y: hasContent ? 0 : 10 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
         ref={contentRef} 
-        className="page-shell__content relative z-0 flex-1 min-h-0 flex flex-col"
+        className="page-shell__content relative z-0 flex-1 w-full min-h-0 min-w-0 flex flex-col"
       >
         {children}
       </motion.div>
