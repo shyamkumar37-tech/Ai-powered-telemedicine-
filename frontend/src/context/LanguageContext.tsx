@@ -498,7 +498,14 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
         missingKeyWarnings.add(key);
         console.warn(`[TeleCare+] Missing i18n key: ${key}`);
       }
-      const englishText = (labels.en as Record<string, string>)?.[key] ?? key;
+      let englishText = (labels.en as Record<string, string>)?.[key];
+      if (!englishText) {
+        if (/^[a-z]+[A-Z]/.test(key)) {
+          englishText = key.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (str) => str.toUpperCase());
+        } else {
+          englishText = key;
+        }
+      }
       const localizedText = ((labels as Record<string, Record<string, string>>)[activeLanguage])?.[key] ?? englishText;
       const runtimeTranslation = getRuntimeTranslation(runtimeTranslations, activeLanguage, englishText);
       if (runtimeTranslation) {
