@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b1329"/>
+      <stop offset="50%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+
+    <!-- Cyan Glow -->
+    <linearGradient id="cyanGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.2"/>
+      <stop offset="50%" stop-color="#0284c7" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.2"/>
+    </linearGradient>
+
+    <!-- ECG Line Gradient -->
+    <linearGradient id="ecgGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#06b6d4"/>
+      <stop offset="50%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+
+    <!-- Filter for Glow Effect -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <style>
+    .pulse-line {
+      stroke-dasharray: 1200;
+      stroke-dashoffset: 1200;
+      animation: dash 3.5s ease-in-out infinite;
+    }
+    .wave-bg {
+      animation: float 6s ease-in-out infinite alternate;
+    }
+    .status-dot {
+      animation: blink 1.8s ease-in-out infinite;
+    }
+    .title-text {
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+    }
+    .sub-text {
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      font-weight: 500;
+    }
+    @keyframes dash {
+      0% { stroke-dashoffset: 1200; }
+      50% { stroke-dashoffset: 0; }
+      100% { stroke-dashoffset: -1200; }
+    }
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      100% { transform: translateY(12px); }
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+  </style>
+
+  <!-- Dark Background Container -->
+  <rect width="1200" height="360" rx="16" fill="url(#bgGrad)"/>
+  
+  <!-- Subtle Wave Mesh Background -->
+  <g class="wave-bg" opacity="0.25">
+    <path d="M0 200 C 300 280, 600 120, 1200 220 L 1200 360 L 0 360 Z" fill="url(#cyanGlow)" />
+    <path d="M0 240 C 400 160, 800 300, 1200 180 L 1200 360 L 0 360 Z" fill="url(#cyanGlow)" opacity="0.5"/>
+  </g>
+
+  <!-- Grid Pattern Overlay -->
+  <g opacity="0.08" stroke="#ffffff" stroke-width="1">
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <rect width="40" height="40" fill="none"/>
+      <path d="M 40 0 L 0 0 0 40"/>
+    </pattern>
+    <rect width="1200" height="360" fill="url(#grid)"/>
+  </g>
+
+  <!-- ECG Heartbeat Animated Line -->
+  <path class="pulse-line" d="M 50 180 L 350 180 L 370 140 L 390 220 L 410 100 L 435 250 L 460 180 L 500 180 L 1150 180" 
+        fill="none" stroke="url(#ecgGrad)" stroke-width="4" stroke-linecap="round" filter="url(#glow)" />
+
+  <!-- Logo Icon Badge -->
+  <g transform="translate(80, 75)">
+    <rect width="64" height="64" rx="16" fill="#0284c7" filter="url(#glow)"/>
+    <path d="M 32 16 L 32 48 M 16 32 L 48 32" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+  </g>
+
+  <!-- Main Title & Subtitle -->
+  <text x="165" y="118" class="title-text" font-size="44" fill="#ffffff">TeleCare+</text>
+  <text x="165" y="148" class="sub-text" font-size="18" fill="#94a3b8">Continuous Care Telemedicine &amp; Remote Patient Monitoring</text>
+
+  <!-- Architecture Badges & Live Status -->
+  <g transform="translate(80, 240)">
+    <!-- Badge 1: Spring Modulith -->
+    <rect width="170" height="38" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+    <text x="85" y="24" class="sub-text" font-size="14" fill="#38bdf8" text-anchor="middle">🍃 Spring Modulith</text>
+
+    <!-- Badge 2: Java 21 -->
+    <g transform="translate(185, 0)">
+      <rect width="130" height="38" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+      <text x="65" y="24" class="sub-text" font-size="14" fill="#f97316" text-anchor="middle">☕ Java 21</text>
+    </g>
+
+    <!-- Badge 3: React 18 TS -->
+    <g transform="translate(330, 0)">
+      <rect width="165" height="38" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+      <text x="82" y="24" class="sub-text" font-size="14" fill="#61dafbaa" text-anchor="middle">⚛️ React 18 TS</text>
+    </g>
+
+    <!-- Badge 4: FHIR R4 & DICOM -->
+    <g transform="translate(510, 0)">
+      <rect width="180" height="38" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+      <text x="90" y="24" class="sub-text" font-size="14" fill="#a855f7" text-anchor="middle">🏥 FHIR R4 &amp; DICOM</text>
+    </g>
+
+    <!-- Badge 5: Kubernetes -->
+    <g transform="translate(705, 0)">
+      <rect width="150" height="38" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+      <text x="75" y="24" class="sub-text" font-size="14" fill="#3b82f6" text-anchor="middle">☸️ Kubernetes</text>
+    </g>
+  </g>
+
+  <!-- Live Pulse Status Indicator Top Right -->
+  <g transform="translate(970, 70)">
+    <rect width="150" height="36" rx="18" fill="#0f172a" stroke="#22c55e" stroke-width="1.5"/>
+    <circle class="status-dot" cx="24" cy="18" r="6" fill="#22c55e" filter="url(#glow)"/>
+    <text x="40" y="23" class="sub-text" font-size="13" font-weight="600" fill="#4ade80">System Live</text>
+  </g>
+</svg>

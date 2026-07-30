@@ -1,6 +1,17 @@
-# 🏥 TeleCare+ AI Telemedicine & Care Continuity Platform
+<p align="center">
+  <img src="assets/animated_banner.svg" alt="TeleCare+ Banner" width="100%" />
+</p>
 
-A modular monolith telemedicine and remote patient monitoring platform built with **Spring Boot 3.3**, **Java 21 Virtual Threads**, **Spring Modulith**, and **React 18 TypeScript**.
+<p align="center">
+  <img src="https://img.shields.io/badge/Java-21-orange?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java 21" />
+  <img src="https://img.shields.io/badge/Spring_Boot-3.3.5-brightgreen?style=for-the-badge&logo=spring&logoColor=white" alt="Spring Boot 3.3" />
+  <img src="https://img.shields.io/badge/Spring_Modulith-1.2-green?style=for-the-badge&logo=spring&logoColor=white" alt="Spring Modulith" />
+  <img src="https://img.shields.io/badge/React-18_TS-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 18 TypeScript" />
+  <img src="https://img.shields.io/badge/PostgreSQL-16-blue?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL 16" />
+  <img src="https://img.shields.io/badge/Redis-7-red?style=for-the-badge&logo=redis&logoColor=white" alt="Redis 7" />
+  <img src="https://img.shields.io/badge/Kubernetes-Ready-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white" alt="Kubernetes Ready" />
+  <img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="License MIT" />
+</p>
 
 ---
 
