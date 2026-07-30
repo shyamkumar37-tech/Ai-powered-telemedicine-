@@ -21,7 +21,7 @@ export default function PatientSidebar() {
   };
 
   const navItemClass = (active: DynamicStateObject) => {
-    const baseClass = "flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14.5px] transition-all duration-200 group relative overflow-hidden";
+    const baseClass = "flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14.5px] transition-all duration-200 group relative overflow-hidden whitespace-nowrap";
     if (active) {
       return `${baseClass} bg-gradient-to-r from-[var(--primary-dark)] to-[var(--primary)] text-[#04231A] shadow-[var(--tc-shadow-primary)] font-semibold`;
     }
