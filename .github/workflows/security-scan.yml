@@ -32,6 +32,7 @@ jobs:
       - name: Compile Backend & Verify Spring Modulith
         run: |
           cd backend
+          chmod +x ./mvnw
           ./mvnw clean compile test-compile
 
       - name: Trivy Vulnerability Container & FS Scan
