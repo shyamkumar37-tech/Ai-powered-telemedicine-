@@ -92,147 +92,111 @@ export default function PatientChatbotPage() {
   };
 
   return (
-    <div className="h-full w-full bg-canvas text-[var(--tc-text)] font-sans flex flex-col overflow-hidden lg:flex-row">
+    <div className="shell">
       <PatientSidebar />
       
-      <main className="flex flex-col flex-1 min-w-0 min-h-0 overflow-y-auto relative z-0 pb-24 p-6 lg:p-10 min-w-0" role="main">
+      <main className="w-full flex-1 min-w-0">
         {/* Topbar */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 animate-fadeSlideUp">
+        <div className="topbar">
           <div>
-            <h1 className="font-display text-3xl font-medium mb-2">{t("aIChatbot") || "AI Chatbot"}</h1>
-            <p className="text-ink-muted text-sm mb-3">24/7 intelligent continuity care assistant.</p>
-            <div className="flex gap-2 items-center mt-3">
-              <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-ink-muted">
-                <MessageSquare size={12} className="text-primary" />{t("support") || "Support"}</span>
-              <div className="inline-flex items-center gap-2 text-xs text-ink-muted bg-white/5 border border-white/10 px-3 py-1.5 rounded-full">
-                <User size={14} />
-                Signed in as {auth?.fullName || "Anita Patient"}
-              </div>
-            </div>
+            <div className="greeting-eyebrow">{t("patientWorkspace") || "Patient workspace"}</div>
+            <h1>{t("aIChatbot") || "AI Assistant"}</h1>
+            <p className="subtext">24/7 intelligent continuity care assistant.</p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="status-pills">
             <LanguageSwitcher hideLabel />
+            <span className="pill verified"><i className="ti ti-shield-check"></i>Verified care team</span>
             <button 
               onClick={handleLogout} 
               aria-label="Log out"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-transparent text-ink-muted border border-white/10 rounded-element text-sm font-medium hover:bg-white/5 hover:text-ink transition-colors"
+              className="pill cursor-pointer hover:bg-[var(--surface-2)] text-[var(--ink-muted)] hover:text-white transition-colors"
             >
-              <LogOut size={16} />{t("logout") || "Logout"}</button>
+              <LogOut size={14} />
+              {t("logout") || "Logout"}
+            </button>
           </div>
         </div>
 
-        <div className="max-w-4xl animate-fadeSlideUp" style={{animationDelay: '0.1s'}}>
-          
+        <div className="w-full max-w-4xl space-y-6">
           {/* Chat Input */}
-          <div className="card-premium mb-10">
-            <div className="flex flex-col md:flex-row items-start justify-between gap-6">
-              <div className="flex-1 w-full min-w-0">
-                <div className="flex items-center gap-2 mb-4">
-                  <Zap size={20} className="text-primary" />
-                  <h3 className="font-display text-lg font-medium">{t("askTheCareAssistant") || "Ask the Care Assistant"}</h3>
-                </div>
-                <p className="text-sm text-ink-muted leading-relaxed mb-6">
-                  {t("thisAssistantSupportsContinuityCareUsingTheRecordOnFileItIsNotADiagnosisServiceAndDoesNotReplaceClinicianReviewOrEmergencyCare") || "This assistant supports continuity care using the record on file. It is not a diagnosis service and does not replace clinician review or emergency care."}</p>
-                
-                <div className="relative group">
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/30 to-primary/0 rounded-xl blur opacity-0 group-focus-within:opacity-100 transition duration-500"></div>
-                  <div className="relative">
-                    <textarea
-                      placeholder="How can I help you today?"
-                      value={question}
-                      onChange={(e: DynamicStateObject) => setQuestion(e.target.value)}
-                      onKeyDown={(e: DynamicStateObject) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault();
-                          ask();
-                        }
-                      }}
-                      className="w-full h-[140px] p-4 pb-16 bg-surface border border-white/10 rounded-xl text-ink focus:outline-none focus:border-primary/50 placeholder-ink-muted/50 resize-y transition-colors leading-relaxed"
-                    />
-                    <div className="absolute bottom-4 right-4">
-                      <button 
-                        className="btn-primary py-2 px-4 flex items-center gap-2" 
-                        onClick={ask} 
-                        disabled={sending || !question.trim()}
-                      >
-                        {sending ? "Thinking..." : "Send"} <Send size={16} className={sending ? "animate-pulse" : ""} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                
-                {error && (
-                  <div className="mt-4 flex items-center gap-2 text-alert text-sm font-medium bg-alert/10 border border-alert/20 p-3 rounded-element">
-                    <AlertTriangle size={16} /> {error}
-                  </div>
-                )}
+          <div className="card">
+            <div className="flex items-center gap-2 mb-3">
+              <Zap size={20} className="text-[var(--primary)]" />
+              <h3 className="font-semibold text-base">{t("askTheCareAssistant") || "Ask the Care Assistant"}</h3>
+            </div>
+            <p className="text-xs text-[var(--ink-muted)] leading-relaxed mb-4">
+              {t("thisAssistantSupportsContinuityCareUsingTheRecordOnFileItIsNotADiagnosisServiceAndDoesNotReplaceClinicianReviewOrEmergencyCare") || "This assistant supports continuity care using the record on file. It is not a diagnosis service and does not replace clinician review or emergency care."}
+            </p>
+            
+            <div className="relative">
+              <textarea
+                placeholder="How can I help you today?"
+                value={question}
+                onChange={(e: DynamicStateObject) => setQuestion(e.target.value)}
+                onKeyDown={(e: DynamicStateObject) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    ask();
+                  }
+                }}
+                className="w-full h-[120px] p-4 pb-14 bg-[var(--surface-2)] border border-[var(--border)] rounded-xl text-[var(--ink)] focus:outline-none focus:border-[var(--primary)] placeholder-[var(--ink-muted)] resize-y leading-relaxed text-sm"
+              />
+              <div className="absolute bottom-3 right-3">
+                <button 
+                  className="btn py-2 px-4 flex items-center gap-2" 
+                  onClick={ask} 
+                  disabled={sending || !question.trim()}
+                >
+                  {sending ? "Thinking..." : "Send"} <Send size={15} className={sending ? "animate-pulse" : ""} />
+                </button>
               </div>
             </div>
+            
+            {error && (
+              <div className="mt-4 flex items-center gap-2 text-[var(--alert)] text-xs font-medium bg-[var(--alert-dim)] border border-[var(--alert)] p-3 rounded-lg">
+                <AlertTriangle size={16} /> {error}
+              </div>
+            )}
           </div>
 
           {/* History */}
-          <div className="flex items-center gap-4 mb-6">
-             <h3 className="font-display text-xl font-medium">{t("chatHistory") || "Chat History"}</h3>
-             <div className="flex-1 h-px bg-white/10"></div>
-          </div>
-
-          {loading && !history.length ? (
-            <div className="flex flex-col gap-6">
-              {[1,2,3].map((i: DynamicStateObject) => <div key={i} className="card-premium h-40 animate-pulse bg-white/5"></div>)}
-            </div>
-          ) : !loading && !history.length ? (
-            <div className="flex flex-col items-center justify-center p-16 text-center border border-white/5 rounded-xl border-dashed">
-              <MessageSquare size={48} className="text-ink-muted/30 mb-4" />
-              <h3 className="font-display text-lg mb-2">{t("noChatHistory") || "No Chat History"}</h3>
-              <p className="text-sm text-ink-muted max-w-sm">{t("askAQuestionAboveToSeeGuidanceHere") || "Ask a question above to see guidance here."}</p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-6">
-              {history.map((entry: DynamicStateObject) => (
-                <div key={entry.id} className="card-premium !p-0 !bg-surface hover:border-white/20 transition-colors">
-                  
-                  {/* User Question */}
-                  <div className="p-6 bg-white/5 border-b border-white/10">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-ink-muted mb-2">{t("youAsked") || "You Asked"}</p>
-                        <LocalizedText as="p" className="text-base font-medium text-ink leading-relaxed" value={entry.question || "No question recorded."} />
-                      </div>
-                      <div className="shrink-0 mt-1">
-                        <Badge value={entry.urgencyLabel} />
-                      </div>
-                    </div>
+          <div className="space-y-4">
+            <h3 className="section-title">{t("recentGuidanceHistory") || "Recent Guidance History"}</h3>
+            {loading ? (
+              <div className="space-y-4">
+                {[1, 2].map((i: DynamicStateObject) => (
+                  <div key={i} className="card animate-pulse h-32"></div>
+                ))}
+              </div>
+            ) : history.length === 0 ? (
+              <div className="card text-center p-12">
+                <MessageSquare size={40} className="text-[var(--ink-muted)] mx-auto mb-3 opacity-40" />
+                <h3 className="section-title mb-2">{t("noConversationHistoryYet") || "No conversation history yet"}</h3>
+                <p className="text-xs text-[var(--ink-muted)]">{t("askAQuestionAboveToStartReceivingAIPoweredCareGuidance") || "Ask a question above to start receiving AI-powered care guidance."}</p>
+              </div>
+            ) : (
+              history.map((item: DynamicStateObject) => (
+                <div key={item.id} className="card space-y-3">
+                  <div className="flex items-center justify-between gap-4">
+                    <h4 className="font-semibold text-sm text-[var(--ink)]">Q: {item.question}</h4>
+                    <Badge value={item.urgencyLabel} />
                   </div>
-
-                  {/* AI Response */}
-                  <div className="p-6">
-                    <div className="flex gap-4">
-                      <ShieldCheck size={24} className="text-primary shrink-0 mt-0.5" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-primary/80 mb-2">{t("careAssistant") || "Care Assistant"}</p>
-                        <LocalizedText as="div" className="text-[15px] text-ink-muted leading-relaxed" value={entry.answer} />
-                        
-                        {entry.suggestedActions?.length > 0 && (
-                          <div className="mt-6 pt-6 border-t border-white/5">
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-ink-muted mb-3">{t("suggestedActions") || "Suggested Actions"}</p>
-                            <div className="flex flex-col gap-2">
-                              {entry.suggestedActions.map((action: DynamicStateObject, idx: DynamicStateObject) => (
-                                <div key={idx} className="p-3 bg-white/5 rounded-lg border border-white/10 text-sm text-ink-muted leading-relaxed">
-                                  <LocalizedText as="p" value={action} />
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                  <div className="text-xs text-[var(--ink-muted)] leading-relaxed bg-[var(--surface-2)] p-4 rounded-xl border border-[var(--border)]">
+                    <LocalizedText text={item.answer} fallbackKey={item.answer} />
                   </div>
-                  
+                  {item.suggestedActions.length > 0 && (
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      {item.suggestedActions.map((action: DynamicStateObject, idx: DynamicStateObject) => (
+                        <span key={idx} className="status-tag confirmed">
+                          {translateUiText(action)}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
-          )}
-          
+              ))
+            )}
+          </div>
         </div>
       </main>
     </div>

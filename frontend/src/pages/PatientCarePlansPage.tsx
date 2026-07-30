@@ -106,36 +106,32 @@ export default function PatientCarePlansPage() {
   };
 
   return (
-    <div className="h-full w-full bg-canvas text-[var(--tc-text)] font-sans flex flex-col overflow-hidden lg:flex-row">
+    <div className="shell">
       <PatientSidebar />
 
-      <main className="flex flex-col flex-1 min-w-0 min-h-0 overflow-y-auto relative z-0 pb-24 p-6 lg:p-10 min-w-0" role="main">
+      <main className="w-full flex-1 min-w-0">
         {/* Topbar */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 animate-fadeSlideUp">
+        <div className="topbar">
           <div>
-            <h1 className="font-display text-3xl font-medium mb-2">{t("yourCarePlans") || "Your Care Plans"}</h1>
-            <p className="text-ink-muted text-sm mb-3">{t("reviewYourActiveTreatmentPlansAndLifestyleGuidelines") || "Review your active treatment plans and lifestyle guidelines."}</p>
-            <div className="flex gap-2 items-center mt-3">
-              <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-ink-muted">
-                <ClipboardList size={12} className="text-primary" />{t("care") || "Care"}</span>
-              <div className="inline-flex items-center gap-2 text-xs text-ink-muted bg-white/5 border border-white/10 px-3 py-1.5 rounded-full">
-                <User size={14} />
-                Signed in as {auth?.fullName || "Anita Patient"}
-              </div>
-            </div>
+            <div className="greeting-eyebrow">{t("patientWorkspace") || "Patient workspace"}</div>
+            <h1>{t("yourCarePlans") || "Your Care Plans"}</h1>
+            <p className="subtext">{t("reviewYourActiveTreatmentPlansAndLifestyleGuidelines") || "Review your active treatment plans and lifestyle guidelines."}</p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="status-pills">
             <LanguageSwitcher hideLabel />
+            <span className="pill verified"><i className="ti ti-shield-check"></i>Verified care team</span>
             <button 
               onClick={handleLogout} 
               aria-label="Log out"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-transparent text-ink-muted border border-white/10 rounded-element text-sm font-medium hover:bg-white/5 hover:text-ink transition-colors"
+              className="pill cursor-pointer hover:bg-[var(--surface-2)] text-[var(--ink-muted)] hover:text-white transition-colors"
             >
-              <LogOut size={16} />{t("logout") || "Logout"}</button>
+              <LogOut size={14} />
+              {t("logout") || "Logout"}
+            </button>
           </div>
         </div>
 
-        <div className="max-w-5xl animate-fadeSlideUp" style={{animationDelay: '0.1s'}}>
+        <div className="w-full max-w-5xl">
           
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <h2 className="font-display text-2xl font-medium">{t("treatmentPlans") || "Treatment Plans"}</h2>
