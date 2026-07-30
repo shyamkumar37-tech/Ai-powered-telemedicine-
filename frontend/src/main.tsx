@@ -1,4 +1,4 @@
-import "./index.css";
+import "./styles/index.css";
 // @refresh skip
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
