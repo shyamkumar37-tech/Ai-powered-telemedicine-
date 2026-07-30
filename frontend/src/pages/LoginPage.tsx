@@ -292,39 +292,6 @@ export default function LoginPage() {
             </div>
           )}
 
-          {backendUnavailable && (
-            <motion.div 
-              initial={{ opacity: 0, y: -10 }} 
-              animate={{ opacity: 1, y: 0 }} 
-              className="p-4 rounded-xl bg-slate-900/80 border border-amber-500/30 text-amber-200 text-sm shadow-lg mb-4 flex flex-col gap-2"
-              role="alert"
-              aria-live="polite"
-            >
-              <div className="flex items-center gap-2 font-semibold text-amber-300">
-                <Loader2 className="animate-spin text-amber-400" size={18} />
-                <span>Connecting to TeleCare+ Health Gateway...</span>
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                The secure backend service is initializing. Automatic reconnection will retry shortly (~3-5s).
-              </p>
-              <button
-                type="button"
-                className="self-start text-xs font-semibold px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-200 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                onClick={checkBackend}
-                disabled={backendStatus.state === "checking"}
-              >
-                {backendStatus.state === "checking" ? (
-                  <>
-                    <Loader2 className="animate-spin" size={14} />
-                    <span>Verifying connection...</span>
-                  </>
-                ) : (
-                  <span>Retry Connection Now</span>
-                )}
-              </button>
-            </motion.div>
-          )}
-
           {error && <div className="error-banner" role="alert">{error}</div>}
           {otpMessage && <div className="otp-message">{otpMessage}</div>}
 
