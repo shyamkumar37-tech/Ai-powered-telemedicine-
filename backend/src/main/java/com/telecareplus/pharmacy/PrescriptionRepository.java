@@ -44,7 +44,7 @@ public interface PrescriptionRepository extends JpaRepository<Prescription, Long
         join fetch patient.user patientUser
         join fetch prescription.doctor doctor
         join fetch doctor.user doctorUser
-        where prescription.consultationNote.id = :consultationNoteId
+        where prescription.consultationNoteId = :consultationNoteId
     """)
     Optional<Prescription> findByConsultationNoteId(@Param("consultationNoteId") Long consultationNoteId);
 
@@ -65,8 +65,8 @@ public interface PrescriptionRepository extends JpaRepository<Prescription, Long
         from Prescription prescription
         where prescription.id = :prescriptionId
           and (
-              prescription.consultationNote.appointment.patient.user.id = :userId
-              or prescription.consultationNote.appointment.doctor.user.id = :userId
+              prescription.patient.user.id = :userId
+              or prescription.doctor.user.id = :userId
           )
     """)
     boolean existsByIdAndPatientOrDoctorUserId(@Param("prescriptionId") Long prescriptionId, @Param("userId") Long userId);
@@ -74,8 +74,8 @@ public interface PrescriptionRepository extends JpaRepository<Prescription, Long
     @Query("""
         select case when count(prescription) > 0 then true else false end
         from Prescription prescription
-        where prescription.consultationNote.id = :consultationNoteId
-          and prescription.consultationNote.appointment.doctor.user.id = :userId
+        where prescription.consultationNoteId = :consultationNoteId
+          and prescription.doctor.user.id = :doctorUserId
     """)
-    boolean existsByConsultationNoteIdAndDoctorUserId(@Param("consultationNoteId") Long consultationNoteId, @Param("userId") Long userId);
+    boolean existsByConsultationNoteIdAndDoctorUserId(@Param("consultationNoteId") Long consultationNoteId, @Param("doctorUserId") Long doctorUserId);
 }
