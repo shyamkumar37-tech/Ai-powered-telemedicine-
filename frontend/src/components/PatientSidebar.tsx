@@ -34,11 +34,7 @@ export default function PatientSidebar({ isMobileOpen = false, onClose }: Patien
 
       {/* Sidebar Navigation matching exact demo design */}
       <aside 
-        className={`
-          sidebar
-          ${isMobileOpen ? "fixed inset-y-0 left-0 z-50 flex w-[236px]" : "hidden md:flex"} 
-          w-[236px] min-w-[236px] sticky top-0 h-screen overflow-y-auto
-        `} 
+        className={`sidebar ${isMobileOpen ? "fixed inset-y-0 left-0 z-50 !flex w-[236px]" : ""}`} 
         aria-label="Main Navigation"
       >
         <div className="brand">
