@@ -1,23 +1,45 @@
-# Security Policy & HIPAA Compliance
+# 🔒 TeleCare+ Security Architecture & Compliance Governance
 
-## Security Overview
-
-**TeleCare+** is engineered with a Security-First architecture complying with **HIPAA**, **GDPR**, and **OWASP Top 10** standards:
-
-- **Stateless OAuth2 / JWT Authentication**: Short-lived access tokens paired with secure httpOnly refresh cookies.
-- **Role-Based Access Control (RBAC)**: Enforced via Spring Security `@PreAuthorize` annotations across all domain REST controllers.
-- **HIPAA Access Audit Logging**: Automatic interception of PHI (Protected Health Information) access logged to `access_audit_log` via `@AuditLog`.
-- **CSRF & XSS Protection**: Cookie-based CSRF protection (`XSRF-TOKEN`) with strict Content Security Policy (`CSP`) headers.
-- **Data Isolation**: Schema-based multi-tenancy enforced using Hibernate 6 `@TenantId`.
+**Security Classification**: Production Healthcare Architecture  
+**Standards Compliance**: HIPAA Security Rule, GDPR, OWASP Top 10 (2021), NIST SP 800-53, Zero Trust Principles  
 
 ---
 
-## Reporting a Vulnerability
+## 1. Executive Security Summary
 
-We take the security of healthcare data with utmost seriousness. If you discover a security vulnerability within TeleCare+, please report it responsibly:
+TeleCare+ enforces defense-in-depth security principles across all layers:
+- **Stateless Authorization**: Short-lived JWT Bearer tokens paired with `HttpOnly` CSRF protection cookies (`XSRF-TOKEN`).
+- **Data Protection at Rest**: AES-256 GCM column-level PHI encryption via JPA `PhiCryptoConverter`.
+- **Immutable Audit Trail**: PostgreSQL triggers (`V14__immutable_audit_log_triggers.sql`) preventing `UPDATE` or `DELETE` commands on `access_audit_log`.
+- **AI Security Guard**: Prompt injection pattern detection (`AiSecurityGuard.java`) protecting LLM endpoints.
+- **Multi-Factor Authentication**: RFC 6238 TOTP 2FA verification (`TotpService.java`) for Doctor and Admin roles.
 
-1. **Email**: Send vulnerability disclosures to `security@telecareplus.health`.
-2. **Details**: Include steps to reproduce, impact assessment, and proof of concept.
-3. **Response Time**: Our security team will acknowledge receipt within **24 hours** and provide a patch timeline within **72 hours**.
+---
 
-Please do NOT create public GitHub issues for security vulnerabilities.
+## 2. HIPAA Compliance Matrix
+
+| HIPAA Security Rule Standard | Implementation Mechanism | Verification Status |
+| :--- | :--- | :---: |
+| **§164.312(a)(1) Access Control** | Role-Based Access Control (RBAC) via Spring Security & OAuth2 Resource Server | ✅ Verified |
+| **§164.312(a)(2)(iii) Auto Logoff** | 15-minute inactivity session termination via `useIdleTimer.ts` | ✅ Verified |
+| **§164.312(a)(2)(iv) Encryption** | AES-256 GCM JPA AttributeConverter (`PhiCryptoConverter.java`) | ✅ Verified |
+| **§164.312(b) Audit Controls** | PostgreSQL immutable audit log triggers (`V14__immutable_audit_log_triggers.sql`) | ✅ Verified |
+| **§164.312(e)(1) Transmission Security**| TLS 1.3 encryption in transit with HSTS and strict CSP headers | ✅ Verified |
+
+---
+
+## 3. OWASP Top 10 (2021) Risk Mitigation
+
+| OWASP Vulnerability Risk | TeleCare+ Defense Mechanism |
+| :--- | :--- |
+| **A01:2021 – Broken Access Control** | `@PreAuthorize` method annotations + Spring Modulith domain boundary isolation |
+| **A02:2021 – Cryptographic Failures** | AES-256 GCM field-level encryption at rest + BCrypt password hashing |
+| **A03:2021 – Injection** | Prepared statements via Spring Data JPA + `AiSecurityGuard.java` for LLM prompt injection |
+| **A04:2021 – Insecure Design** | Zero Trust Architecture + automated idle timeout + RFC 6238 TOTP 2FA |
+| **A05:2021 – Security Misconfiguration**| Immutable database triggers + production `ddl-auto=validate` schema verification |
+
+---
+
+## 4. Vulnerability Disclosure Policy
+
+To report security vulnerabilities, please email **security@telecareplus.health**. Reports will be acknowledged within 24 hours.
