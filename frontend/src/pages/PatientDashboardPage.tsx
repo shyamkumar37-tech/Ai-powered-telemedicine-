@@ -30,7 +30,8 @@ import {
   Lock,
   Lightbulb,
   TrendingUp,
-  ClipboardCheck
+  ClipboardCheck,
+  Menu
 } from "lucide-react";
 import { DynamicStateObject, DynamicState } from "./../types/DynamicState";
 
@@ -40,6 +41,7 @@ export default function PatientDashboardPage() {
   const { t = (key: DynamicStateObject) => key } = useLanguage() || { language: "en", t: (key: DynamicStateObject) => key };
 
   const [liveTime, setLiveTime] = useState<DynamicState>("");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ["dashboard", "patient", auth?.profileId],
@@ -64,8 +66,8 @@ export default function PatientDashboardPage() {
 
   return (
     <div className="flex h-full flex-1 w-full min-h-0 min-w-0 flex-col lg:flex-row bg-[var(--tc-bg)] text-[var(--tc-text)] font-sans overflow-hidden">
-      {/* 280px Fixed Width Desktop Sidebar */}
-      <PatientSidebar />
+      {/* 280px Fixed Width Desktop Sidebar & Mobile Overlay Drawer */}
+      <PatientSidebar isMobileOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
 
       {/* Main Content Workspace (Elastic 100% Remaining Width) */}
       <main className="flex-1 w-full min-w-0 min-h-0 overflow-y-auto relative z-0 p-4 sm:p-6 lg:p-8" role="main">
@@ -74,9 +76,18 @@ export default function PatientDashboardPage() {
           {/* Header Row */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-[var(--tc-surface-elevated)] border border-[var(--tc-border)] rounded-2xl p-6 shadow-sm">
             <div>
-              <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight text-white mb-1">
-                {t("dashboard") || "Dashboard"}
-              </h1>
+              <div className="flex items-center gap-3 mb-1">
+                <button
+                  onClick={() => setIsMobileMenuOpen(true)}
+                  className="md:hidden p-2 text-[var(--tc-text-muted)] hover:text-white bg-[var(--tc-surface)] border border-[var(--tc-border)] rounded-xl"
+                  aria-label="Open sidebar menu"
+                >
+                  <Menu size={20} />
+                </button>
+                <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight text-white">
+                  {t("dashboard") || "Dashboard"}
+                </h1>
+              </div>
               <p className="text-[var(--tc-text-muted)] text-sm mb-3">
                 {t("reviewUpdatesTasksAndCareActionsForToday") || "Review updates, tasks, and care actions for today."}
               </p>

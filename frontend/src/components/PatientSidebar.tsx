@@ -9,7 +9,12 @@ import { motion } from "framer-motion";
 import { staggerContainer, fadeInUp } from "../utils/motionVariants";
 import { DynamicStateObject } from "./../types/DynamicState";
 
-export default function PatientSidebar() {
+interface PatientSidebarProps {
+  isMobileOpen?: boolean;
+  onClose?: () => void;
+}
+
+export default function PatientSidebar({ isMobileOpen = false, onClose }: PatientSidebarProps) {
   const { t } = useLanguage();
   const location = useLocation();
 
@@ -42,7 +47,24 @@ export default function PatientSidebar() {
   const dotBadgeActive = "ml-auto w-2 h-2 rounded-full bg-[#04231A]";
 
   return (
-    <aside className="hidden lg:flex flex-col shrink-0 w-[280px] min-w-[280px] max-w-[280px] bg-[var(--tc-sidebar-bg)] backdrop-blur-2xl border-r border-[var(--tc-border)] h-full sticky top-0" aria-label="Main Navigation">
+    <>
+      {/* Mobile Backdrop Overlay */}
+      {isMobileOpen && (
+        <div 
+          onClick={onClose}
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden" 
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Main Sidebar (Desktop: sticky, Mobile: fixed drawer) */}
+      <aside 
+        className={`
+          ${isMobileOpen ? "fixed inset-y-0 left-0 z-50 flex w-[280px]" : "hidden md:flex"} 
+          flex-col shrink-0 w-[280px] min-w-[280px] max-w-[280px] bg-[var(--tc-sidebar-bg)] backdrop-blur-2xl border-r border-[var(--tc-border)] h-full sticky top-0 transition-transform duration-300
+        `} 
+        aria-label="Main Navigation"
+      >
       <div className="flex items-center p-6 pb-4 shrink-0 border-b border-[var(--tc-border-subtle)] lg:border-none">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] flex items-center justify-center shadow-[var(--tc-shadow-primary)] mr-3">
             <span className="text-[#04231A] font-extrabold text-base tracking-tighter">T+</span>
@@ -221,5 +243,6 @@ export default function PatientSidebar() {
         </motion.nav>
       </div>
     </aside>
+    </>
   );
 }
