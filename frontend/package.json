@@ -38,7 +38,7 @@
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "leaflet": "^1.9.4",
-    "lucide-react": "^0.503.0",
+    "lucide-react": "^0.577.0",
     "papaparse": "^5.5.4",
     "react": "^19.2.8",
     "react-day-picker": "^10.0.1",
