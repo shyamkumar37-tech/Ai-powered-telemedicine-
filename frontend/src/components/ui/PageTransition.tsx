@@ -1,4 +1,4 @@
-import { DynamicState, DynamicStateObject } from "./../../types/DynamicState";
+import { DynamicState } from "./../../types/DynamicState";
 import { motion } from "framer-motion";
 
 import { useAccessibleAnimation } from "../../hooks/useAccessibleAnimation";

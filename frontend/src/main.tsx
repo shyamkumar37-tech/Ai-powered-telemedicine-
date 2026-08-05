@@ -10,7 +10,8 @@ import { LanguageProvider, useLanguage } from "./context/LanguageContext";
 import { registerPushServiceWorker } from "./services/pushService";
 import { installTelemetryInterceptors } from "./services/telemetry";
 import { ToastProvider } from "./components/ui/ToastProvider";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { queryClient, idbPersister } from "./services/queryClient";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 // @ts-ignore
 import { registerSW } from 'virtual:pwa-register';
@@ -22,16 +23,6 @@ Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN || "",
   integrations: [new BrowserTracing() as any],
   tracesSampleRate: 1.0,
-});
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes default
-      refetchOnWindowFocus: true,
-      retry: 1,
-    },
-  },
 });
 
 const CLIENT_BUILD_VERSION = "20260716-fix-check";
@@ -167,7 +158,9 @@ async function refreshClientCaches() {
         } catch {
           // Ignore storage write failure.
         }
-        console.log("[TeleCare+] Cache refresh reload triggered once.");
+        if (import.meta.env.DEV) {
+          console.log("[TeleCare+] Cache refresh reload triggered once.");
+        }
         window.location.reload();
       }
     } catch {
@@ -373,7 +366,7 @@ if (_rootEl) {
 
   try {
     (window as any).__TELECARE_REACT_ROOT__?.render(
-      <QueryClientProvider client={queryClient}>
+      <PersistQueryClientProvider client={queryClient} persistOptions={{ persister: idbPersister }}>
         <AppErrorBoundary>
           <BrowserRouter basename={ROUTER_BASE}>
             <LanguageProvider>
@@ -386,7 +379,7 @@ if (_rootEl) {
           </BrowserRouter>
         </AppErrorBoundary>
         {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
-      </QueryClientProvider>
+      </PersistQueryClientProvider>
     );
   } catch (e: DynamicStateObject) {
     console.error("[TeleCare+] render failed", e);

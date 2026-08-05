@@ -3,7 +3,7 @@ import LocalizedText from "./LocalizedText";
 import SectionCard from "./SectionCard";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
-import { fetchConversations, sendChatMessage } from "../services/telecareService";
+import { sendChatMessage } from "../services/telecareService";
 import { getApiErrorMessage } from "../utils/apiError";
 import { formatDisplayValue } from "../utils/formatDisplayValue";
 import { translateDisplayText } from "../utils/i18n";
@@ -53,8 +53,8 @@ export default function MessagingWorkspace({ role, title }: MessagingWorkspacePr
         { signal }
       );
       
-      const safeContacts = Array.isArray(data?.contacts) ? data.contacts : [];
-      const safeMessages = Array.isArray(data?.messages) ? data.messages : [];
+      const safeContacts = Array.isArray((data as any)?.contacts) ? (data as any).contacts : [];
+      const safeMessages = Array.isArray((data as any)?.messages) ? (data as any).messages : [];
       
       // Filter out test/dev/QA data
       const isTestEntity = (str: DynamicStateObject) => {

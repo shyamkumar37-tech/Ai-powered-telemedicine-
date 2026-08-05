@@ -1,5 +1,5 @@
 import { DynamicState, DynamicStateObject } from "./../../types/DynamicState";
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useLanguage } from "../../context/LanguageContext";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Activity, Droplets } from 'lucide-react';

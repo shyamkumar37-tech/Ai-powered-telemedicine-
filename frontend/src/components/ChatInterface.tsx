@@ -112,11 +112,15 @@ export default function ChatInterface() {
 
   const activeMessages = (messages as DynamicStateObject)[activeContactId] || [];
 
-  const handleSend = async (e: DynamicStateObject) => {
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("handleSend triggered", { messageInput, activeContactId, sending });
+    if (import.meta.env.DEV) {
+      console.log("handleSend triggered", { messageInput, activeContactId, sending });
+    }
     if (!messageInput.trim() || !activeContactId || sending) {
-        console.log("handleSend aborted");
+        if (import.meta.env.DEV) {
+          console.log("handleSend aborted");
+        }
         return;
     }
 
@@ -124,7 +128,7 @@ export default function ChatInterface() {
     setMessageInput("");
     setSending(true);
 
-    const activeConvo = conversations.find((c: DynamicStateObject) => c.contactUserId === activeContactId);
+    const activeConvo = conversations.find((c: Record<string, unknown>) => c.contactUserId === activeContactId);
     
     // Optimistic UI update
     const tempId = `temp-${Date.now()}`;
@@ -138,19 +142,23 @@ export default function ChatInterface() {
       isPending: true
     };
     
-    setMessages((prev: DynamicStateObject) => ({
+    setMessages((prev: Record<string, unknown>) => ({
       ...prev,
-      [activeContactId]: [...((prev as DynamicStateObject)[activeContactId] || []), optimisticMsg]
+      [activeContactId]: [...((prev as Record<string, unknown>)[activeContactId] as unknown[] || []), optimisticMsg]
     }));
 
     try {
-      console.log("Sending chat message to backend", { conversationId: activeConvo?.id, recipientId: activeContactId, content });
+      if (import.meta.env.DEV) {
+        console.log("Sending chat message to backend", { conversationId: activeConvo?.id, recipientId: activeContactId, content });
+      }
       const savedMsg = await sendChatMessage({
-        conversationId: activeConvo?.id,
+        conversationId: activeConvo?.id as string | number | undefined,
         recipientId: activeContactId,
         content: content
       });
-      console.log("Chat message sent successfully", savedMsg);
+      if (import.meta.env.DEV) {
+        console.log("Chat message sent successfully", savedMsg);
+      }
 
       // Replace temp message with real one
       setMessages((prev: DynamicStateObject) => ({

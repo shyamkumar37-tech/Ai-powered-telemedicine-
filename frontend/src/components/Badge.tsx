@@ -1,4 +1,4 @@
-import { DynamicState, DynamicStateObject } from "./../types/DynamicState";
+import { DynamicState } from "./../types/DynamicState";
 import { LANGUAGE_CONTEXT_FALLBACK, useLanguage } from "../context/LanguageContext";
 import { translateDisplayText } from "../utils/i18n";
 

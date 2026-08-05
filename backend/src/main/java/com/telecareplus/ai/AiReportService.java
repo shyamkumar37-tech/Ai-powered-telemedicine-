@@ -38,6 +38,7 @@ public class AiReportService {
     private final GenerativeAiService generativeAiService;
     private final ObjectMapper objectMapper;
     private final ChatClient.Builder chatClientBuilder;
+    private final com.telecareplus.jooq.query.AiReportQuery aiReportQuery;
 
     public SseEmitter generateSummaryStream(Long patientId, String language) {
         SseEmitter emitter = new SseEmitter(120000L); // 2 minutes timeout
@@ -46,16 +47,14 @@ public class AiReportService {
             var patient = patientRepository.findById(patientId)
                     .orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
 
-            var triageHistory = triageAssessmentRepository.findByPatientIdOrderByAssessedAtDesc(patientId);
-            var consultations = consultationNoteRepository.findByPatientIdOrderByCreatedAtDesc(patientId);
-            var prescriptions = prescriptionRepository.findByPatientIdOrderByCreatedAtDesc(patientId);
+            var patientContext = aiReportQuery.getPatientContext(patientId);
 
             String patientName = patient.getUser().getFullName();
             String overview = buildOverview(patientName, 0, patient.getGender(), patient.getDiseases(), patient.getAllergies());
-            List<String> recentComplaints = buildRecentComplaints(triageHistory);
-            String diagnosisSummary = buildDiagnosisSummary(consultations);
-            List<String> prescribedMedicines = buildPrescriptionSummary(prescriptions);
-            List<String> followUpAdvice = buildFollowUpAdvice(consultations, prescriptions);
+            List<String> recentComplaints = patientContext.recentComplaints();
+            String diagnosisSummary = patientContext.diagnosisSummary();
+            List<String> prescribedMedicines = patientContext.prescribedMedicines();
+            List<String> followUpAdvice = patientContext.followUpAdvice();
 
             String systemPrompt = "You are a clinical AI Copilot. Summarize the patient's medical history into a concise, professional clinical summary. Format your response nicely in Markdown." +
                     " Respond strictly in the following language locale: " + language;
@@ -101,16 +100,14 @@ public class AiReportService {
         var patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
 
-        var triageHistory = triageAssessmentRepository.findByPatientIdOrderByAssessedAtDesc(patientId);
-        var consultations = consultationNoteRepository.findByPatientIdOrderByCreatedAtDesc(patientId);
-        var prescriptions = prescriptionRepository.findByPatientIdOrderByCreatedAtDesc(patientId);
+        var patientContext = aiReportQuery.getPatientContext(patientId);
 
         String patientName = patient.getUser().getFullName();
         String overview = buildOverview(patientName, 0, patient.getGender(), patient.getDiseases(), patient.getAllergies());
-        List<String> recentComplaints = buildRecentComplaints(triageHistory);
-        String diagnosisSummary = buildDiagnosisSummary(consultations);
-        List<String> prescribedMedicines = buildPrescriptionSummary(prescriptions);
-        List<String> followUpAdvice = buildFollowUpAdvice(consultations, prescriptions);
+        List<String> recentComplaints = patientContext.recentComplaints();
+        String diagnosisSummary = patientContext.diagnosisSummary();
+        List<String> prescribedMedicines = patientContext.prescribedMedicines();
+        List<String> followUpAdvice = patientContext.followUpAdvice();
 
         if (generativeAiService.isConfigured()) {
             try {

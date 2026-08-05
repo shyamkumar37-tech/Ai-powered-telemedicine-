@@ -1,9 +1,18 @@
-import { DynamicStateObject } from "./../types/DynamicState";
-
 const MAX_FUTURE_DAYS = 365;
 const MIN_YEAR = 2000;
 
-function parseDateValue(value: string | number) {
+export interface TimelineItem {
+  id?: string | number;
+  type?: string;
+  title?: string;
+  details?: string;
+  occurredAt?: string | Date;
+  severity?: string;
+  repeatCount?: number;
+  [key: string]: unknown;
+}
+
+function parseDateValue(value: string | number | Date | null | undefined): Date | null {
   if (!value) {
     return null;
   }
@@ -14,7 +23,7 @@ function parseDateValue(value: string | number) {
   return parsed;
 }
 
-export function normalizeTimelineDate(value: string | number, now = new Date()) {
+export function normalizeTimelineDate(value: string | number | Date, now = new Date()) {
   const parsed = parseDateValue(value);
   if (!parsed) {
     return { date: null, isValid: false, isSuspiciousFuture: false };
@@ -32,15 +41,16 @@ export function normalizeTimelineDate(value: string | number, now = new Date()) 
   return { date: parsed, isValid: true, isSuspiciousFuture: false };
 }
 
-export function formatTimelineDate(date: string | Date) {
+export function formatTimelineDate(date: string | Date | null | undefined): string {
   if (!date) {
     return "Time unavailable";
   }
-  return date.toLocaleString();
+  const parsed = typeof date === "string" ? new Date(date) : date;
+  return Number.isNaN(parsed.getTime()) ? "Time unavailable" : parsed.toLocaleString();
 }
 
-export function formatRelativeTimelineDate(date: DynamicStateObject, now = new Date()) {
-  if (!date) {
+export function formatRelativeTimelineDate(date: Date | null | undefined, now = new Date()): string {
+  if (!date || Number.isNaN(date.getTime())) {
     return "Time unavailable";
   }
   const diffMs = now.getTime() - date.getTime();
@@ -63,18 +73,18 @@ export function formatRelativeTimelineDate(date: DynamicStateObject, now = new D
   return date.toLocaleDateString();
 }
 
-export function deriveStatus(item: any) {
+export function deriveStatus(item: TimelineItem | null | undefined): string | null {
   if (!item?.title) {
     return null;
   }
   const match = item.title.match(/Appointment\s+([A-Z_]+)/i);
-  if (match) {
-    return (match as DynamicStateObject)[1].toUpperCase();
+  if (match && match[1]) {
+    return match[1].toUpperCase();
   }
   return null;
 }
 
-export function deriveActor(item: any) {
+export function deriveActor(item: TimelineItem | null | undefined): string {
   switch (item?.type) {
     case "TRIAGE":
       return "AI Triage";
@@ -93,7 +103,7 @@ export function deriveActor(item: any) {
   }
 }
 
-export function needsAction(item: DynamicStateObject, status: DynamicStateObject) {
+export function needsAction(item: TimelineItem | null | undefined, status: string | null | undefined): boolean {
   if (item?.severity && ["CRITICAL", "WARNING"].includes(String(item.severity).toUpperCase())) {
     return true;
   }
@@ -106,24 +116,24 @@ export function needsAction(item: DynamicStateObject, status: DynamicStateObject
   return false;
 }
 
-export function groupTimelineEvents(items: any[]) {
-  const grouped: DynamicStateObject = [];
-  const triageGroups = new Map();
+export function groupTimelineEvents(items: TimelineItem[]): TimelineItem[] {
+  const grouped: TimelineItem[] = [];
+  const triageGroups = new Map<string, TimelineItem>();
 
-  items.forEach((item: any) => {
+  items.forEach((item: TimelineItem) => {
     if (item?.type === "TRIAGE") {
       const dateKey = item?.occurredAt ? String(item.occurredAt).slice(0, 10) : "unknown";
       const key = `${item.title || ""}|${item.details || ""}|${dateKey}`;
       if (!triageGroups.has(key)) {
         triageGroups.set(key, { ...item, repeatCount: 1 });
       } else {
-        const existing = triageGroups.get(key);
+        const existing = triageGroups.get(key)!;
         const existingDate = parseDateValue(existing?.occurredAt);
         const nextDate = parseDateValue(item?.occurredAt);
         const resolved = nextDate && (!existingDate || nextDate > existingDate) ? item : existing;
         triageGroups.set(key, {
           ...resolved,
-          repeatCount: existing.repeatCount + 1
+          repeatCount: (existing.repeatCount || 1) + 1
         });
       }
       return;
@@ -131,6 +141,6 @@ export function groupTimelineEvents(items: any[]) {
     grouped.push(item);
   });
 
-  triageGroups.forEach((value: string | number) => grouped.push(value));
+  triageGroups.forEach((value: TimelineItem) => grouped.push(value));
   return grouped;
 }

@@ -1,7 +1,7 @@
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import PatientSidebar from "../components/PatientSidebar";
-import { LogOut, MessageSquare, User } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { buildLoginRedirect } from "../utils/authSession";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import { useNavigate } from "react-router-dom";

@@ -1,4 +1,3 @@
-import { DynamicStateObject } from "./../types/DynamicState";
 
 const TELEMETRY_EVENT_NAME = "telecareplus:telemetry";
 const TELEMETRY_BUFFER_KEY = "__telecareTelemetry";

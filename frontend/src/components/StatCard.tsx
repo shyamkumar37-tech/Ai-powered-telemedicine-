@@ -1,4 +1,4 @@
-import { DynamicState, DynamicStateObject } from "./../types/DynamicState";
+import { DynamicState } from "./../types/DynamicState";
 import LocalizedText from "./LocalizedText";
 
 export interface StatCardProps {

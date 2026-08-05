@@ -1,11 +1,10 @@
 import { defineConfig, devices } from "@playwright/test";
-import path from "path";
 
 /**
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
-  testDir: "./tests/e2e/specs",
+  testDir: "./tests",
   /* Maximum time one test can run for. */
   timeout: 60 * 1000,
   expect: {
@@ -56,10 +55,10 @@ export default defineConfig({
       use: { ...devices["Desktop Safari"] },
     }
   ],
-  /* webServer: {
+  webServer: {
     command: 'npm run dev',
     url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: true,
     timeout: 120 * 1000,
-  }, */
+  },
 });

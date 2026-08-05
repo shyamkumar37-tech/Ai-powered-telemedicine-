@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from "react";
 import { login as loginRequest, register as registerRequest, verifyOtpLogin as verifyOtpLoginRequest } from "../services/authService";
-import { wsService } from "../services/websocketService";
+import { silentRefreshToken } from "../services/api";
 import { trackAuthEvent } from "../services/telemetry";
 import { safeJsonParse } from "../utils/safeJson";
 import { normalizeAuth as normalizeAuthUtil } from "../utils/normalizeAuth";
@@ -8,7 +8,9 @@ import {
   AUTH_CHANGED_EVENT,
   AUTH_STORAGE_KEY,
   clearAuthStorageArtifacts,
-  notifyAuthCleared
+  notifyAuthCleared,
+  setInMemoryAccessToken,
+  getInMemoryAccessToken
 } from "../utils/authSession";
 import { DynamicStateObject, DynamicState } from "./../types/DynamicState";
 
@@ -20,37 +22,29 @@ function readStoredAuth() {
   try {
     const stored = localStorage.getItem(AUTH_STORAGE_KEY);
     if (!stored) {
-      console.log("[AUTH]", { step: "storage-read", stored: false });
-      if (typeof window !== "undefined" && window.__TELECARE_LOCAL_RUNTIME__) {
-        console.log("[TeleCare+] readStoredAuth: no stored auth");
-      }
       return null;
     }
     const parsed = safeJsonParse(stored);
     if (!parsed) {
-      console.log("[AUTH]", { step: "storage-read", stored: true, validJson: false });
-      if (typeof window !== "undefined" && window.__TELECARE_LOCAL_RUNTIME__) {
-        console.log("[TeleCare+] readStoredAuth: stored auth invalid, clearing");
-      }
       localStorage.removeItem(AUTH_STORAGE_KEY);
       return null;
     }
     const norm = normalizeAuth(parsed);
-    console.log("[AUTH]", {
-      step: "storage-read",
-      stored: true,
-      normalized: Boolean(norm),
-      role: norm?.role ?? null,
-      userId: norm?.userId ?? null,
-      profileId: norm?.profileId ?? null
-    });
-    if (typeof window !== "undefined" && window.__TELECARE_LOCAL_RUNTIME__) {
-      console.log("[TeleCare+] readStoredAuth -> normalized", norm);
+    if (!norm) {
+      try {
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+      } catch {
+        // Ignore storage cleanup errors.
+      }
+      return null;
+    }
+    // Re-attach active in-memory access token if available
+    const activeToken = getInMemoryAccessToken();
+    if (activeToken) {
+      norm.token = activeToken;
     }
     return norm;
   } catch {
-    console.log("[AUTH]", { step: "storage-read", error: "storage-read-invalid" });
-    trackAuthEvent("storage-read-invalid", { storageKey: AUTH_STORAGE_KEY });
     localStorage.removeItem(AUTH_STORAGE_KEY);
     return null;
   }
@@ -68,12 +62,20 @@ function notifyAuthChange(auth: DynamicStateObject) {
 
 function persistStoredAuth(auth: DynamicStateObject) {
   try {
+    // 1. Keep access token strictly in React / module memory
+    if (auth?.token) {
+      setInMemoryAccessToken(auth.token);
+    } else if (!auth) {
+      setInMemoryAccessToken(null);
+    }
+
+    // 2. Strip sensitive token string before persisting profile state to localStorage
+    const storageObject = auth ? { ...auth, token: undefined } : null;
+    const nextJson = storageObject ? JSON.stringify(storageObject) : null;
     const existing = localStorage.getItem(AUTH_STORAGE_KEY);
-    const existingJson = existing || null;
-    const nextJson = auth ? JSON.stringify(auth) : null;
-    if (nextJson === existingJson) {
+    if (nextJson === existing) {
       // no-op to avoid storage event loops
-    } else if (auth) {
+    } else if (storageObject) {
       localStorage.setItem(AUTH_STORAGE_KEY, nextJson as string);
     } else {
       localStorage.removeItem(AUTH_STORAGE_KEY);
@@ -81,16 +83,6 @@ function persistStoredAuth(auth: DynamicStateObject) {
   } catch {
     // Ignore storage failures; active in-memory auth can still work.
   } finally {
-    console.log("[AUTH]", {
-      step: auth ? "token-save" : "token-clear",
-      hasToken: Boolean(auth?.token),
-      role: auth?.role ?? null,
-      userId: auth?.userId ?? null,
-      profileId: auth?.profileId ?? null
-    });
-    if (typeof window !== "undefined" && window.__TELECARE_LOCAL_RUNTIME__) {
-      console.log("[TeleCare+] persistStoredAuth", auth);
-    }
     notifyAuthChange(auth);
   }
 }
@@ -164,6 +156,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [initialized, setInitialized] = useState<DynamicState>(true);
 
   useEffect(() => {
+    // Session Recovery on Page Reload / New Tab via httpOnly Refresh Cookie
+    if (auth && !auth.token) {
+      silentRefreshToken()
+        .then((token) => {
+          if (token) {
+            setAuth((current: any) => (current ? { ...current, token } : current));
+          }
+        })
+        .catch(() => {});
+    }
+
     const handleAuthChange = (e: any) => {
       setAuth(e.detail);
     };

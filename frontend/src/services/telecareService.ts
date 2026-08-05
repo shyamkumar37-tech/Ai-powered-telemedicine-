@@ -126,7 +126,7 @@ function createSseSubscription(path: DynamicStateObject, onMessage: DynamicState
           buffer = buffer.slice(boundaryIndex + 2);
           const dataLine = rawEvent
             .split("\n")
-            .find((line: DynamicStateObject) => line.startsWith("data:"));
+            .find((line: string) => line.startsWith("data:"));
 
           if (dataLine) {
             const payload = dataLine.slice(5).trim();
@@ -143,9 +143,9 @@ function createSseSubscription(path: DynamicStateObject, onMessage: DynamicState
           boundaryIndex = buffer.indexOf("\n\n");
         }
       }
-    } catch (error: DynamicStateObject) {
-      if (!cancelled && error.name !== "AbortError") {
-        onError?.(error);
+    } catch (error: unknown) {
+      if (!cancelled && (error as { name?: string })?.name !== "AbortError") {
+        onError?.(error instanceof Error ? error : new Error(String(error)));
       }
     }
   })();
@@ -156,8 +156,8 @@ function createSseSubscription(path: DynamicStateObject, onMessage: DynamicState
   };
 }
 
-export const subscribeToPatientAlertStream = (id: number | string, onMessage: DynamicStateObject, onError: DynamicStateObject) =>
+export const subscribeToPatientAlertStream = (id: number | string, onMessage: (data: unknown) => void, onError?: (err: Error) => void) =>
   createSseSubscription(`/alerts/patient/${id}/stream`, onMessage, onError);
 
-export const subscribeToCaregiverAlertStream = (id: number | string, onMessage: DynamicStateObject, onError: DynamicStateObject) =>
+export const subscribeToCaregiverAlertStream = (id: number | string, onMessage: (data: unknown) => void, onError?: (err: Error) => void) =>
   createSseSubscription(`/alerts/caregiver/${id}/stream`, onMessage, onError);

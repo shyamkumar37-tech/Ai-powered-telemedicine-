@@ -1,32 +1,113 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
-    
-    <appender name="CONSOLE_JSON" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
-            <providers>
-                <timestamp/>
-                <version/>
-                <loggerName/>
-                <threadName/>
-                <logLevel/>
-                <message/>
-                <mdc/>
-                <pattern>
-                    <pattern>
-                        {
-                        "app_name": "telecareplus-backend",
-                        "traceId": "%mdc{traceId:-}",
-                        "spanId": "%mdc{spanId:-}"
-                        }
-                    </pattern>
-                </pattern>
-                <stackTrace/>
-            </providers>
-        </encoder>
-    </appender>
 
-    <root level="INFO">
-        <appender-ref ref="CONSOLE_JSON" />
-    </root>
+    <!-- ── Properties ─────────────────────────────────────────────────────── -->
+    <property name="APP_NAME"  value="telecareplus-backend"/>
+    <property name="LOG_DIR"   value="${LOG_PATH:-/var/log/telecareplus}"/>
+    <property name="LOG_FILE"  value="${LOG_DIR}/${APP_NAME}.log"/>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         APPENDER: CONSOLE (dev profile) — human-readable coloured output
+         ══════════════════════════════════════════════════════════════════════ -->
+    <springProfile name="!prod">
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n%wEx</pattern>
+            </encoder>
+        </appender>
+
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         APPENDER: CONSOLE_JSON (prod profile) — structured JSON for log aggregators
+         ══════════════════════════════════════════════════════════════════════ -->
+    <springProfile name="prod">
+        <appender name="CONSOLE_JSON" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+                <providers>
+                    <timestamp>
+                        <fieldName>timestamp</fieldName>
+                        <timeZone>UTC</timeZone>
+                    </timestamp>
+                    <version/>
+                    <logLevel>
+                        <fieldName>level</fieldName>
+                    </logLevel>
+                    <loggerName>
+                        <fieldName>logger</fieldName>
+                        <shortenedLoggerNameLength>36</shortenedLoggerNameLength>
+                    </loggerName>
+                    <threadName>
+                        <fieldName>thread</fieldName>
+                    </threadName>
+                    <message>
+                        <fieldName>message</fieldName>
+                    </message>
+                    <mdc/>
+                    <pattern>
+                        <pattern>
+                            {
+                                "app": "${APP_NAME}",
+                                "traceId": "%mdc{traceId:-none}",
+                                "spanId":  "%mdc{spanId:-none}"
+                            }
+                        </pattern>
+                    </pattern>
+                    <stackTrace>
+                        <fieldName>stackTrace</fieldName>
+                        <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                            <maxDepthPerCause>20</maxDepthPerCause>
+                            <rootCauseFirst>true</rootCauseFirst>
+                        </throwableConverter>
+                    </stackTrace>
+                </providers>
+            </encoder>
+        </appender>
+
+        <!-- ── Rolling file appender with 30-day retention ───────────────── -->
+        <appender name="ROLLING_JSON" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <file>${LOG_FILE}</file>
+            <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                <!-- daily rotation; .gz compression auto-applied -->
+                <fileNamePattern>${LOG_DIR}/${APP_NAME}.%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+                <maxHistory>30</maxHistory>
+                <totalSizeCap>5GB</totalSizeCap>
+            </rollingPolicy>
+            <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+                <providers>
+                    <timestamp>
+                        <fieldName>timestamp</fieldName>
+                        <timeZone>UTC</timeZone>
+                    </timestamp>
+                    <version/>
+                    <logLevel><fieldName>level</fieldName></logLevel>
+                    <loggerName><fieldName>logger</fieldName></loggerName>
+                    <threadName><fieldName>thread</fieldName></threadName>
+                    <message><fieldName>message</fieldName></message>
+                    <mdc/>
+                    <pattern>
+                        <pattern>{"app": "${APP_NAME}", "traceId": "%mdc{traceId:-none}", "spanId": "%mdc{spanId:-none}"}</pattern>
+                    </pattern>
+                    <stackTrace><fieldName>stackTrace</fieldName></stackTrace>
+                </providers>
+            </encoder>
+        </appender>
+
+        <root level="INFO">
+            <appender-ref ref="CONSOLE_JSON"/>
+            <appender-ref ref="ROLLING_JSON"/>
+        </root>
+
+        <!-- Suppress noise from third-party libraries in production -->
+        <logger name="org.hibernate.SQL"                     level="WARN"/>
+        <logger name="org.hibernate.orm.jdbc.bind"           level="WARN"/>
+        <logger name="org.springframework.web"               level="WARN"/>
+        <logger name="io.lettuce.core"                       level="WARN"/>
+        <logger name="org.springframework.security"          level="WARN"/>
+    </springProfile>
+
 </configuration>

@@ -11,7 +11,7 @@ import { runWithRequestTimeout } from "../utils/requestLifecycle";
 import { toast } from "react-hot-toast";
 import { 
   ClipboardCheck, Package, ShoppingBag, DollarSign, Activity, 
-  AlertTriangle, ShieldAlert, CheckCircle2, RefreshCw, BarChart3, Clock, TestTube, Zap, Database, CalendarOff
+  AlertTriangle, ShieldAlert, CheckCircle2, RefreshCw, BarChart3, Clock, TestTube, Zap, CalendarOff
 } from "lucide-react";
 import { motion } from "framer-motion";
 import PriorityActionsCard from "../components/ui/PriorityActionsCard";
@@ -126,9 +126,10 @@ export default function PharmacistDashboardPage() {
 
       {/* KPI Cards (Moved below Action Hierarchy) */}
       <motion.div 
-        className="ph-grid-5 mt-8"
+        className="@container w-full mt-8"
         variants={staggerContainer}
       >
+        <div className="grid grid-cols-1 @sm:grid-cols-2 @xl:grid-cols-5 gap-6">
         <motion.div variants={fadeInUp as any} whileHover={hoverLift as any} className="ph-card ph-card-interactive p-5 flex items-center gap-4">
           <div className="bg-emerald-500/20 p-3 rounded-xl text-emerald-400 border border-emerald-500/20">
             <ClipboardCheck className="h-6 w-6" />
@@ -184,6 +185,7 @@ export default function PharmacistDashboardPage() {
             </p>
           </div>
         </motion.div>
+        </div>
       </motion.div>
 
       {/* Quick Actions Bar */}
@@ -206,7 +208,8 @@ export default function PharmacistDashboardPage() {
         </div>
       </motion.div>
 
-      <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
+      <div className="@container w-full">
+        <div className="grid gap-6 @xl:grid-cols-[2fr_1fr]">
         <div className="space-y-6">
           
           {/* Priority Actions & Alerts */}
@@ -422,6 +425,7 @@ export default function PharmacistDashboardPage() {
           </div>
           
         </div>
+      </div>
       </div>
     </motion.div>
   );

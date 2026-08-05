@@ -1,20 +1,27 @@
 import { trackTelemetry } from "../services/telemetry";
-import { DynamicStateObject } from "./../types/DynamicState";
 
 const DEFAULT_TIMEOUT_MS = 12000;
 
-export function isAbortLikeError(error: DynamicStateObject) {
-  return error?.name === "AbortError"
-    || error?.name === "CanceledError"
-    || error?.code === "ERR_CANCELED";
+export interface RequestTimeoutOptions {
+  timeoutMs?: number;
+  signal?: AbortSignal;
+  timeoutMessage?: string;
 }
 
-export async function runWithRequestTimeout(executor: DynamicStateObject, options: { timeoutMs?: number, signal?: AbortSignal, timeoutMessage?: string } = {}) {
-  const timeoutMs = Number.isFinite((options.timeoutMs as any)) ? (options.timeoutMs as any) : DEFAULT_TIMEOUT_MS;
+export function isAbortLikeError(error: unknown) {
+  const err = error as { name?: string; code?: string } | null;
+  return err?.name === "AbortError"
+    || err?.name === "CanceledError"
+    || err?.code === "ERR_CANCELED";
+}
+
+export async function runWithRequestTimeout<T>(
+  executor: (signal: AbortSignal) => Promise<T>,
+  options: RequestTimeoutOptions = {}
+): Promise<T> {
+  const timeoutMs = Number.isFinite(options.timeoutMs) ? (options.timeoutMs as number) : DEFAULT_TIMEOUT_MS;
   const controller = new AbortController();
   const externalSignal = options.signal;
-  let timeoutId: DynamicStateObject;
-
   const abortFromParent = () => {
     if (!controller.signal.aborted) {
       controller.abort();
@@ -29,7 +36,7 @@ export async function runWithRequestTimeout(executor: DynamicStateObject, option
     }
   }
 
-  timeoutId = window.setTimeout(() => {
+  const timeoutId = window.setTimeout(() => {
     if (!controller.signal.aborted) {
       controller.abort();
     }
@@ -37,7 +44,7 @@ export async function runWithRequestTimeout(executor: DynamicStateObject, option
 
   try {
     return await executor(controller.signal);
-  } catch (error: DynamicStateObject) {
+  } catch (error: unknown) {
     if (isAbortLikeError(error) && !externalSignal?.aborted) {
       const timeoutError = new Error(options.timeoutMessage || "The request took too long to complete.");
       timeoutError.name = "TimeoutError";
@@ -45,21 +52,24 @@ export async function runWithRequestTimeout(executor: DynamicStateObject, option
     }
     throw error;
   } finally {
-    window.clearTimeout(timeoutId);
+    if (timeoutId !== undefined) {
+      window.clearTimeout(timeoutId);
+    }
     if (externalSignal) {
       externalSignal.removeEventListener("abort", abortFromParent);
     }
   }
 }
 
-export function logAsyncFailure(scope: DynamicStateObject, error: DynamicStateObject, extra = {}) {
+export function logAsyncFailure(scope: string, error: unknown, extra: Record<string, unknown> = {}) {
+  const err = error as { message?: string } | null;
   if (import.meta.env.DEV) {
     console.error(`[TeleCare+] ${scope}`, error, extra);
   }
 
   trackTelemetry("ui:async-failure", {
     scope,
-    message: String(error?.message || "Unknown error"),
+    message: String(err?.message || "Unknown error"),
     ...extra
   }, {
     level: "warn",

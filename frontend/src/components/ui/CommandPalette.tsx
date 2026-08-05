@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Command } from "cmdk";
 import { useNavigate } from "react-router-dom";
-import { Search, Monitor, Settings, Activity, Users, Calendar, LogOut, Sun, Moon } from "lucide-react";
+import { Search, Monitor, Settings, Activity, Users, Calendar, LogOut } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useLanguage } from "../../context/LanguageContext";
 import { AnimatePresence, motion } from "framer-motion";
@@ -98,14 +98,14 @@ export default function CommandPalette() {
 
               <Command.Group heading="Actions" className="px-2 py-1 pt-4 text-xs font-medium text-gray-400">
                 <Command.Item
-                  onSelect={() => handleSelect(() => console.log("Toggle Theme"))}
+                  onSelect={() => handleSelect(() => navigate("/patient/profile"))}
                   className="mt-1 flex cursor-pointer items-center rounded-md px-3 py-2.5 text-sm text-[var(--tc-text)] hover:bg-[var(--tc-accent)] hover:text-white aria-selected:bg-[var(--tc-accent)] aria-selected:text-white"
                 >
                   <Monitor className="mr-3 h-4 w-4" />
                   Toggle Theme (Dark / Light)
                 </Command.Item>
                 <Command.Item
-                  onSelect={() => handleSelect(() => console.log("Open Settings"))}
+                  onSelect={() => handleSelect(() => navigate("/patient/profile"))}
                   className="flex cursor-pointer items-center rounded-md px-3 py-2.5 text-sm text-[var(--tc-text)] hover:bg-[var(--tc-accent)] hover:text-white aria-selected:bg-[var(--tc-accent)] aria-selected:text-white"
                 >
                   <Settings className="mr-3 h-4 w-4" />

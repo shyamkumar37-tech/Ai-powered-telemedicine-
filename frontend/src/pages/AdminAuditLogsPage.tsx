@@ -21,7 +21,7 @@ export default function AdminAuditLogsPage() {
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      let endpoint = activeTab === "access" ? "/admin/audit-logs/access" : "/admin/audit-logs/ai";
+      const endpoint = activeTab === "access" ? "/admin/audit-logs/access" : "/admin/audit-logs/ai";
       const params: any = { page, size: 20 };
       
       if (activeTab === "access") {

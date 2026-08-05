@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { LANGUAGE_CONTEXT_FALLBACK, useLanguage } from "../context/LanguageContext";
 import { normalizeRole } from "../utils/roleUtils";
-import { DynamicStateObject } from "./../types/DynamicState";
 
 export default function NotFoundPage() {
   const { auth } = useAuth();

@@ -1,4 +1,3 @@
-import { DynamicStateObject } from "./../types/DynamicState";
 
 export const supportedLanguages = [{ code: 'en', label: 'English' }, { code: 'hi', label: 'Hindi' }, { code: 'ta', label: 'Tamil' }, { code: 'te', label: 'Telugu' }, { code: 'kn', label: 'Kannada' }, { code: 'ml', label: 'Malayalam' }, { code: 'gu', label: 'Gujarati' }, { code: 'pa', label: 'Punjabi' }];
 
@@ -2627,8 +2626,8 @@ Object.assign(pa, {
 
 export const labels = { en, hi, ml, te, pa, ta };
 
-export const t = (language: DynamicStateObject, key: string) => {
-  const translated = ((labels as Record<string, Record<string, string>>)[language] as any)?.[key] ?? (labels.en as Record<string, string>)[key] ?? key;
+export const t = (language: string, key: string) => {
+  const translated = ((labels as Record<string, Record<string, string>>)[language] as Record<string, string>)?.[key] ?? (labels.en as Record<string, string>)[key] ?? key;
   return language === "en" ? translated : translateDisplayText(language, translated);
 };
 
@@ -4574,13 +4573,13 @@ const voiceAccessibilityDisplayLabels = {
   }
 };
 
-function buildReverseIndex(collection: DynamicStateObject) {
-  const index = new Map();
-  Object.values(collection || {}).forEach((entries: DynamicStateObject) => {
+function buildReverseIndex(collection: Record<string, Record<string, string>>) {
+  const index = new Map<string, string>();
+  Object.values(collection || {}).forEach((entries: Record<string, string>) => {
     if (!entries || typeof entries !== "object") {
       return;
     }
-    Object.entries(entries).forEach(([key, value]: DynamicStateObject) => {
+    Object.entries(entries).forEach(([key, value]: [string, string]) => {
       if (value === null || value === undefined) {
         return;
       }
@@ -4643,7 +4642,7 @@ function shouldUsePartialReplacement(source: string, target: string) {
   }
 
   const trimmed = String(source).trim();
-  const hasDelimiter = [" ", "-", ":", "/", "|"].some((character: DynamicStateObject) => trimmed.includes(character));
+  const hasDelimiter = [" ", "-", ":", "/", "|"].some((character: string) => trimmed.includes(character));
   if (trimmed.length < 4 && !hasDelimiter) {
     return false;
   }
@@ -4664,7 +4663,7 @@ function getPartialReplacementEntries(language: string) {
 
 function replaceKnownDisplayFragments(language: string, text: string) {
   const entries = getPartialReplacementEntries(language);
-  return entries.reduce((current: DynamicStateObject, [source, target]) => {
+  return entries.reduce((current: string, [source, target]: [string, string]) => {
     const pattern = new RegExp(escapeDisplayPattern(source), "gi");
     return current.replace(pattern, target);
   }, text);
@@ -5046,8 +5045,8 @@ export const translateDisplayText = (language: string, value: string | number | 
     ]
   };
 
-  const transformed = ((replacementRules as any)[language] || []).reduce(
-    (current: DynamicStateObject, [pattern, replacement]: DynamicStateObject) => current.replace(pattern, replacement),
+  const transformed = ((replacementRules as unknown as Record<string, [RegExp | string, string][]>)[language] || []).reduce(
+    (current: string, [pattern, replacement]: [RegExp | string, string]) => current.replace(pattern, replacement as string),
     text
   );
   const freeTextTranslated = replaceKnownDisplayFragments(language, transformed);

@@ -124,7 +124,9 @@ export default function PatientHealthPage() {
                     acceptAllDevices: true,
                     optionalServices: ['heart_rate']
                   });
-                  console.log("Paired with", device.name);
+                  if (import.meta.env.DEV) {
+                    console.log("Paired with", device.name);
+                  }
                   alert("Successfully paired with wearable device: " + device.name);
                 } catch (err: DynamicStateObject) {
                   console.error("Bluetooth pairing failed", err);

@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import PageContainer from "../components/ui/PageContainer";
 import { useLanguage } from "../context/LanguageContext";
-import { DynamicStateObject } from "./../types/DynamicState";
 
 export default function TermsPage() {
   const { translateUiText = (value: string | number) => value , t } = useLanguage();

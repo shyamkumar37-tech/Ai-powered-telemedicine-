@@ -1,4 +1,4 @@
-import { DynamicState, DynamicStateObject } from "./../types/DynamicState";
+import { DynamicState } from "./../types/DynamicState";
 import { useLanguage } from "../context/LanguageContext";
 import { useEffect, useRef, useState, ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";

@@ -2,7 +2,7 @@ import axios from "axios";
 import { trackApiFailure, trackAuthEvent, trackTelemetry } from "./telemetry";
 import { safeJsonParse } from "../utils/safeJson";
 import { normalizeAuth } from "../utils/normalizeAuth";
-import { AUTH_CHANGED_EVENT, AUTH_STORAGE_KEY, clearAuthStorageArtifacts } from "../utils/authSession";
+import { AUTH_CHANGED_EVENT, AUTH_STORAGE_KEY, clearAuthStorageArtifacts, getInMemoryAccessToken, setInMemoryAccessToken } from "../utils/authSession";
 import { DynamicStateObject } from "./../types/DynamicState";
 
 export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api").replace(/\/+$/, "");
@@ -84,8 +84,36 @@ function getStoredAuthObject() {
 }
 
 export const getStoredAuthToken = () => {
-    return localStorage.getItem('token');
+    return getInMemoryAccessToken();
 };
+
+let refreshPromise: Promise<string | null> | null = null;
+
+export async function silentRefreshToken(): Promise<string | null> {
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = (async () => {
+    try {
+      const response = await api.post("/auth/refresh", {}, {
+        metadata: { isAuthRequest: true },
+        withCredentials: true
+      } as any);
+      const newToken = response.data?.token || response.data?.accessToken;
+      if (newToken) {
+        setInMemoryAccessToken(newToken);
+        return newToken;
+      }
+      return null;
+    } catch {
+      setInMemoryAccessToken(null);
+      return null;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
+}
 
 export const uploadFile = async (file: DynamicStateObject) => {
     const formData = new FormData();
@@ -426,17 +454,17 @@ api.interceptors.request.use((config: DynamicStateObject) => {
   (config.headers as DynamicStateObject)["Accept-Language"] = getStoredLanguage();
   
   config.metadata = metadata;
-  console.log("[BOOTSTRAP]", {
-    step: "api-request",
-    method: String(config.method || "get").toUpperCase(),
-    url: config.url,
-    authenticated: Boolean(token),
-    authRequest: isAuthRequest
-  });
-  if (typeof window !== "undefined" && window.__TELECARE_LOCAL_RUNTIME__) {
+  if (import.meta.env.DEV && typeof window !== "undefined" && window.__TELECARE_LOCAL_RUNTIME__) {
+    console.log("[BOOTSTRAP]", {
+      step: "api-request",
+      method: String(config.method || "get").toUpperCase(),
+      url: config.url,
+      authenticated: Boolean(token),
+      authRequest: isAuthRequest
+    });
     try {
       console.log("[TeleCare+] api.request", { method: config.method, url: config.url, headers: { ...(config.headers || {}) } });
-    } catch (err: DynamicStateObject) {
+    } catch {
       // ignore
     }
   }
@@ -444,37 +472,37 @@ api.interceptors.request.use((config: DynamicStateObject) => {
 });
 
 api.interceptors.response.use(
-  (response: DynamicStateObject) => {
-    console.log("[BOOTSTRAP]", {
-      step: "api-response",
-      method: String(response.config?.method || "get").toUpperCase(),
-      url: response.config?.url,
-      status: response.status
-    });
-    if (typeof window !== "undefined" && window.__TELECARE_LOCAL_RUNTIME__) {
+  (response: any) => {
+    if (import.meta.env.DEV && typeof window !== "undefined" && window.__TELECARE_LOCAL_RUNTIME__) {
+      console.log("[BOOTSTRAP]", {
+        step: "api-response",
+        method: String(response.config?.method || "get").toUpperCase(),
+        url: response.config?.url,
+        status: response.status
+      });
       try {
         console.log("[TeleCare+] api.response", { method: response.config?.method, url: response.config?.url, status: response.status });
-      } catch (err: DynamicStateObject) {
+      } catch (err: unknown) {
         // ignore
       }
     }
-    if ((response.config?.method || "get").toLowerCase() === "get" && response?.data !== undefined) {
+    if (((response.config?.method || "get").toString()).toLowerCase() === "get" && response?.data !== undefined) {
       writeCachedResponse(response.config, response.data);
     }
     return response;
   },
-  (error: DynamicStateObject) => {
-    console.log("[BOOTSTRAP]", {
-      step: "api-error",
-      method: String(error?.config?.method || "get").toUpperCase(),
-      url: error?.config?.url,
-      status: error?.response?.status ?? null,
-      message: error?.message ?? "Unknown API error"
-    });
-    if (typeof window !== "undefined" && window.__TELECARE_LOCAL_RUNTIME__) {
+  (error: any) => {
+    if (import.meta.env.DEV && typeof window !== "undefined" && window.__TELECARE_LOCAL_RUNTIME__) {
+      console.log("[BOOTSTRAP]", {
+        step: "api-error",
+        method: String(error?.config?.method || "get").toUpperCase(),
+        url: error?.config?.url,
+        status: error?.response?.status ?? null,
+        message: error?.message ?? "Unknown API error"
+      });
       try {
         console.log("[TeleCare+] api.error", { message: error?.message, url: error?.config?.url, status: error?.response?.status });
-      } catch (err: DynamicStateObject) {
+      } catch (err: unknown) {
         // ignore
       }
     }

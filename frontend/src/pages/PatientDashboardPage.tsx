@@ -7,7 +7,8 @@ import { fetchDashboard } from "../services/telecareService";
 import { buildLoginRedirect } from "../utils/authSession";
 import { useLanguage } from "../context/LanguageContext";
 import PatientSidebar from "../components/PatientSidebar";
-import { LogOut, Menu } from "lucide-react";
+import EmergencySosModal from "../components/patient/EmergencySosModal";
+import { LogOut, Menu, AlertTriangle } from "lucide-react";
 import { DynamicStateObject, DynamicState } from "./../types/DynamicState";
 
 export default function PatientDashboardPage() {
@@ -17,6 +18,7 @@ export default function PatientDashboardPage() {
 
   const [liveTime, setLiveTime] = useState<DynamicState>("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSosOpen, setIsSosOpen] = useState(false);
 
   const { data: dashboardData } = useQuery({
     queryKey: ["dashboard", "patient", auth?.profileId],
@@ -64,6 +66,14 @@ export default function PatientDashboardPage() {
             <p className="subtext">Here's what needs your attention today, {formattedDate}.</p>
           </div>
           <div className="status-pills">
+            <button
+              onClick={() => setIsSosOpen(true)}
+              aria-label="Emergency SOS"
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-lg shadow-rose-600/30 active:scale-95 transition-all cursor-pointer border border-rose-400/40"
+            >
+              <AlertTriangle size={15} className="text-white animate-pulse" />
+              <span>Emergency SOS</span>
+            </button>
             <LanguageSwitcher hideLabel />
             <span className="pill verified"><i className="ti ti-shield-check"></i>Verified care team</span>
             <span className="pill live"><span className="dot"></span>Live · {liveTime || "02:03 pm"}</span>
@@ -248,6 +258,8 @@ export default function PatientDashboardPage() {
           </div>
         </section>
       </main>
+
+      <EmergencySosModal isOpen={isSosOpen} onClose={() => setIsSosOpen(false)} />
     </div>
   );
 }

@@ -32,4 +32,38 @@ test.describe("Security route guards", () => {
     const storedAuth = await page.evaluate(() => localStorage.getItem("telecareplus-auth"));
     expect(storedAuth).toBeNull();
   });
+
+  test("no plaintext passwords or raw JWT secrets leak into browser storage", async ({ page }) => {
+    await loginAs(page, TEST_ACCOUNTS.patient);
+    
+    const { keys, values } = await page.evaluate(() => {
+      const k = [];
+      const v = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        k.push(key);
+        v.push(localStorage.getItem(key));
+      }
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const key = sessionStorage.key(i);
+        k.push(key);
+        v.push(sessionStorage.getItem(key));
+      }
+      return { keys: k, values: v };
+    });
+
+    const jwtPattern = /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/;
+
+    for (const key of keys) {
+      expect(key.toLowerCase()).not.toContain("password");
+      expect(key.toLowerCase()).not.toContain("secret");
+      expect(key.toLowerCase()).not.toContain("jwt");
+    }
+
+    for (const val of values) {
+      if (typeof val === "string") {
+        expect(jwtPattern.test(val.trim())).toBe(false);
+      }
+    }
+  });
 });

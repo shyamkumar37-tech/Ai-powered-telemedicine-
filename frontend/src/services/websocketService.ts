@@ -1,84 +1,94 @@
-import { Client } from "@stomp/stompjs";
+import { Client, Frame, StompSubscription } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import { API_BASE_URL } from "./api";
-import { DynamicStateObject } from "./../types/DynamicState";
+
+export type StateListener = (connected: boolean) => void;
+export type MessageCallback = (data: unknown) => void;
 
 class WebSocketService {
-  client: any;
+  client: Client | null;
   connected: boolean;
-  subscriptions: Map<any, any>;
+  subscriptions: Map<string, StompSubscription>;
   reconnectAttempts: number;
   maxReconnectDelay: number;
-  listeners: Set<any>;
+  listeners: Set<StateListener>;
+
   constructor() {
     this.client = null;
     this.connected = false;
     this.subscriptions = new Map();
     this.reconnectAttempts = 0;
-    this.maxReconnectDelay = 30000; // Max 30 seconds
+    this.maxReconnectDelay = 30000;
     this.listeners = new Set();
   }
 
-  addStateListener(callback: DynamicStateObject) {
-    (this.listeners.add as any)(callback);
+  addStateListener(callback: StateListener) {
+    this.listeners.add(callback);
     callback(this.connected);
     return () => this.listeners.delete(callback);
   }
 
   notifyStateChange() {
-    this.listeners.forEach((cb: DynamicStateObject) => cb(this.connected));
+    this.listeners.forEach((cb) => cb(this.connected));
   }
 
-  connect(token: DynamicStateObject, onConnect: DynamicStateObject, onError: DynamicStateObject) {
+  connect(token?: string, onConnect?: (frame?: Frame) => void, onError?: (frame?: Frame) => void) {
     if (this.client && this.connected) {
       if (onConnect) onConnect();
       return;
     }
 
     const calculateDelay = () => {
-      // Exponential backoff: 2^attempts * 1000ms
       const delay = Math.min(Math.pow(2, this.reconnectAttempts) * 1000, this.maxReconnectDelay);
       this.reconnectAttempts++;
-      console.warn(`[STOMP] Reconnecting in ${delay}ms (Attempt ${this.reconnectAttempts})`);
+      if (import.meta.env.DEV) {
+        console.warn(`[STOMP] Reconnecting in ${delay}ms (Attempt ${this.reconnectAttempts})`);
+      }
       return delay;
     };
+
     this.client = new Client({
       webSocketFactory: () => new SockJS(`${API_BASE_URL}/ws-telecare`),
-      connectHeaders: {
-        Authorization: `Bearer ${token}`
-      },
-      debug: (str: DynamicStateObject) => {
+      connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
+      debug: (str: string) => {
         if (import.meta.env.DEV) {
-          // console.debug("[STOMP]", str); // Muted in dev to avoid noise
+          // console.debug("[STOMP]", str);
         }
       },
-      reconnectDelay: 1000, // This is overridden by beforeConnect
+      reconnectDelay: 1000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
       beforeConnect: () => {
-         // STOMP.js doesn't natively support dynamic backoff via property, 
-         // but we can simulate connection retry logic or let it reconnect with a fixed delay.
-         // Let's implement the dynamic delay via timeout wrapper if needed.
-         this.client.reconnectDelay = calculateDelay();
+        if (this.client) {
+          this.client.reconnectDelay = calculateDelay();
+        }
       }
     });
-    this.client.onConnect = (frame: DynamicStateObject) => {
+
+    this.client.onConnect = (frame: Frame) => {
       this.connected = true;
-      this.reconnectAttempts = 0; // Reset on success
+      this.reconnectAttempts = 0;
       this.notifyStateChange();
       if (onConnect) onConnect(frame);
     };
+
     this.client.onWebSocketClose = () => {
       if (this.connected) {
-         this.connected = false;
-         this.notifyStateChange();
-         console.warn("[STOMP] Connection lost. Attempting reconnect...");
+        this.connected = false;
+        this.notifyStateChange();
+        if (import.meta.env.DEV) {
+          console.warn("[STOMP] Connection lost. Attempting reconnect...");
+        }
       }
     };
-    this.client.onStompError = (frame: DynamicStateObject) => {
-      console.error("[STOMP] Broker error: " + (frame.headers as DynamicStateObject)["message"]);
+
+    this.client.onStompError = (frame: Frame) => {
+      if (import.meta.env.DEV) {
+        console.error("[STOMP] Broker error: " + frame.headers["message"]);
+      }
       if (onError) onError(frame);
     };
+
     this.client.activate();
   }
 
@@ -91,20 +101,22 @@ class WebSocketService {
     }
   }
 
-  subscribe(destination: DynamicStateObject, callback: DynamicStateObject) {
+  subscribe(destination: string, callback: MessageCallback): StompSubscription | null {
     if (!this.client || !this.connected) {
-      console.warn("[STOMP] Cannot subscribe, not connected.");
+      if (import.meta.env.DEV) {
+        console.warn("[STOMP] Cannot subscribe, not connected.");
+      }
       return null;
     }
     if (this.subscriptions.has(destination)) {
-      return this.subscriptions.get(destination);
+      return this.subscriptions.get(destination)!;
     }
-    const subscription = this.client.subscribe(destination, (message: DynamicStateObject) => {
+    const subscription = this.client.subscribe(destination, (message) => {
       if (message.body) {
         try {
           const parsed = JSON.parse(message.body);
           callback(parsed);
-        } catch (e: DynamicStateObject) {
+        } catch {
           callback(message.body);
         }
       }
@@ -113,25 +125,23 @@ class WebSocketService {
     return subscription;
   }
 
-  unsubscribe(destination: DynamicStateObject) {
+  unsubscribe(destination: string) {
     if (this.subscriptions.has(destination)) {
-      this.subscriptions.get(destination).unsubscribe();
+      this.subscriptions.get(destination)!.unsubscribe();
       this.subscriptions.delete(destination);
     }
   }
 
-  send(destination: DynamicStateObject, body: DynamicStateObject, headers = {}) {
-    if (!this.client || !this.connected) {
-      console.warn("[STOMP] Cannot send message, not connected.");
-      return;
+  send(destination: string, body: any) {
+    if (this.client && this.connected) {
+      this.client.publish({
+        destination,
+        body: typeof body === "string" ? body : JSON.stringify(body)
+      });
     }
-    this.client.publish({
-      destination,
-      body: JSON.stringify(body),
-      headers
-    });
   }
-
 }
 
-export const wsService = new WebSocketService();
+export const websocketService = new WebSocketService();
+export const wsService = websocketService;
+

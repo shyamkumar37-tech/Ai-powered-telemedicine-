@@ -1,4 +1,4 @@
-import { DynamicState, DynamicStateObject } from "./../../types/DynamicState";
+import { DynamicState } from "./../../types/DynamicState";
 export interface LoadingSkeletonProps {
   className?: DynamicState;
     [key: string]: ReturnType<typeof JSON.parse>;

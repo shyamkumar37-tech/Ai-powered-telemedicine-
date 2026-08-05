@@ -6,7 +6,7 @@ import { useLanguage } from "../context/LanguageContext";
 import { fetchPatientPrescriptions } from "../services/telecareService";
 import { getApiErrorMessage } from "../utils/apiError";
 import PatientSidebar from "../components/PatientSidebar";
-import { User, LogOut, Pill, AlertTriangle, RefreshCw, FileText, CalendarDays, ShieldCheck, Truck } from "lucide-react";
+import { LogOut, AlertTriangle, RefreshCw, FileText, CalendarDays, ShieldCheck, Truck } from "lucide-react";
 import { buildLoginRedirect } from "../utils/authSession";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import { useState, useEffect } from "react";
@@ -16,7 +16,7 @@ import SockJS from "sockjs-client";
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { DynamicState, DynamicStateObject } from "../types/DynamicState";
+import { DynamicStateObject } from "../types/DynamicState";
 
 // Fix Leaflet's default icon path issues with Webpack/Vite
 delete L.Icon.Default.prototype._getIconUrl;

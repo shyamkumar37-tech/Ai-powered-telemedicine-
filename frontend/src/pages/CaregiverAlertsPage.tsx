@@ -69,7 +69,7 @@ export default function CaregiverAlertsPage() {
         setAlerts((current: DynamicStateObject) => [alert, ...current.filter((item: DynamicStateObject) => item.id !== alert.id)]);
         setError("");
         if (!pushState.subscribed) {
-          notifyBrowser(alert.patientName, translateDisplayText(language, alert.message));
+          notifyBrowser(String(alert.patientName || "Alert"), String(translateDisplayText(language, alert.message)));
         }
       },
       () => {}
@@ -128,7 +128,7 @@ export default function CaregiverAlertsPage() {
 
   const processedAlerts = useMemo(() => {
     // Apply filters
-    let filtered = alerts.filter((alert: DynamicStateObject) => {
+    const filtered = alerts.filter((alert: DynamicStateObject) => {
       const isActioned = !!(actionedAlerts as DynamicStateObject)[alert.id];
       const isDismissed = isActioned && (actionedAlerts as DynamicStateObject)[alert.id].action === 'dismiss';
       

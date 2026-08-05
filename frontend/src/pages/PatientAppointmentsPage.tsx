@@ -3,8 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import { buildLoginRedirect } from "../utils/authSession";
 import { useLanguage } from "../context/LanguageContext";
-import {
-  Stethoscope, User, LogOut, Clock, Calendar, CheckCircle2, AlertTriangle, Plus, CalendarDays
+import { LogOut, Clock, Calendar, CheckCircle2, AlertTriangle, Plus, CalendarDays
 } from "lucide-react";
 import PatientSidebar from "../components/PatientSidebar";
 import LanguageSwitcher from "../components/LanguageSwitcher";
@@ -215,8 +214,10 @@ export default function PatientAppointmentsPage() {
       <QRCheckIn 
         isOpen={isQROpen}
         onClose={() => setIsQROpen(false)}
-        onScanSuccess={(decodedText: DynamicStateObject) => {
-          console.log("Check in successful for ID:", decodedText);
+        onScanSuccess={(decodedText: unknown) => {
+          if (import.meta.env.DEV) {
+            console.log("Check in successful for ID:", decodedText);
+          }
         }}
       />
     </div>

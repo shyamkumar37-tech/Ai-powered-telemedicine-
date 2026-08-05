@@ -1,5 +1,5 @@
-import { DynamicState, DynamicStateObject } from "./../../types/DynamicState";
-import React, { useEffect, useState } from 'react';
+import { DynamicState } from "./../../types/DynamicState";
+import { useEffect, useState } from 'react';
 
 export interface ProgressRingProps {
   progress?: DynamicState;

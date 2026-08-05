@@ -1,0 +1,62 @@
+name: TeleCare+ Security, Testing & Code Quality Hardening Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  hardening-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Install Frontend Dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Run TypeScript Strict Type Check
+        run: |
+          cd frontend
+          npm run typecheck
+
+      - name: Run ESLint Quality Audit
+        run: |
+          cd frontend
+          npm run lint
+
+      - name: Run Vitest Unit & Schema Validation Tests
+        run: |
+          cd frontend
+          npx vitest run
+
+      - name: Run Security Vulnerability Audit
+        run: |
+          cd frontend
+          npm audit --audit-level=high
+
+      - name: Install Playwright Browsers
+        run: |
+          cd frontend
+          npx playwright install --with-deps chromium
+
+      - name: Run Playwright E2E & WCAG 2.1 AA Accessibility Tests
+        run: |
+          cd frontend
+          npx playwright test tests/smoke-login.spec.js tests/security-route-guards.spec.js tests/regression-language-persistence.spec.js tests/regression-mobile-overflow.spec.js tests/remediation-regression.spec.js tests/accessibility-a11y.spec.js --project=chromium
+
+      - name: Validate Production PWA Build Bundle
+        run: |
+          cd frontend
+          npm run build

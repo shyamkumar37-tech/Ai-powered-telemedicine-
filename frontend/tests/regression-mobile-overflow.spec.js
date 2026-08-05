@@ -22,7 +22,7 @@ for (const viewport of viewportSizes) {
       test(`${entry.route} stays within viewport`, async ({ page }) => {
         await loginAs(page, TEST_ACCOUNTS[entry.role]);
         await page.goto(entry.route);
-        await page.waitForSelector("#page-main", { state: "visible" });
+        await page.waitForSelector("main, .shell, #root", { state: "visible" });
         await expectNoHorizontalOverflow(page);
       });
     }

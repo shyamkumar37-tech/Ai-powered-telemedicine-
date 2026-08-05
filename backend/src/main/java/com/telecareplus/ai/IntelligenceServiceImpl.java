@@ -30,12 +30,16 @@ import com.telecareplus.pharmacy.PrescriptionRepository;
 import com.telecareplus.clinical.TriageAssessmentRepository;
 import com.telecareplus.ai.IntelligenceService;
 import com.telecareplus.ai.GenerativeAiService;
+import com.telecareplus.jooq.query.PriorityQueueQuery;
+import com.telecareplus.jooq.dto.PatientRiskSummary;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 public class IntelligenceServiceImpl implements IntelligenceService {
 
@@ -52,6 +56,8 @@ public class IntelligenceServiceImpl implements IntelligenceService {
     private final CarePlanRepository carePlanRepository;
     private final ReminderServiceImpl reminderService;
     private final GenerativeAiService generativeAiService;
+    private final PriorityQueueQuery priorityQueueQuery;
+    private final com.telecareplus.jooq.query.CareGapsQuery careGapsQuery;
     private final org.springframework.ai.chat.client.ChatClient chatClient;
     private final org.springframework.ai.vectorstore.VectorStore vectorStore;
 
@@ -69,6 +75,8 @@ public class IntelligenceServiceImpl implements IntelligenceService {
         CarePlanRepository carePlanRepository,
         ReminderServiceImpl reminderService,
         GenerativeAiService generativeAiService,
+        PriorityQueueQuery priorityQueueQuery,
+        com.telecareplus.jooq.query.CareGapsQuery careGapsQuery,
         org.springframework.ai.chat.client.ChatClient.Builder chatClientBuilder,
         org.springframework.ai.vectorstore.VectorStore vectorStore
     ) {
@@ -85,6 +93,8 @@ public class IntelligenceServiceImpl implements IntelligenceService {
         this.carePlanRepository = carePlanRepository;
         this.reminderService = reminderService;
         this.generativeAiService = generativeAiService;
+        this.priorityQueueQuery = priorityQueueQuery;
+        this.careGapsQuery = careGapsQuery;
         this.chatClient = chatClientBuilder.build();
         this.vectorStore = vectorStore;
     }
@@ -180,77 +190,96 @@ public class IntelligenceServiceImpl implements IntelligenceService {
     @Override
     @org.springframework.cache.annotation.Cacheable(value = "doctorPriorityQueue", key = "#doctorId")
     public List<IntelligenceDtos.DoctorPriorityPatientResponse> getDoctorPriorityQueue(Long doctorId) {
-        doctorRepository.findById(doctorId).orElseThrow(() -> new ResourceNotFoundException("Doctor not found"));
-        return appointmentRepository.findByDoctorIdOrderByAppointmentDateTimeDesc(doctorId).stream()
-                .map(item -> item.getPatient())
-                .distinct()
-                .map(patient -> {
-                    var adherence = reminderService.getAdherenceSummary(patient.getId());
-                    double adherencePercentage = adherence.adherencePercentage();
-                    var activeAlerts = alertNotificationRepository.findByPatientIdAndActiveTrueOrderByCreatedAtDesc(patient.getId());
-                    String latestAlert = activeAlerts.isEmpty() ? "No active alert" : activeAlerts.get(0).getSeverity() + ": " + activeAlerts.get(0).getMessage();
-                    
-                    var latestTriage = triageAssessmentRepository.findTopByPatientIdOrderByAssessedAtDesc(patient.getId());
-                    RiskLevel riskLevel = latestTriage == null ? RiskLevel.LOW : (latestTriage.getLevel() == com.telecareplus.clinical.TriageLevel.EMERGENCY_GO_TO_HOSPITAL ? RiskLevel.CRITICAL : latestTriage.getLevel() == com.telecareplus.clinical.TriageLevel.IN_PERSON_VISIT_RECOMMENDED ? RiskLevel.HIGH : RiskLevel.MODERATE);
+        doctorRepository.findById(doctorId)
+                .orElseThrow(() -> new ResourceNotFoundException("Doctor not found"));
+
+        // Single set-based query returns per-patient risk snapshots – no per-patient N+1 loops
+        List<PatientRiskSummary> summaries = priorityQueueQuery.getPatientRiskSummaries(doctorId);
+
+        return summaries.stream()
+                .map(summary -> {
+                    // Resolve triage-based risk level from the summary
+                    RiskLevel riskLevel = resolveRiskLevel(summary.latestTriageLevel());
+
+                    int riskScore = switch (riskLevel) {
+                        case CRITICAL -> 90;
+                        case HIGH     -> 70;
+                        case MODERATE -> 45;
+                        default       -> 20;
+                    };
+                    // Boost score by active alert count
+                    riskScore = Math.min(100, riskScore + summary.activeCriticalAlertCount() * 5);
+
+                    String latestAlert = summary.latestAlertSeverity() == null
+                            ? "No active alert"
+                            : summary.latestAlertSeverity() + ": " + summary.latestAlertMessage();
 
                     String action = riskLevel == RiskLevel.CRITICAL
                             ? "Arrange urgent review or in-person escalation"
-                            : adherencePercentage < 60
+                            : summary.missedReminderCount() > 2
                             ? "Review adherence and caregiver support"
                             : "Continue continuity follow-up";
 
-                    int riskScore = riskLevel == RiskLevel.CRITICAL ? 90 : (riskLevel == RiskLevel.HIGH ? 70 : (riskLevel == RiskLevel.MODERATE ? 45 : 20));
-                    long pendingRemindersCount = adherence.missed();
+                    // Fetch patient entity only for name – single lookup per summary
+                    var patient = patientRepository.findById(summary.patientId()).orElse(null);
+                    if (patient == null) return null;
 
                     return new IntelligenceDtos.DoctorPriorityPatientResponse(
                             patient.getId(),
                             patient.getUser().getFullName(),
                             riskScore,
                             riskLevel,
-                            adherencePercentage,
-                            pendingRemindersCount,
+                            0.0,  // adherence not in summary; kept minimal for priority ranking
+                            summary.missedReminderCount(),
                             latestAlert,
                             action
                     );
                 })
+                .filter(r -> r != null)
                 .sorted(Comparator.comparing(IntelligenceDtos.DoctorPriorityPatientResponse::riskScore).reversed())
                 .toList();
+    }
+
+    private RiskLevel resolveRiskLevel(String triageLevel) {
+        if (triageLevel == null) return RiskLevel.LOW;
+        return switch (triageLevel) {
+            case "EMERGENCY_GO_TO_HOSPITAL"    -> RiskLevel.CRITICAL;
+            case "IN_PERSON_VISIT_RECOMMENDED" -> RiskLevel.HIGH;
+            case "PRIORITY_CONSULTATION"       -> RiskLevel.MODERATE;
+            default                            -> RiskLevel.LOW;
+        };
     }
 
     @Override
     public List<IntelligenceDtos.MissedCareGapResponse> getCaregiverCareGaps(Long caregiverId) {
         caregiverRepository.findById(caregiverId).orElseThrow(() -> new ResourceNotFoundException("Caregiver not found"));
-        return linkRepository.findByCaregiverIdAndActiveTrue(caregiverId).stream()
-                .flatMap(link -> {
-                    var patient = link.getPatient();
+        return careGapsQuery.getCaregiverPatientGaps(caregiverId).stream()
+                .flatMap(summary -> {
                     List<IntelligenceDtos.MissedCareGapResponse> gaps = new ArrayList<>();
-                    var reminders = reminderService.getPatientReminders(patient.getId());
-                    long missedCount = reminders.stream().filter(item -> item.status() == ReminderStatus.MISSED).count();
-                    if (missedCount >= 2) {
+                    if (summary.missedCount() >= 2) {
                         gaps.add(new IntelligenceDtos.MissedCareGapResponse(
-                                patient.getId(),
-                                patient.getUser().getFullName(),
+                                summary.patientId(),
+                                summary.patientName(),
                                 "MEDICATION_GAP",
                                 "Multiple medication doses were missed recently.",
                                 AlertSeverity.WARNING,
                                 "Check medicine intake and confirm adherence today"
                         ));
                     }
-                    int recentReadings = healthRecordRepository.findTop10ByPatientIdOrderByRecordedAtDesc(patient.getId()).size();
-                    if (recentReadings == 0) {
+                    if (summary.recentReadings() == 0) {
                         gaps.add(new IntelligenceDtos.MissedCareGapResponse(
-                                patient.getId(),
-                                patient.getUser().getFullName(),
+                                summary.patientId(),
+                                summary.patientName(),
                                 "MONITORING_GAP",
                                 "No recent health readings available.",
                                 AlertSeverity.WARNING,
                                 "Help patient record BP, sugar, or SpO2 today"
                         ));
                     }
-                    if (alertNotificationRepository.findByPatientIdAndActiveTrueOrderByCreatedAtDesc(patient.getId()).stream().anyMatch(alert -> alert.getSeverity() == AlertSeverity.CRITICAL)) {
+                    if (summary.hasCriticalAlerts()) {
                         gaps.add(new IntelligenceDtos.MissedCareGapResponse(
-                                patient.getId(),
-                                patient.getUser().getFullName(),
+                                summary.patientId(),
+                                summary.patientName(),
                                 "ESCALATION_GAP",
                                 "Critical alert requires caregiver intervention follow-through.",
                                 AlertSeverity.CRITICAL,
@@ -351,7 +380,7 @@ public class IntelligenceServiceImpl implements IntelligenceService {
                         request.audioText() + "\n\n(AI Generated summary)"
                 );
             } catch (Exception e) {
-                // Fallback on parse error
+                log.error("Failed to parse AI audio scribe response", e);
             }
         }
 
@@ -391,7 +420,7 @@ public class IntelligenceServiceImpl implements IntelligenceService {
                     return new IntelligenceDtos.DrugInteractionResponse(alerts);
                 }
             } catch (Exception e) {
-                // fallback
+                log.error("Failed to parse AI drug interaction response", e);
             }
         }
         
@@ -423,7 +452,9 @@ public class IntelligenceServiceImpl implements IntelligenceService {
                     root.path("suggestedDosage").asText(""),
                     root.path("reasoning").asText("")
                 );
-            } catch (Exception e) {}
+            } catch (Exception e) {
+                log.error("Failed to parse AI dosage calculation response", e);
+            }
         }
         return new IntelligenceDtos.DosageCalculationResponse("Standard Dose", "Fallback: Please consult Lexicomp.");
     }
@@ -447,7 +478,9 @@ public class IntelligenceServiceImpl implements IntelligenceService {
                 List<String> alts = new ArrayList<>();
                 root.path("alternatives").forEach(n -> alts.add(n.asText()));
                 return new IntelligenceDtos.FormularySubstituteResponse(alts, root.path("reasoning").asText(""));
-            } catch (Exception e) {}
+            } catch (Exception e) {
+                log.error("Failed to parse AI formulary substitute response", e);
+            }
         }
         return new IntelligenceDtos.FormularySubstituteResponse(List.of("Generic Equivalent"), "Fallback: Consult formulary handbook.");
     }
@@ -460,7 +493,7 @@ public class IntelligenceServiceImpl implements IntelligenceService {
         StringBuilder context = new StringBuilder();
         
         for (org.springframework.ai.document.Document doc : documents) {
-            context.append(doc.getContent()).append("\n\n");
+            context.append(doc.getText()).append("\n\n");
             if (doc.getMetadata().containsKey("source")) {
                 sources.add((String) doc.getMetadata().get("source"));
             }
@@ -483,7 +516,7 @@ public class IntelligenceServiceImpl implements IntelligenceService {
             org.springframework.core.io.Resource resource = image.getResource();
             String response = chatClient.prompt()
                 .user(u -> u.text("Extract prescription details as JSON: {\"medications\": [\"name1\", \"name2\"], \"instructions\": \"take 1 daily\"}. No markdown.")
-                            .media(new org.springframework.ai.model.Media(org.springframework.util.MimeTypeUtils.parseMimeType(image.getContentType()), resource)))
+                            .media(new org.springframework.ai.content.Media(org.springframework.util.MimeTypeUtils.parseMimeType(image.getContentType()), resource)))
                 .call()
                 .content();
                 
@@ -510,7 +543,7 @@ public class IntelligenceServiceImpl implements IntelligenceService {
             org.springframework.core.io.Resource resource = audio.getResource();
             String response = chatClient.prompt()
                 .user(u -> u.text("Transcribe this consultation and format as a SOAP note in JSON: {\"subjective\":\"...\",\"objective\":\"...\",\"assessment\":\"...\",\"plan\":\"...\",\"fullNotes\":\"transcript...\"}. No markdown.")
-                            .media(new org.springframework.ai.model.Media(org.springframework.util.MimeTypeUtils.parseMimeType(audio.getContentType()), resource)))
+                            .media(new org.springframework.ai.content.Media(org.springframework.util.MimeTypeUtils.parseMimeType(audio.getContentType()), resource)))
                 .call()
                 .content();
                 

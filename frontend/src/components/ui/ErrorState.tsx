@@ -1,4 +1,4 @@
-import { DynamicState, DynamicStateObject } from "./../../types/DynamicState";
+import { DynamicState } from "./../../types/DynamicState";
 import { useLanguage } from "../../context/LanguageContext";
 export interface ErrorStateProps {
   title?: DynamicState;

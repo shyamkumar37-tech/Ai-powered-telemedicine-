@@ -1,5 +1,3 @@
-import { useEffect, useState } from "react";
-import LocalizedText from "../components/LocalizedText";
 import PremiumSectionCard from "../components/PremiumSectionCard";
 import PremiumStatCard from "../components/PremiumStatCard";
 import { useAuth } from "../context/AuthContext";
@@ -9,7 +7,6 @@ import { fetchDashboard } from "../services/telecareService";
 import { getApiErrorMessage } from "../utils/apiError";
 import { useQuery } from "@tanstack/react-query";
 import { translateDisplayText } from "../utils/i18n";
-import LoadingSkeleton from "../components/ui/LoadingSkeleton";
 import EmptyStateCard from "../components/ui/EmptyStateCard";
 import ErrorStateCard from "../components/ui/ErrorStateCard";
 import PremiumPriorityActionsCard from "../components/PremiumPriorityActionsCard";
@@ -148,31 +145,34 @@ export default function DoctorDashboardPage() {
           emptyBody={(t("youReCaughtUpContinueMonitoringYourQueue") || "You're caught up. Continue monitoring your queue.")}
         />
       </motion.div>
-      <motion.div className="doc-grid-3" variants={accessibleFadeInUp}>
-        <PremiumStatCard 
-          title={t("appointmentsLabel")} 
-          value={dashboard.totalAppointments} 
-          hint={t("allAssignedAppointments")} 
-          icon={<CalendarDays className="h-5 w-5" />} 
-          progress={todayProgress}
-        />
-        <PremiumStatCard 
-          title={t("pendingToday")} 
-          value={dashboard.pendingAppointments} 
-          hint={t("awaitingConfirmation")} 
-          icon={<ClipboardCheck className="h-5 w-5" />} 
-          progress={pendingAppointments > 0 ? 30 : 100}
-        />
-        <PremiumStatCard 
-          title={t("completedConsults")} 
-          value={dashboard.prescriptionCount} 
-          hint={t("consultationsClosed")} 
-          icon={<Stethoscope className="h-5 w-5" />} 
-          progress={100}
-        />
+      <motion.div className="@container w-full" variants={accessibleFadeInUp}>
+        <div className="grid grid-cols-1 @md:grid-cols-2 @xl:grid-cols-3 gap-6">
+          <PremiumStatCard 
+            title={t("appointmentsLabel")} 
+            value={dashboard.totalAppointments} 
+            hint={t("allAssignedAppointments")} 
+            icon={<CalendarDays className="h-5 w-5" />} 
+            progress={todayProgress}
+          />
+          <PremiumStatCard 
+            title={t("pendingToday")} 
+            value={dashboard.pendingAppointments} 
+            hint={t("awaitingConfirmation")} 
+            icon={<ClipboardCheck className="h-5 w-5" />} 
+            progress={pendingAppointments > 0 ? 30 : 100}
+          />
+          <PremiumStatCard 
+            title={t("completedConsults")} 
+            value={dashboard.prescriptionCount} 
+            hint={t("consultationsClosed")} 
+            icon={<Stethoscope className="h-5 w-5" />} 
+            progress={100}
+          />
+        </div>
       </motion.div>
-      <div className="doc-grid-2">
-        <PremiumSectionCard
+      <div className="@container w-full">
+        <div className="grid grid-cols-1 @lg:grid-cols-2 gap-6">
+          <PremiumSectionCard
           title={(
             <span className="flex items-center gap-2">
               <Stethoscope className="h-4 w-4 text-teal-400" />
@@ -229,6 +229,7 @@ export default function DoctorDashboardPage() {
             </div>
           )}
         </PremiumSectionCard>
+        </div>
       </div>
       
       <motion.div variants={accessibleFadeInUp}>

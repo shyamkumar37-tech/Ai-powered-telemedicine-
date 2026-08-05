@@ -12,17 +12,17 @@ import ErrorStateCard from "../components/ui/ErrorStateCard";
 import { Clock, Filter, ShoppingBag } from "lucide-react";
 import PharmacistDeliveryTracker from "../components/pharmacist/PharmacistDeliveryTracker";
 import { DynamicState, DynamicStateObject } from "../types/DynamicState";
+import { usePharmacistStore } from "../stores/usePharmacistStore";
 
-export default function PharmacistDispensingPage() {
+export default function PharmacistDispensingPage({ pharmacistId: propsPharmacistId }: DynamicStateObject) {
   const { auth } = useAuth();
   const { language, t } = useLanguage();
-  const pharmacistId = auth.profileId ?? auth.userId;
-  const [records, setRecords] = useState<DynamicStateObject[]>([]);
+  const pharmacistId = propsPharmacistId ?? auth?.profileId ?? auth?.userId;
+  const [records, setRecords] = useState<DynamicState>([]);
+  const [edits, setEdits] = useState<DynamicState>({});
   const [loading, setLoading] = useState<DynamicState>(true);
   const [error, setError] = useState<DynamicState>("");
-  const [edits, setEdits] = useState<DynamicState>({});
-  const [statusFilter, setStatusFilter] = useState<DynamicState>("ALL");
-  const [sortBy, setSortBy] = useState<DynamicState>("NEWEST");
+  const { statusFilter, setStatusFilter, sortBy, setSortBy } = usePharmacistStore();
 
   useEffect(() => {
     setLoading(true);

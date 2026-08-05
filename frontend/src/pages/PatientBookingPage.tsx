@@ -1,5 +1,6 @@
 import { useLanguage } from "../context/LanguageContext";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { createAppointment, fetchTriageHistory, fetchDoctors } from "../services/telecareService";
@@ -45,6 +46,25 @@ function buildSlotsForDate(date: DynamicStateObject) {
   return daySlots;
 }
 
+function BookingSubmitButton({ success, t }: { success: boolean, t: any }) {
+  const { pending } = useFormStatus();
+  return (
+    <button 
+      type="submit"
+      className="btn-primary w-full mt-6 flex justify-center py-3"
+      disabled={pending || success}
+    >
+      {success ? (
+        <><CheckCircle2 size={18} className="mr-2" /> {t("confirmed") || "Confirmed!"}</>
+      ) : pending ? (
+        <><RefreshCw size={18} className="mr-2 animate-spin" /> {t("processing") || "Processing..."}</>
+      ) : (
+        "Confirm appointment"
+      )}
+    </button>
+  );
+}
+
 export default function PatientBookingPage() {
   const { t } = useLanguage();
   const { auth, logout } = useAuth();
@@ -66,9 +86,7 @@ export default function PatientBookingPage() {
   const [mode, setMode] = useState<DynamicState>("TELECONSULTATION");
   const [concernSummary, setConcernSummary] = useState<DynamicState>("");
   
-  const [booking, setBooking] = useState<DynamicState>(false);
   const [bookingSuccess, setBookingSuccess] = useState<DynamicState>(false);
-  const [bookingError, setBookingError] = useState<DynamicState>("");
 
   const availableSlots = useMemo(() => buildSlotsForDate(selectedDate), [selectedDate]);
   const latestTriage = triageHistory[0] || null;
@@ -150,12 +168,9 @@ export default function PatientBookingPage() {
     return filtered;
   }, [doctors, query, filter]);
 
-  const confirmBooking = async () => {
-    if (!selectedDoctor || !selectedSlot) return;
+  const [bookingState, submitBookingAction, isBookingPending] = useActionState(async (prevState: any, formData: FormData) => {
+    if (!selectedDoctor || !selectedSlot) return { error: null };
     
-    setBooking(true);
-    setBookingError("");
-
     try {
       await createAppointment({
         patientId,
@@ -170,12 +185,11 @@ export default function PatientBookingPage() {
       setTimeout(() => {
         navigate("/patient/appointments");
       }, 1500);
-
+      return { error: null };
     } catch (err: DynamicStateObject) {
-      setBookingError(getApiErrorMessage(err, "Unable to confirm appointment."));
-      setBooking(false);
+      return { error: getApiErrorMessage(err, "Unable to confirm appointment.") };
     }
-  };
+  }, { error: null });
 
   return (
     <div className="h-full w-full bg-canvas text-[var(--tc-text)] font-sans flex flex-col overflow-hidden lg:flex-row">
@@ -457,25 +471,15 @@ export default function PatientBookingPage() {
                     )}
                   </div>
 
-                  {bookingError && (
+                  {bookingState.error && (
                     <div className="mt-5 p-3 bg-alert/10 border border-alert/20 text-alert rounded-element text-sm">
-                      {bookingError}
+                      {bookingState.error}
                     </div>
                   )}
 
-                  <button 
-                    className="btn-primary w-full mt-6 flex justify-center py-3"
-                    onClick={confirmBooking}
-                    disabled={booking || bookingSuccess}
-                  >
-                    {bookingSuccess ? (
-                      <><CheckCircle2 size={18} className="mr-2" /> {t("confirmed") || "Confirmed!"}</>
-                    ) : booking ? (
-                      <><RefreshCw size={18} className="mr-2 animate-spin" /> {t("processing") || "Processing..."}</>
-                    ) : (
-                      "Confirm appointment"
-                    )}
-                  </button>
+                  <form action={submitBookingAction}>
+                    <BookingSubmitButton success={bookingSuccess} t={t} />
+                  </form>
                 </div>
               )}
             </div>

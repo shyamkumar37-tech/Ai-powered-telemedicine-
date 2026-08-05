@@ -1,4 +1,4 @@
-import { DynamicState, DynamicStateObject } from "./../../types/DynamicState";
+import { DynamicState } from "./../../types/DynamicState";
 import { ReactNode } from "react";
 
 export interface PageContainerProps {

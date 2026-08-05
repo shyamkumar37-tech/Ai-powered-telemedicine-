@@ -97,8 +97,9 @@ export default function SafeAccessibilityFrame({ children }: SafeAccessibilityFr
       resetKey={`${location.pathname}:${language}`}
       fallbackTitle={fallbackCopy.title}
       fallbackBody={fallbackCopy.body}
-      children={children}
       childrenWithAccessibility={<AccessibilityFrame>{children}</AccessibilityFrame>}
-    />
+    >
+      {children}
+    </AccessibilityErrorBoundary>
   );
 }

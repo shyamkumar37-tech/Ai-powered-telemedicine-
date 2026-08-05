@@ -6,10 +6,8 @@ test('login inputs accept typing', async ({ page }) => {
   const email = page.locator('#login-email');
   const pass = page.locator('#login-password');
   await expect(email).toBeVisible({ timeout: 5000 });
-  await email.click();
-  await email.type('user@example.com');
+  await email.fill('user@example.com');
   await expect(email).toHaveValue('user@example.com');
-  await pass.click();
-  await pass.type('Secret123!');
+  await pass.fill('Secret123!');
   await expect(pass).toHaveValue('Secret123!');
 });

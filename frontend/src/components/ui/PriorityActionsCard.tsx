@@ -2,7 +2,6 @@ import { DynamicState, DynamicStateObject } from "./../../types/DynamicState";
 import { motion } from "framer-motion";
 import { AlertTriangle, CalendarDays, ClipboardList, ChevronRight } from "lucide-react";
 import Card from "./Card";
-import Button from "./Button";
 import { useLanguage } from "../../context/LanguageContext";
 import { useNavigate } from "react-router-dom";
 

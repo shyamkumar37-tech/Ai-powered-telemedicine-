@@ -18,6 +18,7 @@ import java.util.List;
 public class ReminderServiceImpl implements ReminderService {
 
     private final MedicationReminderRepository medicationReminderRepository;
+    private final com.telecareplus.jooq.query.MedicationAdherenceQuery medicationAdherenceQuery;
     private final ApplicationEventPublisher applicationEventPublisher;
 
 
@@ -43,7 +44,7 @@ public class ReminderServiceImpl implements ReminderService {
     @Override
     public ReminderDtos.AdherenceSummaryResponse getAdherenceSummary(Long patientId) {
         LocalDate today = LocalDate.now();
-        var counts = medicationReminderRepository.summarizeAdherence(patientId, today);
+        var counts = medicationAdherenceQuery.getAdherenceCounts(patientId, today);
         long taken = counts.getTaken();
         long missed = counts.getMissed();
         long total = taken + missed;

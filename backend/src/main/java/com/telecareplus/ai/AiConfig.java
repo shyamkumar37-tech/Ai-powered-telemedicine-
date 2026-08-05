@@ -18,7 +18,7 @@ public class AiConfig {
 
     @Bean
     public VectorStore vectorStore(EmbeddingModel embeddingModel) {
-        SimpleVectorStore store = new SimpleVectorStore(embeddingModel);
+        SimpleVectorStore store = SimpleVectorStore.builder(embeddingModel).build();
         File storeFile = new File("vector_store.json");
         if (storeFile.exists() && aiEnabled) {
             try {

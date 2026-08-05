@@ -208,6 +208,7 @@ function detectContentLanguage(text: DynamicStateObject, preferredLanguage = "en
   return preferredLanguage;
 }
 
+/* eslint-disable no-misleading-character-class */
 function buildSpeechSegments(text: DynamicStateObject, preferredLanguage = "en") {
   const cleaned = normalizeWhitespace(text);
   if (!cleaned) {
@@ -217,6 +218,7 @@ function buildSpeechSegments(text: DynamicStateObject, preferredLanguage = "en")
   const parts = cleaned.match(
     /[\u0B80-\u0BFF]+|[\u0C00-\u0C7F]+|[\u0D00-\u0D7F]+|[\u0A00-\u0A7F]+|[\u0900-\u097F]+|[A-Za-z0-9+./%-]+|[^A-Za-z0-9\u0900-\u097F\u0A00-\u0A7F\u0B80-\u0BFF\u0C00-\u0C7F\u0D00-\u0D7F]+/g
   ) || [cleaned];
+/* eslint-enable no-misleading-character-class */
 
   const segments: DynamicStateObject = [];
   let currentLanguage: DynamicStateObject = null;

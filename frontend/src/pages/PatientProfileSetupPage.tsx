@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   User, Mail, Phone, Calendar, ArrowRight, ArrowLeft, 
   Activity, ShieldPlus, Heart, MapPin, Pill, FileText, 
-  CheckCircle2, X, Droplet, Contact, Info, AlertCircle, Check
+  CheckCircle2, X, Droplet, Contact, Info, AlertCircle
 } from "lucide-react";
 
 // Custom UI Components with Floating Labels and High Contrast

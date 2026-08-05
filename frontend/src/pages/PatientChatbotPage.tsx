@@ -8,7 +8,7 @@ import { askChatbotQuestion, fetchChatbotHistory } from "../services/telecareSer
 import { getApiErrorMessage } from "../utils/apiError";
 import { translateDisplayText } from "../utils/i18n";
 import PatientSidebar from "../components/PatientSidebar";
-import { User, LogOut, MessageSquare, Send, AlertTriangle, ShieldCheck, Zap } from "lucide-react";
+import { LogOut, MessageSquare, Send, AlertTriangle, Zap } from "lucide-react";
 import { buildLoginRedirect } from "../utils/authSession";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import { DynamicState, DynamicStateObject } from "../types/DynamicState";

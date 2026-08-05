@@ -1,6 +1,4 @@
-import { DynamicStateObject } from "./../types/DynamicState";
-
-const ROLE_ALIASES = {
+const ROLE_ALIASES: Record<string, string> = {
   patient: "PATIENT",
   doctor: "DOCTOR",
   caregiver: "CAREGIVER",
@@ -13,7 +11,7 @@ const ROLE_ALIASES = {
   role_admin: "ADMIN"
 };
 
-export function normalizeRole(value: string | number) {
+export function normalizeRole(value: string | number | null | undefined): string | null {
   if (!value) {
     return null;
   }
@@ -22,20 +20,20 @@ export function normalizeRole(value: string | number) {
     return null;
   }
   const upper = raw.toUpperCase();
-  if ((ROLE_ALIASES as DynamicStateObject)[upper.toLowerCase()]) {
-    return (ROLE_ALIASES as DynamicStateObject)[upper.toLowerCase()];
+  if (ROLE_ALIASES[upper.toLowerCase()]) {
+    return ROLE_ALIASES[upper.toLowerCase()];
   }
-  if ((ROLE_ALIASES as DynamicStateObject)[raw.toLowerCase()]) {
-    return (ROLE_ALIASES as DynamicStateObject)[raw.toLowerCase()];
+  if (ROLE_ALIASES[raw.toLowerCase()]) {
+    return ROLE_ALIASES[raw.toLowerCase()];
   }
   if (upper.startsWith("ROLE_")) {
     const withoutPrefix = upper.slice(5);
-    return (ROLE_ALIASES as DynamicStateObject)[withoutPrefix.toLowerCase()] || withoutPrefix;
+    return ROLE_ALIASES[withoutPrefix.toLowerCase()] || withoutPrefix;
   }
-  return (ROLE_ALIASES as DynamicStateObject)[upper.toLowerCase()] || upper;
+  return ROLE_ALIASES[upper.toLowerCase()] || upper;
 }
 
-export function getDefaultRouteForRole(role: DynamicStateObject, search = "") {
+export function getDefaultRouteForRole(role: string | number | null | undefined, search = ""): string {
   const normalizedRole = normalizeRole(role);
   const suffix = search || "";
 

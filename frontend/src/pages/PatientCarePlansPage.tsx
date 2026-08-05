@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { fetchPatientCarePlans } from "../services/telecareService";
 import { getApiErrorMessage } from "../utils/apiError";
-import { CalendarDays, ClipboardList, User, LogOut, MessageSquare, CheckCircle2,
+import { CalendarDays, User, LogOut, MessageSquare, CheckCircle2,
   Edit3, ShieldCheck, AlertTriangle, RefreshCw, Link as LinkIcon
 } from "lucide-react";
 import PatientSidebar from "../components/PatientSidebar";

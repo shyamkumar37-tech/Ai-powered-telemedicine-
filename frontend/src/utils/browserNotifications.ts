@@ -1,6 +1,4 @@
-import { DynamicStateObject } from "./../types/DynamicState";
-
-export async function requestBrowserNotificationPermission() {
+export async function requestBrowserNotificationPermission(): Promise<NotificationPermission | "unsupported"> {
   if (typeof window === "undefined" || typeof Notification === "undefined") {
     return "unsupported";
   }
@@ -16,7 +14,7 @@ export async function requestBrowserNotificationPermission() {
   return Notification.requestPermission();
 }
 
-export function notifyBrowser(title: DynamicStateObject, body: DynamicStateObject) {
+export function notifyBrowser(title: string, body: string): void {
   if (typeof window === "undefined" || typeof Notification === "undefined") {
     return;
   }

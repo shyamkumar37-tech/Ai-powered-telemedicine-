@@ -1,7 +1,7 @@
 import * as ToastPrimitive from "@radix-ui/react-toast";
 import { createContext, useCallback, useContext, useMemo, useState, ReactNode } from "react";
 import { X } from "lucide-react";
-import { DynamicState, DynamicStateObject } from "../../types/DynamicState";
+import { DynamicStateObject } from "../../types/DynamicState";
 
 const ToastContext = createContext({ pushToast: (options: DynamicStateObject) => {} });
 

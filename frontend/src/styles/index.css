@@ -1,7 +1,43 @@
+@import "tailwindcss";
 @import "./theme.css";
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+
+@theme {
+  --color-canvas: #0B1121;
+  --color-surface: #151E32;
+  --color-primary: #14B8A6;
+  --color-live: #38BDF8;
+  --color-alert: #E11D48;
+  --color-ink: #F8FAFC;
+  --color-ink-muted: #94A3B8;
+
+  --font-sans: "Inter", "sans-serif";
+  --font-display: "Outfit", "sans-serif";
+  --font-mono: "'Roboto Mono'", "monospace";
+
+  --shadow-premium: 0 10px 40px -10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+  --shadow-panel: var(--tc-shadow-lg);
+  --shadow-card: var(--tc-shadow-md);
+  --shadow-lift: var(--tc-shadow-lift);
+
+  --radius-2xl: var(--tc-radius-lg);
+  --radius-3xl: var(--tc-radius-xl);
+  --radius-card: 16px;
+  --radius-element: 8px;
+
+  --animate-pulseBorder: pulseBorder 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-shimmer: shimmer 2s linear infinite;
+
+  @keyframes pulseBorder {
+    0%, 100% { border-color: rgba(56, 189, 248, 0.2); }
+    50% { border-color: rgba(56, 189, 248, 0.8); }
+  }
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+}
 
 :root{
   --canvas:#0B1121;
@@ -110,6 +146,11 @@ section{margin-bottom:22px;}
 .card{
   background:var(--surface);border:1px solid var(--border);
   border-radius:var(--card-radius);padding:16px;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card:hover{
+  border-color: rgba(20, 184, 166, 0.28);
+  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.5), 0 0 12px rgba(20, 184, 166, 0.08);
 }
 
 .priority-grid{display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:12px;}

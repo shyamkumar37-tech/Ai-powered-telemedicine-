@@ -11,7 +11,7 @@ export default tseslint.config(
   pluginReact.configs.flat.recommended,
   pluginReact.configs.flat["jsx-runtime"],
   {
-    ignores: ["dist", "node_modules", "coverage", "trace_out", "tmp-*"],
+    ignores: ["dist", "node_modules", "coverage", "trace_out", "tmp-*", "*.cjs"],
   },
   {
     files: ["**/*.{js,mjs,cjs,jsx,ts,tsx}"],

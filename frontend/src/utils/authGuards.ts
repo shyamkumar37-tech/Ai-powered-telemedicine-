@@ -1,5 +1,23 @@
 import { getDefaultRouteForRole, normalizeRole } from "./roleUtils";
-import { DynamicStateObject } from "./../types/DynamicState";
+
+export interface AuthUser {
+  role?: string | null;
+  userId?: string | number | null;
+  profileId?: string | number | null;
+  isProfileComplete?: boolean;
+  token?: string | null;
+  [key: string]: unknown;
+}
+
+export interface ProtectedRouteGuardInput {
+  auth?: AuthUser | null;
+  isAuthenticated?: boolean;
+  isAuthReady?: boolean;
+  roles?: string | string[] | null;
+  variant?: string;
+  pathname?: string;
+  languageSearch?: string;
+}
 
 export function evaluateProtectedRouteState({
   auth,
@@ -8,8 +26,8 @@ export function evaluateProtectedRouteState({
   roles,
   variant,
   pathname,
-  languageSearch
-}: DynamicStateObject) {
+  languageSearch = ""
+}: ProtectedRouteGuardInput) {
   const normalizedRole = normalizeRole(auth?.role);
 
   if (!isAuthReady) {
@@ -35,7 +53,8 @@ export function evaluateProtectedRouteState({
     };
   }
 
-  if (roles && !roles.includes(normalizedRole)) {
+  const roleArray = Array.isArray(roles) ? roles : roles ? [roles] : null;
+  if (roleArray && !roleArray.includes(normalizedRole)) {
     const redirectHome = getDefaultRouteForRole(normalizedRole, languageSearch);
     if (variant === "shell" && pathname !== redirectHome.replace(languageSearch, "")) {
       return {
@@ -77,7 +96,7 @@ export function evaluateProtectedRouteState({
   };
 }
 
-export function buildAuthSnapshot(auth: DynamicStateObject) {
+export function buildAuthSnapshot(auth?: AuthUser | null) {
   return {
     role: normalizeRole(auth?.role),
     userId: auth?.userId ?? null,

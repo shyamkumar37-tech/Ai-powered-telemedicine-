@@ -9,7 +9,8 @@ import { getApiErrorMessage } from "../utils/apiError";
 import { notifyBrowser, requestBrowserNotificationPermission } from "../utils/browserNotifications";
 import { translateDisplayText } from "../utils/i18n";
 import PatientSidebar from "../components/PatientSidebar";
-import { User, LogOut, Bell, ShieldAlert, Check, RefreshCw, Layers } from "lucide-react";
+import EmergencySosModal from "../components/patient/EmergencySosModal";
+import { LogOut, Bell, ShieldAlert, Check, RefreshCw, Layers, AlertTriangle } from "lucide-react";
 import { buildLoginRedirect } from "../utils/authSession";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import { DynamicState, DynamicStateObject } from "../types/DynamicState";
@@ -19,6 +20,7 @@ export default function PatientAlertsPage() {
   const navigate = useNavigate();
   const { language, t } = useLanguage();
   const patientId = auth?.profileId;
+  const [isSosOpen, setIsSosOpen] = useState(false);
   
   const [alerts, setAlerts] = useState<DynamicStateObject[]>([]);
   const [error, setError] = useState<DynamicState>("");
@@ -75,7 +77,7 @@ export default function PatientAlertsPage() {
         setAlerts((current: DynamicStateObject) => [alert, ...current.filter((item: DynamicStateObject) => item.id !== alert.id)]);
         setError("");
         if (!pushState.subscribed) {
-          notifyBrowser("Notification Center", translateDisplayText(language, alert.message));
+          notifyBrowser("Notification Center", String(translateDisplayText(language, alert.message)));
         }
       },
       () => {}
@@ -106,14 +108,22 @@ export default function PatientAlertsPage() {
       nextReadIds = [...readAlertIds, id];
     }
     setReadAlertIds(nextReadIds);
-    try { localStorage.setItem(`telecareplus-read-alerts-${patientId}`, JSON.stringify(nextReadIds)); } catch {}
+    try {
+      localStorage.setItem(`telecareplus-read-alerts-${patientId}`, JSON.stringify(nextReadIds));
+    } catch {
+      // Ignore storage error.
+    }
   };
 
   const markAllAsRead = () => {
     const allIds = alerts.map((a: DynamicStateObject) => a.id);
     const nextReadIds = [...new Set([...readAlertIds, ...allIds])];
     setReadAlertIds(nextReadIds);
-    try { localStorage.setItem(`telecareplus-read-alerts-${patientId}`, JSON.stringify(nextReadIds)); } catch {}
+    try {
+      localStorage.setItem(`telecareplus-read-alerts-${patientId}`, JSON.stringify(nextReadIds));
+    } catch {
+      // Ignore storage error.
+    }
   };
 
   const filteredAlerts = useMemo(() => {
@@ -141,6 +151,14 @@ export default function PatientAlertsPage() {
             <p className="subtext">{t("reviewAndManageYourCriticalHealthAlerts") || "Review and manage your critical health alerts."}</p>
           </div>
           <div className="status-pills">
+            <button
+              onClick={() => setIsSosOpen(true)}
+              aria-label="Emergency SOS"
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-lg shadow-rose-600/30 active:scale-95 transition-all cursor-pointer border border-rose-400/40"
+            >
+              <AlertTriangle size={15} className="text-white animate-pulse" />
+              <span>Emergency SOS</span>
+            </button>
             <LanguageSwitcher hideLabel />
             <span className="pill verified"><i className="ti ti-shield-check"></i>Verified care team</span>
             <button 
@@ -257,6 +275,8 @@ export default function PatientAlertsPage() {
 
         </div>
       </main>
+
+      <EmergencySosModal isOpen={isSosOpen} onClose={() => setIsSosOpen(false)} />
     </div>
   );
 }

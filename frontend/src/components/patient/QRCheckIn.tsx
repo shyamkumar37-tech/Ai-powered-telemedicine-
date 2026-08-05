@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import { Camera, X, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';

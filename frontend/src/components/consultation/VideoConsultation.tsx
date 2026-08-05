@@ -5,8 +5,7 @@ import {
   Mic,
   PhoneOff,
   Signal,
-  VideoOff,
-  Lock
+  VideoOff
 } from "lucide-react";
 import Avatar from "../ui/Avatar";
 import Button from "../ui/Button";
@@ -15,7 +14,7 @@ import Card from "../ui/Card";
 import TeleExamPanel from "./TeleExamPanel";
 import { transcribeAudioToSoapNote } from "../../ai/services/aiService";
 import { CryptoService } from "../../services/cryptoService";
-import { translateText, sendChatMessage } from "../../services/telecareService";
+import { translateText } from "../../services/telecareService";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import { DynamicState, DynamicStateObject } from "../../types/DynamicState";
 
@@ -145,12 +144,14 @@ export default function VideoConsultation({
   const sendMessage = async () => {
     if (!draft.trim() || !recipientId || !currentUserId) return;
     
-    let sentText = draft.trim();
+    const sentText = draft.trim();
     let displayMsg = sentText;
     
     if (e2eKey) {
        const ciphertext = await CryptoService.encryptMessage(e2eKey, sentText);
-       console.log("Transmitting ciphertext:", ciphertext);
+       if (import.meta.env.DEV) {
+         console.log("Transmitting ciphertext:", ciphertext);
+       }
        displayMsg = await CryptoService.decryptMessage(e2eKey, ciphertext);
     }
 
@@ -182,6 +183,7 @@ export default function VideoConsultation({
           <p className="text-sm text-slate-500">{appointmentTime}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Badge tone="warning">Mock Mode (Daily.co SDK Stub)</Badge>
           <Badge tone="info">Verified doctor</Badge>
           <Badge tone={connection.tone}>{connection.label}</Badge>
         </div>

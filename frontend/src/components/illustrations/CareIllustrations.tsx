@@ -1,4 +1,4 @@
-import { DynamicState, DynamicStateObject } from "./../../types/DynamicState";
+import { DynamicState } from "./../../types/DynamicState";
 export function DashboardCareIllustration() {
   return (
     <svg viewBox="0 0 320 220" className="h-full w-full" role="img" aria-label="Care dashboard illustration">

@@ -1,16 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Badge from "../components/Badge";
-import LocalizedText from "../components/LocalizedText";
-import AiReportSummaryCard from "../ai/components/AiReportSummaryCard";
-import AiMoodInsightsPanel from "../ai/components/AiMoodInsightsPanel";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { fetchMedicalRecords } from "../services/telecareService";
 import { getApiErrorMessage } from "../utils/apiError";
 import { translateDisplayText } from "../utils/i18n";
 import PatientSidebar from "../components/PatientSidebar";
-import { User, LogOut, FileArchive, RefreshCw, AlertTriangle, FileText, LayoutList, Stethoscope, Pill, AlertCircle } from "lucide-react";
+import { LogOut, RefreshCw, AlertTriangle, FileText, Stethoscope } from "lucide-react";
 import { buildLoginRedirect } from "../utils/authSession";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import { DynamicState, DynamicStateObject } from "../types/DynamicState";

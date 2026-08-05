@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useOptimistic } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
@@ -25,6 +25,14 @@ export default function PatientRemindersPage() {
   const [updatingReminderId, setUpdatingReminderId] = useState<DynamicStateObject | null>(null);
   const [filter, setFilter] = useState<DynamicState>("All");
   const [search, setSearch] = useState<DynamicState>("");
+
+  const [optimisticReminders, addOptimisticReminder] = useOptimistic(
+    reminders,
+    (state: DynamicStateObject[], update: { id: DynamicStateObject; status: DynamicStateObject }) =>
+      state.map((r) =>
+        r.id === update.id ? { ...r, status: update.status, effectiveStatus: update.status } : r
+      )
+  );
 
   const parseScheduledDate = (value: string | number) => {
     if (!value) return null;
@@ -97,8 +105,7 @@ export default function PatientRemindersPage() {
   };
 
   const updateStatus = async (reminderId: DynamicStateObject, status: DynamicStateObject) => {
-    setUpdatingReminderId(reminderId);
-    setError("");
+    addOptimisticReminder({ id: reminderId, status });
     try {
       await updateReminderStatus(reminderId, { status });
       pushToast({
@@ -106,13 +113,12 @@ export default function PatientRemindersPage() {
         title: "Reminders",
         message: status === "TAKEN" ? "Reminder marked as taken." : "Reminder marked as missed."
       });
+      // The reload happens in background, optimistic state keeps it fast
       await load();
     } catch (err: DynamicStateObject) {
       const message = getApiErrorMessage(err, "Unable to update reminder status.");
       setError(message);
       pushToast({ type: "error", title: "Error", message });
-    } finally {
-      setUpdatingReminderId(null);
     }
   };
 
@@ -122,7 +128,7 @@ export default function PatientRemindersPage() {
 
   const filteredReminders = useMemo(() => {
     const query = search.trim().toLowerCase();
-    return reminders.filter((item: DynamicStateObject) => {
+    return optimisticReminders.filter((item: DynamicStateObject) => {
       const status = item.effectiveStatus || item.status || "PENDING";
       if (filter !== "All" && status !== filter.toUpperCase()) return false;
       if (!query) return true;
@@ -331,13 +337,11 @@ export default function PatientRemindersPage() {
                                 <div className="flex gap-2">
                                   <button
                                     className="px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-element text-sm font-medium transition-colors disabled:opacity-50"
-                                    disabled={updatingReminderId === item.id}
                                     onClick={() => updateStatus(item.id, "TAKEN")}
                                   >
                                     {t("markTaken") || "Mark Taken"}</button>
                                   <button
                                     className="px-4 py-2 bg-transparent hover:bg-white/5 text-ink border border-white/20 rounded-element text-sm font-medium transition-colors disabled:opacity-50"
-                                    disabled={updatingReminderId === item.id}
                                     onClick={() => updateStatus(item.id, "MISSED")}
                                   >
                                     {t("missed") || "Missed"}</button>

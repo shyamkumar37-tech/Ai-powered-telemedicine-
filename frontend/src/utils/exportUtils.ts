@@ -1,14 +1,18 @@
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import Papa from "papaparse";
-import { DynamicStateObject } from "./../types/DynamicState";
+
+export interface PDFColumnDefinition {
+  header: string;
+  dataKey: string;
+}
 
 /**
  * Export data to a CSV file.
- * @param {Array} data - Array of objects to export.
- * @param {String} filename - The name of the file to save as (without .csv).
+ * @param data Array of objects to export.
+ * @param filename The name of the file to save as (without .csv).
  */
-export const exportToCSV = (data: DynamicStateObject, filename: DynamicStateObject) => {
+export const exportToCSV = (data: Record<string, unknown>[], filename: string) => {
   if (!data || data.length === 0) {
     console.warn("No data available to export to CSV");
     return;
@@ -29,12 +33,17 @@ export const exportToCSV = (data: DynamicStateObject, filename: DynamicStateObje
 
 /**
  * Export data to a PDF file.
- * @param {Array} data - Array of objects to export.
- * @param {String} filename - The name of the file to save as (without .pdf).
- * @param {Array} columns - Array of objects containing { header: String, dataKey: String }.
- * @param {String} title - The title of the PDF document.
+ * @param data Array of objects to export.
+ * @param filename The name of the file to save as (without .pdf).
+ * @param columns Array of objects containing { header: string, dataKey: string }.
+ * @param title The title of the PDF document.
  */
-export const exportToPDF = (data: DynamicStateObject, filename: DynamicStateObject, columns: DynamicStateObject, title = "Report") => {
+export const exportToPDF = (
+  data: Record<string, unknown>[],
+  filename: string,
+  columns: PDFColumnDefinition[],
+  title = "Report"
+) => {
   if (!data || data.length === 0) {
     console.warn("No data available to export to PDF");
     return;
@@ -52,13 +61,13 @@ export const exportToPDF = (data: DynamicStateObject, filename: DynamicStateObje
   doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
 
   // Add table
-  (doc as any).autoTable({
+  (doc as unknown as { autoTable: (options: Record<string, unknown>) => void }).autoTable({
     startY: 36,
-    head: [columns.map((col: DynamicStateObject) => col.header)],
-    body: data.map((item: DynamicStateObject) => columns.map((col: DynamicStateObject) => (item as DynamicStateObject)[col.dataKey])),
+    head: [columns.map((col) => col.header)],
+    body: data.map((item) => columns.map((col) => item[col.dataKey])),
     theme: 'grid',
     styles: { fontSize: 10, cellPadding: 3 },
-    headStyles: { fillColor: [79, 179, 160], textColor: 255 }, // matches teal-500 roughly
+    headStyles: { fillColor: [79, 179, 160], textColor: 255 },
     alternateRowStyles: { fillColor: [248, 250, 252] }
   });
 

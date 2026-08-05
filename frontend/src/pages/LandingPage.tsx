@@ -74,7 +74,9 @@ export default function LandingPage() {
     }
     try {
       localStorage.setItem("telecareplus-theme", darkMode ? "dark" : "light");
-    } catch {}
+    } catch {
+      // Ignore storage failure.
+    }
   }, [darkMode]);
 
   const toggleTheme = () => setDarkMode((d: DynamicStateObject) => !d);

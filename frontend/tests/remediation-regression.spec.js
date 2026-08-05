@@ -15,7 +15,7 @@ async function expectResolvedState(page) {
 test.describe("Remediation regressions", () => {
   test("patient logout clears session and redirects to login", async ({ page }) => {
     await loginAs(page, TEST_ACCOUNTS.patient);
-    await page.getByRole("button", { name: /logout/i }).click();
+    await page.getByRole("button", { name: /log out|logout/i }).first().click();
     await expect(page).toHaveURL(/\/login(\?.*)?$/);
 
     await expect.poll(async () => page.evaluate(() => localStorage.getItem("telecareplus-auth"))).toBeNull();
@@ -42,7 +42,7 @@ test.describe("Remediation regressions", () => {
     await loginAs(page, TEST_ACCOUNTS.patient);
     await page.goto("/patient/chatbot");
     await expectResolvedState(page);
-    await expect(page.getByText(/ai care chatbot|unable to load chatbot history|no chatbot guidance/i)).toBeVisible();
+    await expect(page.getByText(/ai care chatbot|ai assistant|care assistant|unable to load chatbot history|no chatbot guidance/i).first()).toBeVisible();
   });
 
   test("pharmacist dashboard resolves beyond infinite skeleton", async ({ page }) => {

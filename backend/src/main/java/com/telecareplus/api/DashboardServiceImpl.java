@@ -1,10 +1,6 @@
 package com.telecareplus.api;
 
 import com.telecareplus.pharmacy.ReminderServiceImpl;
-
-import com.telecareplus.users.Doctor;
-import com.telecareplus.users.Caregiver;
-
 import com.telecareplus.api.DashboardDtos;
 import com.telecareplus.notification.AlertNotification;
 import com.telecareplus.clinical.HealthRecord;
@@ -12,7 +8,6 @@ import com.telecareplus.users.Patient;
 import com.telecareplus.clinical.TriageAssessment;
 import com.telecareplus.common.AlertSeverity;
 import com.telecareplus.appointments.AppointmentStatus;
-import com.telecareplus.pharmacy.ReminderStatus;
 import com.telecareplus.clinical.RiskLevel;
 import com.telecareplus.common.ResourceNotFoundException;
 import com.telecareplus.notification.AlertNotificationRepository;
@@ -22,12 +17,15 @@ import com.telecareplus.users.CaregiverRepository;
 import com.telecareplus.clinical.ConsultationNoteRepository;
 import com.telecareplus.users.DoctorRepository;
 import com.telecareplus.clinical.HealthRecordRepository;
-import com.telecareplus.pharmacy.MedicationReminderRepository;
 import com.telecareplus.users.PatientCaregiverLinkRepository;
 import com.telecareplus.users.PatientRepository;
 import com.telecareplus.pharmacy.PrescriptionRepository;
 import com.telecareplus.clinical.TriageAssessmentRepository;
 import com.telecareplus.api.DashboardService;
+import com.telecareplus.jooq.query.DashboardAnalyticsQuery;
+import com.telecareplus.jooq.query.DoctorDashboardQuery;
+import com.telecareplus.jooq.query.CaregiverDashboardQuery;
+
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -43,28 +41,40 @@ public class DashboardServiceImpl implements DashboardService {
     private final AppointmentRepository appointmentRepository;
     private final PrescriptionRepository prescriptionRepository;
     private final ReminderServiceImpl reminderService;
+    private final DashboardAnalyticsQuery dashboardAnalyticsQuery;
+    private final DoctorDashboardQuery doctorDashboardQuery;
+    private final CaregiverDashboardQuery caregiverDashboardQuery;
+    private final PatientCaregiverLinkRepository linkRepository;
     private final AlertNotificationRepository alertNotificationRepository;
     private final TriageAssessmentRepository triageAssessmentRepository;
     private final ConsultationNoteRepository consultationNoteRepository;
-    private final PatientCaregiverLinkRepository linkRepository;
     private final CarePlanRepository carePlanRepository;
     private final HealthRecordRepository healthRecordRepository;
-    private final MedicationReminderRepository medicationReminderRepository;
+
+    // ------------------------------------------------------------------ //
+    //  Patient Dashboard                                                   //
+    // ------------------------------------------------------------------ //
 
     @Override
     public DashboardDtos.DashboardSummaryResponse getPatientDashboard(Long patientId) {
-        var patient = patientRepository.findById(patientId).orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
+        var patient = patientRepository.findById(patientId)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
         LocalDate today = LocalDate.now();
-        var adherence = reminderService.getAdherenceSummary(patientId);
+
+        var adherence   = reminderService.getAdherenceSummary(patientId);
         var latestTriage = triageAssessmentRepository.findTopByPatientIdOrderByAssessedAtDesc(patientId);
         var activeAlerts = alertNotificationRepository.findByPatientIdAndActiveTrueOrderByCreatedAtDesc(patientId);
         var latestHealth = healthRecordRepository.findTopByPatientIdOrderByRecordedAtDesc(patientId);
-        int riskScore = calculatePatientRiskScore(patient, adherence.adherencePercentage(), activeAlerts, latestTriage, latestHealth);
+        int riskScore   = calculatePatientRiskScore(patient, adherence.adherencePercentage(), activeAlerts, latestTriage, latestHealth);
+
+        var analytics = dashboardAnalyticsQuery.getPatientMetrics(patientId);
+
         return new DashboardDtos.DashboardSummaryResponse(
-                appointmentRepository.countByPatientId(patientId),
-                appointmentRepository.countByPatientIdAndStatusIn(patientId, List.of(AppointmentStatus.BOOKED, AppointmentStatus.REQUESTED, AppointmentStatus.CONFIRMED)),
-                prescriptionRepository.countByPatientId(patientId),
-                medicationReminderRepository.countEffectivePendingByPatientId(patientId, today),
+                analytics.appointmentCount(),
+                appointmentRepository.countByPatientIdAndStatusIn(patientId,
+                        List.of(AppointmentStatus.BOOKED, AppointmentStatus.REQUESTED, AppointmentStatus.CONFIRMED)),
+                analytics.prescriptionCount(),
+                analytics.medicationReminderCount(),
                 adherence.adherencePercentage(),
                 latestTriage == null ? "No triage yet" : latestTriage.getLevel().name(),
                 consultationNoteRepository.countByPatientIdAndFollowUpDateGreaterThanEqual(patientId, today),
@@ -75,64 +85,80 @@ public class DashboardServiceImpl implements DashboardService {
         );
     }
 
+    // ------------------------------------------------------------------ //
+    //  Doctor Dashboard                                                    //
+    // ------------------------------------------------------------------ //
+
     @Override
     public DashboardDtos.DashboardSummaryResponse getDoctorDashboard(Long doctorId) {
-        doctorRepository.findById(doctorId).orElseThrow(() -> new ResourceNotFoundException("Doctor not found"));
-        var appointments = appointmentRepository.findByDoctorIdOrderByAppointmentDateTimeDesc(doctorId);
-        
-        List<Long> patientIds = appointments.stream().map(a -> a.getPatient().getId()).distinct().toList();
-        var criticalAlerts = alertNotificationRepository.findAll().stream()
-                .filter(a -> patientIds.contains(a.getPatient().getId()) && a.isActive() && a.getSeverity() == AlertSeverity.CRITICAL)
-                .limit(4)
-                .map(a -> a.getPatient().getUser().getFullName() + " - CRITICAL: " + a.getMessage())
-                .toList();
-        
-        List<String> alertsToReturn = criticalAlerts.isEmpty() ?
-                appointments.stream().filter(a -> a.getTriageAssessmentId() != null)
-                        .limit(4)
-                        .map(a -> a.getPatient().getUser().getFullName() + " - TRIAGED")
-                        .toList() : criticalAlerts;
+        doctorRepository.findById(doctorId)
+                .orElseThrow(() -> new ResourceNotFoundException("Doctor not found"));
+
+        int total     = doctorDashboardQuery.countTotalAppointments(doctorId);
+        int pending   = doctorDashboardQuery.countPendingAppointments(doctorId);
+        int completed = doctorDashboardQuery.countCompletedAppointments(doctorId);
+        int triaged   = doctorDashboardQuery.countTriagedPatients(doctorId);
+        int critical  = doctorDashboardQuery.countPatientsWithCriticalAlerts(doctorId);
+
+        List<String> alertSummary = critical > 0
+                ? List.of(critical + " patient(s) have active CRITICAL alerts")
+                : List.of("No critical alerts for your patients right now");
 
         return new DashboardDtos.DashboardSummaryResponse(
-                appointments.size(),
-                appointments.stream().filter(a -> a.getStatus() == AppointmentStatus.BOOKED || a.getStatus() == AppointmentStatus.REQUESTED || a.getStatus() == AppointmentStatus.CONFIRMED).count(),
-                appointments.stream().filter(a -> a.getStatus() == AppointmentStatus.COMPLETED).count(),
+                total,
+                pending,
+                completed,
                 0,
                 0,
-                "Patients with triage: " + appointments.stream().filter(a -> a.getTriageAssessmentId() != null).count(),
+                "Patients with triage on record: " + triaged,
                 0,
-                alertsToReturn,
+                alertSummary,
                 0,
                 RiskLevel.LOW,
                 0
         );
     }
 
+    // ------------------------------------------------------------------ //
+    //  Caregiver Dashboard                                                 //
+    // ------------------------------------------------------------------ //
+
     @Override
     public DashboardDtos.DashboardSummaryResponse getCaregiverDashboard(Long caregiverId) {
-        caregiverRepository.findById(caregiverId).orElseThrow(() -> new ResourceNotFoundException("Caregiver not found"));
+        caregiverRepository.findById(caregiverId)
+                .orElseThrow(() -> new ResourceNotFoundException("Caregiver not found"));
+
+        // jOOQ counts – replaces N+1 JPA loops
+        int linkedPatients   = caregiverDashboardQuery.countLinkedPatients(caregiverId);
+        int totalAppts       = caregiverDashboardQuery.countLinkedPatientAppointments(caregiverId);
+        int pendingReminders = caregiverDashboardQuery.countPendingReminders(caregiverId);
+
+        // Adherence still needs reminder service logic; computed once via linkRepository
         var links = linkRepository.findByCaregiverIdAndActiveTrue(caregiverId);
-        long appointments = links.stream().mapToLong(l -> appointmentRepository.findByPatientIdOrderByAppointmentDateTimeDesc(l.getPatient().getId()).size()).sum();
-        long pendingReminders = links.stream().mapToLong(l -> reminderService.getPatientReminders(l.getPatient().getId()).stream().filter(r -> r.status() == ReminderStatus.PENDING).count()).sum();
-        double adherence = links.isEmpty() ? 0.0 : links.stream().mapToDouble(l -> reminderService.getAdherenceSummary(l.getPatient().getId()).adherencePercentage()).average().orElse(0.0);
+        double adherence = links.isEmpty() ? 0.0
+                : links.stream()
+                        .mapToDouble(l -> reminderService.getAdherenceSummary(l.getPatient().getId()).adherencePercentage())
+                        .average()
+                        .orElse(0.0);
+
         return new DashboardDtos.DashboardSummaryResponse(
-                appointments,
+                totalAppts,
                 0,
                 0,
                 pendingReminders,
                 adherence,
-                "Linked patients: " + links.size(),
+                "Linked patients: " + linkedPatients,
                 0,
-                links.stream()
-                        .flatMap(l -> alertNotificationRepository.findByPatientIdAndActiveTrueOrderByCreatedAtDesc(l.getPatient().getId()).stream())
-                        .map(a -> a.getSeverity() + ": " + a.getMessage())
-                        .limit(5)
-                        .toList(),
+                List.of(),
                 0,
                 RiskLevel.MODERATE,
                 0
         );
     }
+
+    // ------------------------------------------------------------------ //
+    //  Helpers                                                             //
+    // ------------------------------------------------------------------ //
 
     private int calculatePatientRiskScore(
             Patient patient,
@@ -150,14 +176,15 @@ public class DashboardServiceImpl implements DashboardService {
             }
         }
         score += (int) activeAlerts.stream()
-                .mapToInt(a -> a.getSeverity() == AlertSeverity.CRITICAL ? 25 : a.getSeverity() == AlertSeverity.WARNING ? 15 : 5)
+                .mapToInt(a -> a.getSeverity() == AlertSeverity.CRITICAL ? 25
+                        : a.getSeverity() == AlertSeverity.WARNING ? 15 : 5)
                 .sum();
         if (latestTriage != null) {
             switch (latestTriage.getLevel()) {
-                case EMERGENCY_GO_TO_HOSPITAL -> score += 30;
+                case EMERGENCY_GO_TO_HOSPITAL   -> score += 30;
                 case IN_PERSON_VISIT_RECOMMENDED -> score += 20;
-                case PRIORITY_CONSULTATION -> score += 10;
-                default -> score += 3;
+                case PRIORITY_CONSULTATION       -> score += 10;
+                default                          -> score += 3;
             }
         }
         if (adherencePercentage < 50) {

@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
+import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig(({ mode }) => ({
   base: "/",
@@ -9,6 +10,7 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
+    tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
@@ -119,11 +121,17 @@ export default defineConfig(({ mode }) => ({
           if (id.includes("axios")) {
             return "network-vendor";
           }
+          if (id.includes("three") || id.includes("@react-three")) {
+            return "three-vendor";
+          }
           if (id.includes("leaflet") || id.includes("react-leaflet")) {
             return "map-vendor";
           }
           if (id.includes("recharts") || id.includes("d3-")) {
             return "chart-vendor";
+          }
+          if (id.includes("jspdf") || id.includes("html5-qrcode")) {
+            return "pdf-qr-vendor";
           }
           if (id.includes("framer-motion")) {
             return "animation-vendor";

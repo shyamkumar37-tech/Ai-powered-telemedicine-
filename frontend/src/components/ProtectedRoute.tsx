@@ -1,4 +1,4 @@
-import { DynamicState, DynamicStateObject } from "./../types/DynamicState";
+import { DynamicState } from "./../types/DynamicState";
 import { useEffect, useState, ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -16,23 +16,20 @@ export interface ProtectedRouteProps {
 }
 
 export default function ProtectedRoute({ roles, children, variant = "page" }: ProtectedRouteProps) {
-  const { auth, isAuthenticated, isAuthReady } = useAuth();
+  const { auth, isAuthenticated, isAuthReady, logout } = useAuth();
   const { t, language, translateUiText = (value: string | number) => value } = useLanguage() ?? LANGUAGE_CONTEXT_FALLBACK;
   const location = useLocation();
   const languageSearch = location.search || (language && language !== "en" ? `?lang=${language}` : "");
   const [timedOut, setTimedOut] = useState<DynamicState>(false);
 
-  if (typeof window !== "undefined" && window.__TELECARE_LOCAL_RUNTIME__) {
-      console.log("[TeleCare+] ProtectedRoute decision", {
-        path: location.pathname + location.search,
-        isAuthReady,
-        isAuthenticated,
-        role: auth?.role ?? null,
-        roles: roles ?? null
-      });
-    }
-
-  if (typeof window !== "undefined" && window.__TELECARE_LOCAL_RUNTIME__) {
+  if (import.meta.env.DEV && typeof window !== "undefined" && window.__TELECARE_LOCAL_RUNTIME__) {
+    console.log("[TeleCare+] ProtectedRoute decision", {
+      path: location.pathname + location.search,
+      isAuthReady,
+      isAuthenticated,
+      role: auth?.role ?? null,
+      roles: roles ?? null
+    });
     console.log("[TeleCare+] ProtectedRoute guardState", evaluateProtectedRouteState({
       auth, isAuthenticated, isAuthReady, roles, variant, pathname: location.pathname, languageSearch
     }));
@@ -64,17 +61,19 @@ export default function ProtectedRoute({ roles, children, variant = "page" }: Pr
     languageSearch
   });
 
-  console.log("[WORKSPACE]", {
-    step: "route-guard",
-    path: location.pathname + location.search,
-    state: guardState.kind,
-    isAuthReady,
-    isAuthenticated,
-    role: auth?.role ?? null,
-    userId: auth?.userId ?? null,
-    profileId: auth?.profileId ?? null,
-    requiredRoles: roles ?? null
-  });
+  if (import.meta.env.DEV) {
+    console.log("[WORKSPACE]", {
+      step: "route-guard",
+      path: location.pathname + location.search,
+      state: guardState.kind,
+      isAuthReady,
+      isAuthenticated,
+      role: auth?.role ?? null,
+      userId: auth?.userId ?? null,
+      profileId: auth?.profileId ?? null,
+      requiredRoles: roles ?? null
+    });
+  }
 
   useEffect(() => {
     if (guardState.kind === "invalid-auth") {
@@ -82,6 +81,7 @@ export default function ProtectedRoute({ roles, children, variant = "page" }: Pr
         path: location.pathname + location.search,
         ...buildAuthSnapshot(auth)
       });
+      logout();
     }
 
     if (guardState.kind === "denied" || guardState.kind === "redirect-home") {

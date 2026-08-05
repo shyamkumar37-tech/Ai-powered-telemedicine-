@@ -1,5 +1,5 @@
-import { DynamicState, DynamicStateObject } from "./../types/DynamicState";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { DynamicState } from "./../types/DynamicState";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
 import { motion } from "framer-motion";
 import { ArrowLeft, Mail, Phone, MessageSquare, LifeBuoy, FileText, Lock, Clock } from "lucide-react";

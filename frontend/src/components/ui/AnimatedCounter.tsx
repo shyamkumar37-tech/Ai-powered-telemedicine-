@@ -1,6 +1,6 @@
 import { DynamicState, DynamicStateObject } from "./../../types/DynamicState";
 import { useEffect, useRef } from "react";
-import { useInView, useMotionValue, useSpring, motion } from "framer-motion";
+import { useInView, useMotionValue, useSpring } from "framer-motion";
 import { useAccessibleAnimation } from "../../hooks/useAccessibleAnimation";
 
 export interface AnimatedCounterProps {

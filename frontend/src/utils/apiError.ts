@@ -1,30 +1,26 @@
 import { translateDisplayText } from "./i18n";
-import { DynamicStateObject } from "./../types/DynamicState";
 
-const FIELD_LABELS = {
-  age: "Age",
-  appointmentDateTime: "Appointment date & time",
-  concernSummary: "Concern summary",
-  email: "Email",
-  fullName: "Full name",
-  gender: "Gender",
-  notes: "Notes",
+const FIELD_LABELS: Record<string, string> = {
+  fullName: "पूरा नाम",
+  email: "ईमेल",
+  password: "पासवर्ड",
+  mobileNumber: "मोबाइल नंबर",
   otp: "OTP",
-  password: "Password",
-  phone: "Phone",
-  requestedAppointmentTime: "Requested appointment time",
-  symptoms: "Symptoms"
+  notes: "देखभालकर्ता नोट्स",
+  requestedTime: "अनुरोधित समय",
+  concernSummary: "चिंता सारांश"
 };
 
-function getStoredLanguage() {
+function getStoredLanguage(): string {
   if (typeof window === "undefined") {
     return "en";
   }
 
   try {
-    const queryLanguage = new URL(window.location.href).searchParams.get("lang");
-    if (queryLanguage) {
-      return queryLanguage;
+    const searchParams = new URLSearchParams(window.location.search);
+    const lang = searchParams.get("lang");
+    if (lang) {
+      return lang;
     }
   } catch {
     // Ignore malformed URL state.
@@ -40,13 +36,13 @@ function getStoredLanguage() {
   }
 }
 
-function getFieldLabel(language: DynamicStateObject, fieldKey: DynamicStateObject) {
-  const label = (FIELD_LABELS as DynamicStateObject)[fieldKey];
-  return label ? translateDisplayText(language, label) : "";
+function getFieldLabel(language: string, fieldKey: string): string {
+  const label = FIELD_LABELS[fieldKey];
+  return label ? String(translateDisplayText(language, label)) : "";
 }
 
-function localizeMessage(language: DynamicStateObject, fieldKey: DynamicStateObject, message: DynamicStateObject) {
-  const normalizedMessage = translateDisplayText(language, String(message || "").trim());
+function localizeMessage(language: string, fieldKey: string, message: string): string {
+  const normalizedMessage = String(translateDisplayText(language, String(message || "").trim()));
   if (!normalizedMessage) {
     return normalizedMessage;
   }
@@ -92,7 +88,7 @@ function localizeMessage(language: DynamicStateObject, fieldKey: DynamicStateObj
   return normalizedMessage;
 }
 
-export function getApiErrorMessage(err: DynamicStateObject, fallback: DynamicStateObject) {
+export function getApiErrorMessage(err: any, fallback: string): string {
   const language = getStoredLanguage();
   if (err?.name === "TimeoutError") {
     return localizeMessage(language, "", err.message || "The request took too long to complete.");
