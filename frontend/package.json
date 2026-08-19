@@ -63,7 +63,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
-    "@axe-core/playwright": "^4.12.1",
+    "@axe-core/playwright": "^4.13.0",
     "@eslint/js": "^8.57.0",
     "@playwright/test": "^1.61.1",
     "@testing-library/dom": "^10.4.1",
