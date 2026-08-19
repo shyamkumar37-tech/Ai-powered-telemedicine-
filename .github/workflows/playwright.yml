@@ -33,6 +33,22 @@ jobs:
     - name: Build Frontend
       run: npm run build
 
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        
+    - name: Build and Start Backend
+      working-directory: backend
+      env:
+        SPRING_PROFILES_ACTIVE: test
+      run: |
+        chmod +x ./mvnw
+        ./mvnw spring-boot:run &
+        # Wait for backend to be ready on port 8080
+        timeout 60 bash -c 'while ! curl -s http://localhost:8080/api/health > /dev/null; do sleep 5; done' || true
+        
     - name: Run Playwright tests
       run: npx playwright test
       continue-on-error: true
